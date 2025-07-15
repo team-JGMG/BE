@@ -44,7 +44,7 @@ jobs:
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.5.4
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+          ssh-private-key: ${{ secrets.EC2_KEY }}
 
       - name: Add EC2 to known hosts
         run: |
