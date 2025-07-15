@@ -41,6 +41,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+.pem
 
 # 루트에서 제외할 디렉토리들
 /test-repo/

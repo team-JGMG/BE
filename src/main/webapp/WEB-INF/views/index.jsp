@@ -13,6 +13,6 @@
   <title>Title</title>
 </head>
 <body>
-<h1>환영합니다.</h1>
+<h1>환영합니다. CI/CD 적용 완료 입니다.</h1>
 </body>
 </html>
