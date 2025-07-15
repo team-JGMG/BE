@@ -26,7 +26,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ../..          # 프로젝트 루트 기준으로
+          file: ../../Dockerfile  # 실제 Dockerfile 경로
           push: true
-          tags: yyssjjj/bobj:latest  # <--- 너의 DockerHub 사용자명/리포지토리명
+          tags: yyssjjj/bobj:latest
