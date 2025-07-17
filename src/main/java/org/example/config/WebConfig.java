@@ -2,17 +2,27 @@ package org.example.config;
 
 import javax.servlet.Filter;
 import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
 
+
+
+    // 루트 설정 클래스 (DB, 보안 등 전역 설정)
     @Override
     protected Class<?>[] getRootConfigClasses() {
         return new Class[] { RootConfig.class };
     }
+
+
+    // 서블릿 관련 설정 클래스
     @Override
     protected Class<?>[] getServletConfigClasses() {
-        return new Class[] { ServletConfig.class };
+        return new Class[]{
+            SwaggerConfig.class,
+            ServletConfig.class
+        };
     }
     // 스프링의 FrontController인 DispatcherServlet이 담당할 Url 매핑 패턴, / : 모든 요청에 대해 매핑
     @Override
@@ -27,6 +37,7 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         characterEncodingFilter.setForceEncoding(true);
         return new Filter[] {characterEncodingFilter};
     }
+
 
 
 }

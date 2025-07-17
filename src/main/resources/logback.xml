@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- 콘솔에 로그 출력 -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%-5level [%logger{36}] - %msg%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <!-- MyBatis 디버깅용 -->
+  <logger name="org.mybatis" level="DEBUG" />
+  <logger name="org.apache.ibatis" level="DEBUG" />
+
+  <!-- Spring 프레임워크 로그 최소화 -->
+  <logger name="org.springframework" level="INFO" />
+
+  <!-- Hibernate 로그 (필요 시만 추가) -->
+  <logger name="org.hibernate.SQL" level="DEBUG" />
+  <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
+
+  <!-- 전체 루트 로그 설정 -->
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
