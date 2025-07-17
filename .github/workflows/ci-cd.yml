@@ -21,8 +21,14 @@ jobs:
       - name: Grant permission for gradlew
         run: chmod +x ./gradlew
 
+#      테스트 포함
+#      - name: Build WAR file
+#        run: ./gradlew build
+
+#      테스트 미포함 CI/CD (현재 배포 디비 고려 안함)
       - name: Build WAR file
-        run: ./gradlew build
+        run: ./gradlew build -x test
+
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
