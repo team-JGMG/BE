@@ -15,8 +15,8 @@ ext {
     springVersion = '5.3.37'
     lombokVersion = '1.18.30'
     springSecurityVersion = '5.8.13'
-    slf4jVersion = '2.0.9'
-    logbackVersion = '1.4.14'
+    slf4jVersion = '1.7.36'         // ✅ SLF4J 낮추기
+    logbackVersion = '1.2.11'
     mybatisVersion = '3.4.6'
     mybatisSpringVersion = '1.3.2'
     h2Version = '2.2.224'
