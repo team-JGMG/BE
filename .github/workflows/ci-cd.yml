@@ -46,6 +46,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: yyssjjj/bobj:latest
+          no-cache: true  #  이전 이미지 정보 재사용 안 함
 
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.5.4
