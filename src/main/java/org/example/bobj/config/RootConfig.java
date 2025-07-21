@@ -1,4 +1,4 @@
-package org.example.config;
+package org.example.bobj.config;
 
 
 import com.zaxxer.hikari.HikariConfig;
