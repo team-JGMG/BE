@@ -1,4 +1,4 @@
-package org.example.bobj.common.constants;
+package org.example.bobj.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
