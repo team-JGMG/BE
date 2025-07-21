@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @PropertySource("classpath:/application.properties")
-@ComponentScan(basePackages = "org.example")
+@ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
 @Import(SwaggerConfig.class)
 public class RootConfig {
