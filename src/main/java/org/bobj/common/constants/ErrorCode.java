@@ -1,4 +1,4 @@
-package org.example.bobj.common.constants;
+package org.bobj.common.constants;
 
 
 import org.springframework.http.HttpStatus;

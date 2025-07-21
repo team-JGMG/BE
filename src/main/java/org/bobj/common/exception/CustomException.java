@@ -1,7 +1,7 @@
-package org.example.bobj.common.exception;
+package org.bobj.common.exception;
 
 import lombok.Getter;
-import org.example.bobj.common.constants.ErrorCode;
+import org.bobj.common.constants.ErrorCode;
 
 @Getter
 public class CustomException extends RuntimeException {

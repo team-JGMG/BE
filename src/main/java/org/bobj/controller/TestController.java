@@ -1,4 +1,4 @@
-package org.example.bobj.controller;
+package org.bobj.controller;
 
 
 import io.swagger.annotations.Api;

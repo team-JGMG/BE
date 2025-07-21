@@ -1,4 +1,4 @@
-package org.example.bobj.common.response;
+package org.bobj.common.response;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.bobj.common.constants.ErrorCode;
+import org.bobj.common.constants.ErrorCode;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;

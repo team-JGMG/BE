@@ -1,4 +1,4 @@
-package org.example.bobj;
+package org.bobj;
 
 import java.io.*;
 import javax.servlet.http.*;

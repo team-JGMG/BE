@@ -1,4 +1,4 @@
-package org.example.bobj.config;
+package org.bobj.config;
 
 import javax.servlet.Filter;
 import org.springframework.web.filter.CharacterEncodingFilter;

@@ -1,9 +1,9 @@
-package org.example.bobj.common.exception;
+package org.bobj.common.exception;
 
 
 
 import javax.servlet.http.HttpServletRequest;
-import org.example.bobj.common.constants.ErrorCode;
+import org.bobj.common.constants.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -6,7 +6,7 @@ import java.sql.Connection;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
-import org.example.bobj.config.RootConfig;
+import org.bobj.config.RootConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,11 +1,11 @@
-package org.example.bobj.common.exception;
+package org.bobj.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.example.bobj.common.constants.ErrorCode;
+import org.bobj.common.constants.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;

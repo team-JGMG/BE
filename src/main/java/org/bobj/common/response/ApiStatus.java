@@ -1,4 +1,4 @@
-package org.example.bobj.common.response;
+package org.bobj.common.response;
 
 import lombok.Getter;
 
