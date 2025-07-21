@@ -47,3 +47,8 @@ bin/
 /test-repo/
 /SpringLegacy/
 /.idea/
+
+
+# 환경설정
+application.properties
+application-*.properties
