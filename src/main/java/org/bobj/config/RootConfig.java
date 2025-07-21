@@ -23,12 +23,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @PropertySource("classpath:/application.properties")
+@ComponentScan(basePackages = "org.bobj")
 @MapperScan(basePackages = {
         "org.bobj.order.mapper",
         "org.bobj.share.mapper",
         "org.bobj.property.mapper",
         "org.bobj.trade.mapper",
-        "org.bobj.point.mapper"})
+        "org.bobj.point.mapper",})
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
 @Import(SwaggerConfig.class)
