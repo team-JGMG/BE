@@ -1,4 +1,4 @@
-package org.example.bobj.common.dto;
+package org.example.bobj.common.response;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;

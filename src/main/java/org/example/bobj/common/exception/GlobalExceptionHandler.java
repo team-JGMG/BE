@@ -1,4 +1,4 @@
-package org.example.bobj.common.handler;
+package org.example.bobj.common.exception;
 
 
 
