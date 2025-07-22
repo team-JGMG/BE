@@ -15,6 +15,5 @@ public class PropertyPhotoVO {
     private Long photoId;
     private Long propertyId;
     private String photoUrl;
-    private Boolean isThumbnail;
     private LocalDateTime createdAt;
 }
