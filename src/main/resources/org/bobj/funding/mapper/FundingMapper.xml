@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.funding.mapper.FundingMapper">
+
+  <!--  펀딩 상세 조회  -->
+  <select id="findFundingById" resultType="FundingVO">
+    SELECT *
+    FROM FUNDINGS
+    where fungding_id = #{fundingId}
+  </select>
+
+  <!-- 펀딩 참여 -->
+  <insert id="insertFundingOrder" parameterType="FundingOrderVO">
+    INSERT INTO funding_order (
+      user_id, funding_id, share_count, status, created_at, order_price
+    ) VALUES (
+               #{userId}, #{fundingId}, #{shareCount}, #{status}, #{createdAt}, #{orderPrice}
+             )
+  </insert>
+
+  <!-- 펀딩 취소 -->
+  <update id="cancelFundingOrder">
+    UPDATE funding_order
+    SET status = 'REFUNDED'
+    WHERE order_id = #{orderId}
+  </update>
+
+  <!-- 사용자의 펀딩 참여 내역 조회 -->
+  <select id="findOrdersByUserIdAndFundingId" resultType="FundingOrderVO">
+    SELECT *
+    FROM funding_order
+    WHERE user_id = #{userId}
+      AND funding_id = #{fundingId}
+  </select>
+
+
+
+
+
+
+</mapper>
