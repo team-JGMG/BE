@@ -6,4 +6,8 @@
   <settings>
     <setting name="mapUnderscoreToCamelCase" value="true"/>
   </settings>
+  <typeAliases>
+    <typeAlias alias="FundingVO" type="org.bobj.funding.domain.FundingVO"/>
+    <typeAlias alias="FundingOrderVO" type="org.bobj.funding.domain.FundingOrderVO"/>
+  </typeAliases>
 </configuration>
