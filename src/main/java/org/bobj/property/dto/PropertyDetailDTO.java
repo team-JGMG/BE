@@ -10,6 +10,7 @@ import org.bobj.property.domain.PropertyVO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,19 +51,28 @@ public class PropertyDetailDTO {
     private Integer bathroomCount;
     private Integer floor;
     private String description;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime soldAt;
+
+    // 첫 번째 사진을 썸네일으로
+    private PhotoDTO thumbnail;
 
     private List<DocumentDTO> documents;
     private List<PhotoDTO> photos;
 
     public static PropertyDetailDTO of(PropertyVO vo) {
+        PhotoDTO thumbnail = null;
+        if (vo.getThumbnailUrl() != null) {
+            thumbnail = PhotoDTO.builder()
+                    .photoUrl(vo.getThumbnailUrl())
+                    .build();
+        }
+
         return PropertyDetailDTO.builder()
                 .propertyId(vo.getPropertyId())
                 .userId(vo.getUserId())
-                .seller(SellerDTO.of(vo.getSeller()))
+                .seller(vo.getSeller() != null ? SellerDTO.of(vo.getSeller()) : null)
                 .title(vo.getTitle())
                 .address(vo.getAddress())
                 .area(vo.getArea())
@@ -88,43 +98,54 @@ public class PropertyDetailDTO {
                 .createdAt(vo.getCreatedAt())
                 .updatedAt(vo.getUpdatedAt())
                 .soldAt(vo.getSoldAt())
-                .documents(vo.getDocuments().stream().map(DocumentDTO::of).collect(Collectors.toList()))
-                .photos(vo.getPhotos().stream().map(PhotoDTO::of).collect(Collectors.toList()))
+                .thumbnail(thumbnail)
+                .documents(vo.getDocuments() != null
+                        ? vo.getDocuments().stream().map(DocumentDTO::of).collect(Collectors.toList())
+                        : List.of())
+                .photos(vo.getPhotos() != null
+                        ? vo.getPhotos().stream().map(PhotoDTO::of).collect(Collectors.toList())
+                        : List.of())
                 .build();
     }
 
     public PropertyVO toVO() {
-        return PropertyVO.builder()
-                .propertyId(propertyId)
-                .userId(userId)
-                .seller(seller.toVO())
-                .title(title)
-                .address(address)
-                .area(area)
-                .price(price)
-                .fundingStartDate(fundingStartDate)
-                .fundingEndDate(fundingEndDate)
-                .status(status)
-                .usageDistrict(usageDistrict)
-                .landArea(landArea)
-                .buildingArea(buildingArea)
-                .totalFloorAreaProperty(totalFloorAreaProperty)
-                .totalFloorAreaBuilding(totalFloorAreaBuilding)
-                .basementFloors(basementFloors)
-                .groundFloors(groundFloors)
-                .approvalDate(approvalDate)
-                .officialLandPrice(officialLandPrice)
-                .unitPricePerPyeong(unitPricePerPyeong)
-                .propertyType(propertyType)
-                .roomCount(roomCount)
-                .bathroomCount(bathroomCount)
-                .floor(floor)
-                .description(description)
-                .createdAt(createdAt)
-                .updatedAt(updatedAt)
-                .soldAt(soldAt)
-                .documents(documents.stream().map(DocumentDTO::toVO).collect(Collectors.toList()))
-                .photos(photos.stream().map(PhotoDTO::toVO).collect(Collectors.toList()))
-                .build();
+        PropertyVO.PropertyVOBuilder builder = PropertyVO.builder()
+                .propertyId(this.propertyId)
+                .userId(this.userId)
+                .seller(this.seller.toVO())
+                .title(this.title)
+                .address(this.address)
+                .area(this.area)
+                .price(this.price)
+                .fundingStartDate(this.fundingStartDate)
+                .fundingEndDate(this.fundingEndDate)
+                .status(this.status)
+                .usageDistrict(this.usageDistrict)
+                .landArea(this.landArea)
+                .buildingArea(this.buildingArea)
+                .totalFloorAreaProperty(this.totalFloorAreaProperty)
+                .totalFloorAreaBuilding(this.totalFloorAreaBuilding)
+                .basementFloors(this.basementFloors)
+                .groundFloors(this.groundFloors)
+                .approvalDate(this.approvalDate)
+                .officialLandPrice(this.officialLandPrice)
+                .unitPricePerPyeong(this.unitPricePerPyeong)
+                .propertyType(this.propertyType)
+                .roomCount(this.roomCount)
+                .bathroomCount(this.bathroomCount)
+                .floor(this.floor)
+                .description(this.description)
+                .createdAt(this.createdAt)
+                .updatedAt(this.updatedAt)
+                .soldAt(this.soldAt)
+                .documents(this.documents.stream().map(DocumentDTO::toVO).collect(Collectors.toList()))
+                .photos(this.photos.stream().map(PhotoDTO::toVO).collect(Collectors.toList()));
+        if (this.thumbnail != null) {
+            builder.photos(Collections.singletonList(this.thumbnail.toVO()));
+        } else {
+            builder.photos(Collections.emptyList());
+        }
+
+        return builder.build();
     }
 }

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.property.mapper.PropertyMapper">
+    <select id="findById" parameterType="long" resultMap="PropertyResultMap">
+        SELECT
+            p.*,
+            u.user_id AS seller_user_id,
+            u.name AS user_name,
+            u.email,
+            u.phone,
+            d.document_id,
+            d.property_id AS document_property_id,
+            d.document_type,
+            d.file_url,
+            d.created_at AS document_created_at,
+            ph.photo_id,
+            ph.property_id AS photo_property_id,
+            ph.photo_url,
+            ph.created_at AS photo_created_at,
+            (SELECT photo_url
+             FROM property_photos
+             WHERE property_id = p.property_id
+             ORDER BY created_at ASC
+             LIMIT 1) AS thumbnail_url
+        FROM properties p
+                 LEFT JOIN users u ON p.user_id = u.user_id
+                 LEFT JOIN property_document d ON p.property_id = d.property_id
+                 LEFT JOIN property_photos ph ON p.property_id = ph.property_id
+        WHERE p.property_id = #{propertyId}
+    </select>
+    <resultMap id="PropertyResultMap" type="org.bobj.property.domain.PropertyVO">
+        <id property="propertyId" column="property_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="address" column="address"/>
+        <result property="area" column="area"/>
+        <result property="price" column="price"/>
+        <result property="fundingStartDate" column="funding_start_date"/>
+        <result property="fundingEndDate" column="funding_end_date"/>
+        <result property="status" column="status"/>
+        <result property="usageDistrict" column="usage_district"/>
+        <result property="landArea" column="land_area"/>
+        <result property="buildingArea" column="building_area"/>
+        <result property="totalFloorAreaProperty" column="total_floor_area_property"/>
+        <result property="totalFloorAreaBuilding" column="total_floor_area_building"/>
+        <result property="basementFloors" column="basement_floors"/>
+        <result property="groundFloors" column="ground_floors"/>
+        <result property="approvalDate" column="approval_date"/>
+        <result property="officialLandPrice" column="official_land_price"/>
+        <result property="unitPricePerPyeong" column="unit_price_per_pyeong"/>
+        <result property="propertyType" column="property_type"/>
+        <result property="roomCount" column="room_count"/>
+        <result property="bathroomCount" column="bathroom_count"/>
+        <result property="floor" column="floor"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="soldAt" column="sold_at"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+
+        <association property="seller" javaType="org.bobj.property.domain.SellerVO">
+            <id property="userId" column="user_id"/>
+            <result property="name" column="user_name"/>
+            <result property="email" column="email"/>
+            <result property="phone" column="phone"/>
+        </association>
+        <collection property="documents" ofType="org.bobj.property.domain.PropertyDocumentVO">
+            <id property="documentId" column="document_id"/>
+            <result property="propertyId" column="document_property_id"/>
+            <result property="documentType" column="document_type"/>
+            <result property="fileUrl" column="file_url"/>
+            <result property="createdAt" column="document_created_at"/>
+        </collection>
+        <collection property="photos" ofType="org.bobj.property.domain.PropertyPhotoVO">
+            <id property="photoId" column="photo_id"/>
+            <result property="propertyId" column="photo_property_id"/>
+            <result property="photoUrl" column="photo_url"/>
+            <result property="createdAt" column="photo_created_at"/>
+        </collection>
+    </resultMap>
+
+    <select id="findTotal" resultMap="PropertySummaryMap">
+        SELECT p.*,
+               (SELECT photo_url
+                FROM property_photos
+                WHERE property_id = p.property_id
+                ORDER BY created_at ASC
+                LIMIT 1) AS thumbnail_url
+        FROM properties p
+    </select>
+    <resultMap id="PropertySummaryMap" type="org.bobj.property.domain.PropertyVO">
+        <id property="propertyId" column="property_id"/>
+        <result property="title" column="title"/>
+        <result property="address" column="address"/>
+        <result property="price" column="price"/>
+        <result property="status" column="status"/>
+        <result property="fundingStartDate" column="funding_start_date"/>
+        <result property="fundingEndDate" column="funding_end_date"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO">
+        INSERT INTO properties (
+            user_id, title, address, area, price, funding_start_date, funding_end_date,
+            status, usage_district, land_area, building_area, total_floor_area_property,
+            total_floor_area_building, basement_floors, ground_floors,
+            approval_date, official_land_price, unit_price_per_pyeong,
+            property_type, room_count, bathroom_count, floor, description
+        ) VALUES (
+                     #{userId}, #{title}, #{address}, #{area}, #{price}, #{fundingStartDate}, #{fundingEndDate},
+                     #{status}, #{usageDistrict}, #{landArea}, #{buildingArea}, #{totalFloorAreaProperty},
+                     #{totalFloorAreaBuilding}, #{basementFloors}, #{groundFloors},
+                     #{approvalDate}, #{officialLandPrice}, #{unitPricePerPyeong},
+                     #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}
+                 )
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM properties WHERE property_id = #{propertyId}
+    </delete>
+</mapper>

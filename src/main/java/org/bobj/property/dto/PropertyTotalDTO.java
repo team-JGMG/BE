@@ -9,6 +9,7 @@ import org.bobj.property.domain.PropertyVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 
 @Data
 @NoArgsConstructor
@@ -27,9 +28,11 @@ public class PropertyTotalDTO {
     private PhotoDTO thumbnail;
 
     public static PropertyTotalDTO of(PropertyVO vo) {
-        PhotoDTO firstPhoto = null;
-        if (vo.getPhotos() != null && !vo.getPhotos().isEmpty()) {
-            firstPhoto = PhotoDTO.of(vo.getPhotos().get(0));
+        PhotoDTO thumbnail = null;
+        if (vo.getThumbnailUrl() != null) {
+            thumbnail = PhotoDTO.builder()
+                    .photoUrl(vo.getThumbnailUrl())
+                    .build();
         }
 
         return PropertyTotalDTO.builder()
@@ -40,7 +43,7 @@ public class PropertyTotalDTO {
                 .status(vo.getStatus())
                 .fundingStartDate(vo.getFundingStartDate())
                 .fundingEndDate(vo.getFundingEndDate())
-                .thumbnail(firstPhoto)
+                .thumbnail(thumbnail)
                 .build();
     }
 
@@ -55,9 +58,9 @@ public class PropertyTotalDTO {
                 .fundingEndDate(this.fundingEndDate);
 
         if (this.thumbnail != null) {
-            builder.photos(java.util.List.of(this.thumbnail.toVO()));
+            builder.photos(Collections.singletonList(this.thumbnail.toVO()));
         } else {
-            builder.photos(java.util.Collections.emptyList());
+            builder.photos(Collections.emptyList());
         }
 
         return builder.build();
