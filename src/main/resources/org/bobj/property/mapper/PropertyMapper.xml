@@ -103,13 +103,13 @@
 
     <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO">
         INSERT INTO properties (
-            user_id, title, address, area, price, funding_start_date, funding_end_date,
+            user_id, title, address, area, price,
             usage_district, land_area, building_area, total_floor_area_property,
             total_floor_area_building, basement_floors, ground_floors,
             approval_date, official_land_price, unit_price_per_pyeong,
             property_type, room_count, bathroom_count, floor, description
         ) VALUES (
-                     #{userId}, #{title}, #{address}, #{area}, #{price}, #{fundingStartDate}, #{fundingEndDate},
+                     #{userId}, #{title}, #{address}, #{area}, #{price},
                      #{usageDistrict}, #{landArea}, #{buildingArea}, #{totalFloorAreaProperty},
                      #{totalFloorAreaBuilding}, #{basementFloors}, #{groundFloors},
                      #{approvalDate}, #{officialLandPrice}, #{unitPricePerPyeong},
