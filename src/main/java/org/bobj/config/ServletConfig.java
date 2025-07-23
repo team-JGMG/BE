@@ -13,7 +13,7 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.common.exception",
         "org.bobj.controller",
         "org.bobj.order.controller",
-        "org.bobj.property.controller"})  // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
+        "org.bobj.property.controller"})
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
