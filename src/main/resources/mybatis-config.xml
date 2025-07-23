@@ -10,5 +10,6 @@
   <typeAliases>
     <typeAlias alias="PointVO" type="org.bobj.point.domain.PointVO"/>
     <typeAlias alias="PointTransactionVO" type="org.bobj.point.domain.PointTransactionVO"/>
+    <typeAlias alias="PointChargeRequestVO" type="org.bobj.point.domain.PointChargeRequestVO"/>
   </typeAliases>
 </configuration>
