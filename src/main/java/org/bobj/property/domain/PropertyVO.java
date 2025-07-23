@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -17,6 +18,9 @@ public class PropertyVO {
     private Long propertyId;
     private Long userId;
 
+    // 매도자 정보
+    private SellerVO seller;
+
     // 기본 정보
     private String title;
     private String address;
@@ -24,7 +28,7 @@ public class PropertyVO {
     private BigDecimal price;
     private LocalDate fundingStartDate;
     private LocalDate fundingEndDate;
-    private String status;
+    private PropertyStatus status;
 
     // 건축 정보
     private String usageDistrict;
@@ -48,4 +52,11 @@ public class PropertyVO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime soldAt;
+
+    // 문서 및 사진 리스트 추가
+    private List<PropertyDocumentVO> documents;
+    private List<PropertyPhotoVO> photos;
+
+    // 썸네일 -> DB에는 없음!
+    private String thumbnailUrl;
 }
