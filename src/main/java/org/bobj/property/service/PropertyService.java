@@ -3,6 +3,7 @@ package org.bobj.property.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.property.domain.PropertyVO;
+import org.bobj.property.dto.PropertyCreateDTO;
 import org.bobj.property.dto.PropertyDetailDTO;
 import org.bobj.property.dto.PropertyTotalDTO;
 import org.bobj.property.mapper.PropertyMapper;
@@ -21,7 +22,7 @@ public class PropertyService {
     /**
      * 매물 등록
      */
-    public void registerProperty(PropertyDetailDTO dto) {
+    public void registerProperty(PropertyCreateDTO dto) {
         PropertyVO vo = dto.toVO();
         propertyMapper.insert(vo);
     }

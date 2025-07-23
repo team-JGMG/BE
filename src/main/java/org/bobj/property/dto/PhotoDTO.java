@@ -1,5 +1,6 @@
 package org.bobj.property.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import org.bobj.property.domain.PropertyPhotoVO;
 @AllArgsConstructor
 @Builder
 public class PhotoDTO {
+    @ApiModelProperty(value = "사진 URL", example = "https://example.com/image.jpg")
     private String photoUrl;
 
     public static PhotoDTO of(PropertyPhotoVO vo){

@@ -12,7 +12,8 @@ import org.springframework.web.servlet.view.JstlView;
 @ComponentScan(basePackages = {
         "org.bobj.common.exception",
         "org.bobj.controller",
-        "org.bobj.order.controller"})  // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
+        "org.bobj.order.controller",
+        "org.bobj.property.controller"})  // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
