@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.property.dto.PropertyCreateDTO;
 import org.bobj.property.dto.PropertyDetailDTO;
 import org.bobj.property.dto.PropertyTotalDTO;
 import org.bobj.property.service.PropertyService;
@@ -24,7 +25,7 @@ public class PropertyController {
     @PostMapping
     @ApiOperation(value = "매물 등록", notes = "새로운 매물을 등록합니다.")
     public ResponseEntity<String> createProperty(
-            @RequestBody @ApiParam(value = "등록할 매물 정보", required = true) PropertyDetailDTO requestDTO) {
+            @RequestBody @ApiParam(value = "등록할 매물 정보", required = true) PropertyCreateDTO requestDTO) {
         propertyService.registerProperty(requestDTO);
         return ResponseEntity.ok("매물 등록 완료");
     }
