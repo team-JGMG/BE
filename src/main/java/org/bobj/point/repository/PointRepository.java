@@ -17,7 +17,7 @@ public class PointRepository {
         return pointMapper.findById(pointId);
     }
 
-    public List<PointVO> findByUserId(Long userId){
+    public PointVO findByUserId(Long userId){
         return pointMapper.findByUserId(userId);
     }
 
