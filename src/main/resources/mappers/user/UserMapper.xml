@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.user.mapper.UserMapper">
+
+    <!-- USERS 테이블 쿼리 -->
+    <select id="findUserByEmail" resultType="org.bobj.user.domain.UserVO">
+        SELECT * FROM USERS WHERE email = #{email}
+    </select>
+
+    <select id="findUserById" resultType="org.bobj.user.domain.UserVO">
+        SELECT * FROM USERS WHERE user_id = #{userId}
+    </select>
+
+
+
+    <insert id="saveUser" useGeneratedKeys="true" keyProperty="userId">
+        <!-- 최초 가입 시에는 소셜로그인으로 받은 최소 정보만 저장 -->
+        INSERT INTO USERS (name, email, nickname, created_at, updated_at, is_admin, ssn, phone, bank_code, account_number)
+        VALUES(#{name}, #{email}, #{nickname}, NOW(), NOW(), FALSE, #{ssn}, #{phone}, #{bankCode}, #{accountNumber})
+    </insert>
+
+    <update id="updateUser" parameterType="org.bobj.user.domain.UserVO">
+        UPDATE USERS
+        SET
+            name = #{name},
+            nickname = #{nickname},
+            ssn = #{ssn},
+            phone = #{phone},
+            bank_code = #{bankCode},
+            account_number = #{accountNumber},
+            updated_at = NOW()
+        WHERE
+            user_id = #{userId}
+    </update>
+
+    <!-- SOCIAL_LOGINS 테이블 쿼리 -->
+    <select id="findSocialLoginByProviderAndProviderId" resultType="org.bobj.user.domain.SocialLoginsVO">
+        SELECT * FROM social_logins
+        WHERE provider = #{provider} AND provider_id = #{providerId}
+    </select>
+
+
+    <insert id="saveSocialLogin" parameterType="org.bobj.user.domain.SocialLoginsVO">
+        INSERT INTO social_logins (user_id, provider, provider_id, profile_data, created_at)
+        VALUES (#{userId}, #{provider}, #{providerId}, #{profileData}, NOW())
+    </insert>
+
+    <update id="updateRefreshToken" parameterType="org.bobj.user.domain.SocialLoginsVO">
+        UPDATE SOCIAL_LOGINS
+        SET refresh_token = #{refreshToken}
+        WHERE social_id = #{socialId}
+    </update>
+
+    <select id="findSocialLoginByUserId" resultType="org.bobj.user.domain.SocialLoginsVO">
+        SELECT * FROM social_logins WHERE user_id = #{userId}
+    </select>
+
+
+
+</mapper>
