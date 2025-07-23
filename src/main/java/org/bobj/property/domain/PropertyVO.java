@@ -56,4 +56,7 @@ public class PropertyVO {
     // 문서 및 사진 리스트 추가
     private List<PropertyDocumentVO> documents;
     private List<PropertyPhotoVO> photos;
+
+    // 썸네일 -> DB에는 없음!
+    private String thumbnailUrl;
 }

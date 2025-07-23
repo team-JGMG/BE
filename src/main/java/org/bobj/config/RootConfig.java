@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.order.mapper",
         "org.bobj.share.mapper"})
 @ComponentScan(basePackages = "org.bobj")
+@MapperScan(basePackages = "org.bobj")
 @EnableTransactionManagement
 @Import(SwaggerConfig.class)
 public class RootConfig {
