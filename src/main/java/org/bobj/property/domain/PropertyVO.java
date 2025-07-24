@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -59,4 +60,5 @@ public class PropertyVO {
 
     // 썸네일 -> DB에는 없음!
     private String thumbnailUrl;
+
 }
