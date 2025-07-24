@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.trade.mapper.TradeMapper">
+
+    <!--채결 내역 삽입-->
+    <insert id="insert" parameterType="org.bobj.trade.domain.TradeVO">
+        INSERT INTO TRADES (
+        buy_order_id,
+        sell_order_id,
+        buyer_user_id,
+        seller_user_id,
+        trade_count,
+        trade_price_per_share
+        ) VALUES (
+        #{buyOrderId},
+        #{sellOrderId},
+        #{buyerUserId},
+        #{sellerUserId},
+        #{tradeCount},
+        #{tradePricePerShare}
+        )
+        <selectKey resultType="Long" keyProperty="tradeId" keyColumn="trade_id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+</mapper>

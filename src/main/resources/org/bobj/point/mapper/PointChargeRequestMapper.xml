@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.point.mapper.PointChargeRequestMapper">
+
+  <insert id="insert" parameterType="PointChargeRequestVO" 
+    useGeneratedKeys="true" keyProperty="id">
+  </insert>
+  
+  <select id="findByMerchantUid" parameterType="String" resultType="PointChargeRequestVO">>
+    SELECT *
+    FROM point_charge_request
+    where merchant_uid = #{merchantUid}
+  </select>
+
+  <update id="updateStatusAndImpUid" parameterType="PointChargeRequestVO">
+    UPDATE point_charge_request
+    SET status = #{status},
+      imp_uid = #{impUid},
+      paid_at = NOW()
+    WHERE merchant_uid = #{merchantUid}
+  </update>
+
+
+</mapper>
