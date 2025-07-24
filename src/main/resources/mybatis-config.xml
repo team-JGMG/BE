@@ -6,4 +6,14 @@
   <settings>
     <setting name="mapUnderscoreToCamelCase" value="true"/>
   </settings>
+
+
+  <typeAliases>
+    <typeAlias alias="PointVO" type="org.bobj.point.domain.PointVO"/>
+    <typeAlias alias="PointTransactionVO" type="org.bobj.point.domain.PointTransactionVO"/>
+    <typeAlias alias="PointChargeRequestVO" type="org.bobj.point.domain.PointChargeRequestVO"/>
+    <typeAlias alias="FundingVO" type="org.bobj.funding.domain.FundingVO"/>
+    <typeAlias alias="FundingOrderVO" type="org.bobj.funding.domain.FundingOrderVO"/>
+
+  </typeAliases>
 </configuration>

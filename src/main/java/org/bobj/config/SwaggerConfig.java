@@ -15,7 +15,7 @@ public class SwaggerConfig {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
             .select()
-            .apis(RequestHandlerSelectors.basePackage("org.example")) // 여기를 컨트롤러 패키지로 설정
+            .apis(RequestHandlerSelectors.basePackage("org.bobj")) // 여기를 컨트롤러 패키지로 설정
             .paths(PathSelectors.any())
             .build();
     }

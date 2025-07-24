@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -12,8 +14,9 @@ import lombok.NoArgsConstructor;
 public class ShareVO {
     private Long shareId;
     private Long userId;
-    private Long fundingOrderId;
     private Long fundingId;
     private int shareCount;
-    private Long averageAmount;
+    private BigDecimal averageAmount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

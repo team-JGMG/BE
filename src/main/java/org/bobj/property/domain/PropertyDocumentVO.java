@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class PropertyDocumentVO {
     private Long documentId;
     private Long propertyId;
-    private String documentType; // ENUM('OWNERSHIP_CERTIFICATE','SEAL_CERTIFICATE', ...)
+    private PropertyDocumentType documentType; // ENUM('OWNERSHIP_CERTIFICATE','SEAL_CERTIFICATE', ...)
     private String fileUrl;
     private LocalDateTime createdAt;
 }

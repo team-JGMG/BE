@@ -19,8 +19,9 @@ public class OrderBookVO {
     private OrderType orderType;                  // BUY or SELL
     private BigDecimal orderPricePerShare;
     private Integer orderShareCount;
-    private OrderStatus status;                   // PENDING / MATCHED / CANCELLED
+    private OrderStatus status;                   // 'PENDING', 'PARTIALLY_FILLED', 'FULLY_FILLED', 'CANCELLED'
     private Integer remainingShareCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String propertyTitle;
 }
