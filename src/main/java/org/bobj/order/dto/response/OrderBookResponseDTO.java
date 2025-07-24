@@ -67,6 +67,5 @@ public class OrderBookResponseDTO {
                 .createdAt(vo.getCreatedAt())
                 .updatedAt(vo.getUpdatedAt())
                 .build();
-
     }
 }

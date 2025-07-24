@@ -53,4 +53,80 @@
         WHERE share_id = #{shareId}
     </delete>
 
+    <!-- 사용자 모든 보유 주식 조회-->
+    <select id="findSharesByUserId" resultMap="shareResponseDTOMap">
+        SELECT
+            s.share_id AS s_share_id,
+            s.user_id AS s_user_id,
+            s.funding_id AS s_funding_id,
+            s.share_count AS s_share_count,
+            s.average_amount AS s_average_amount,
+            f.current_share_amount AS f_current_share_amount,
+            p.title AS p_title,
+            pp.photo_url AS thumbnail_url
+        FROM
+            shares s
+                JOIN
+            fundings f ON s.funding_id = f.funding_id
+                JOIN
+            properties p ON f.property_id = p.property_id
+                LEFT JOIN (
+                SELECT property_id, photo_url
+                FROM property_photos
+                WHERE (property_id, created_at) IN (
+                    SELECT property_id, MIN(created_at)
+                    FROM property_photos
+                    GROUP BY property_id
+                )
+            ) pp ON pp.property_id = p.property_id
+        WHERE
+            s.user_id = #{userId}
+    </select>
+
+    <select id="countSharesByUserId" resultType="java.lang.Integer">
+        SELECT
+            COUNT(s.share_id)
+        FROM
+            shares s
+        WHERE
+            s.user_id = #{userId}
+    </select>
+
+    <select id="findSharesByUserIdPaging" resultMap="shareResponseDTOMap">
+        SELECT
+            s.share_id AS s_share_id,
+            s.user_id AS s_user_id,
+            s.funding_id AS s_funding_id,
+            s.share_count AS s_share_count,
+            s.average_amount AS s_average_amount,
+            f.current_share_amount AS f_current_share_amount,
+            p.title AS p_title,
+            (SELECT photo_url
+             FROM property_photos pp
+             WHERE pp.property_id = p.property_id
+             ORDER BY created_at ASC
+                LIMIT 1) AS thumbnail_url
+        FROM
+            shares s
+            JOIN
+            fundings f ON s.funding_id = f.funding_id
+            JOIN
+            properties p ON f.property_id = p.property_id
+        WHERE
+            s.user_id = #{userId}
+        ORDER BY
+            s.share_id ASC  LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <resultMap id="shareResponseDTOMap" type="org.bobj.share.dto.response.ShareResponseDTO">
+        <id property="shareId" column="s_share_id"/>
+        <result property="userId" column="s_user_id"/>
+        <result property="fundingId" column="s_funding_id"/>
+        <result property="shareCount" column="s_share_count"/>
+        <result property="averageAmount" column="s_average_amount"/>
+        <result property="currentShareAmount" column="f_current_share_amount"/>
+        <result property="propertyTitle" column="p_title"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+    </resultMap>
+
 </mapper>

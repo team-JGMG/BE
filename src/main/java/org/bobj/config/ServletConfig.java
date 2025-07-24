@@ -13,7 +13,8 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.common.exception",
         "org.bobj.controller",
         "org.bobj.order.controller",
-        "org.bobj.property.controller"})
+        "org.bobj.property.controller",
+        "org.bobj.share.controller"})
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
