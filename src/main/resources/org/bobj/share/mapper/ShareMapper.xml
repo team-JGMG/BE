@@ -4,10 +4,53 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.share.mapper.ShareMapper">
 
+    <!-- 펀딩 보유 주 삽입-->
+    <insert id="insert" parameterType="org.bobj.share.domain.ShareVO">
+        INSERT INTO SHARES (
+            user_id,
+            funding_id,
+            share_count,
+            average_amount
+        ) VALUES (
+                     #{userId},
+                     #{fundingId},
+                     #{shareCount},
+                     #{averageAmount}
+                 )
+        <selectKey keyProperty="shareId" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <!-- 펀딩 보유 주 수 업데이트-->
+    <update id="update">
+        UPDATE SHARES
+        SET
+            share_count = #{shareCount},
+            average_amount = #{averageAmount},
+            updated_at = NOW()
+        WHERE
+            share_id = #{shareId}
+    </update>
+
+    <!-- 사용자 펀딩 보유 주 수 가져오기-->
     <select id="findUserShareCount" resultType="java.lang.Integer">
         SELECT SUM(share_count)
-        FROM shares
+        FROM SHARES
         WHERE user_id = #{userId}
           AND funding_id = #{fundingId} FOR UPDATE
     </select>
+
+    <select id="findUserShareByFundingIdForUpdate" resultType="org.bobj.share.domain.ShareVO">
+        SELECT *
+        FROM SHARES
+        WHERE user_id = #{userId}
+          AND funding_id = #{fundingId} FOR UPDATE
+    </select>
+
+    <delete id="delete">
+        DELETE FROM SHARES
+        WHERE share_id = #{shareId}
+    </delete>
+
 </mapper>

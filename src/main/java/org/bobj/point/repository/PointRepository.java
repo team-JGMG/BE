@@ -33,4 +33,7 @@ public class PointRepository {
         pointMapper.delete(pointId);
     };
 
+    public PointVO findByUserIdForUpdate(Long userId){
+        return pointMapper.findByUserIdForUpdate(userId);
+    }
 }

@@ -4,6 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.order.mapper.OrderBookMapper">
 
+    <!--주문 생성-->
     <insert id="create" parameterType="org.bobj.order.domain.OrderBookVO">
         INSERT INTO order_books (
             user_id,
@@ -27,20 +28,30 @@
         </selectKey>
     </insert>
 
+    <!-- 주문 단건 조회(orderId로) -->
     <select id="get" resultMap="orderBookMap">
         SELECT *
         FROM order_books
         WHERE order_id = #{orderId}
     </select>
 
+    <!-- 사용자별 주문 내역 조회-->
     <select id="getOrderHistoryByUserId" resultType="org.bobj.order.domain.OrderBookVO">
-        SELECT *
-        FROM order_books
-        WHERE user_id = #{userId}
+        SELECT
+            ob.*,
+            p.title AS propertyTitle
+        FROM
+            order_books ob
+        JOIN
+            fundings f ON ob.funding_id = f.funding_id  -- 주문 테이블과 펀딩 테이블 조인
+        JOIN
+            properties p ON f.property_id = p.property_id -- 펀딩 테이블과 매물 테이블 조인
+        WHERE
+            ob.user_id = #{userId}
         <if test="orderType != null and orderType != ''">
             AND order_type = #{orderType}
         </if>
-        AND status IN ('PENDING', 'MATCHED')
+--         AND status IN ('PENDING', 'PARTIALLY_FILLED','FULLY_FILLED')
         ORDER BY created_at DESC
     </select>
 
@@ -51,6 +62,7 @@
             FOR UPDATE
     </select>
 
+    <!--주문 취소-->
     <update id="cancelOrder">
         UPDATE order_books
         SET
@@ -58,6 +70,42 @@
             updated_at = NOW()
         WHERE order_id = #{orderId}
     </update>
+
+    <!-- 주문이 체결되거나 부분 체결될 때, 해당 주문의 남은 수량과 상태를 업데이트   -->
+    <update id="updateOrderBookStatusAndRemainingCount">
+        UPDATE ORDER_BOOKS
+        SET
+            status = #{status}, -- 'FULLY_FILLED', 'PARTIALLY_FILLED'
+            remaining_share_count = #{remainingShareCount},
+            updated_at = NOW()
+        WHERE
+            order_id = #{orderId}
+    </update>
+
+    <!-- 매칭 가능한 주문 조회-->
+    <select id="findMatchingOrders" resultType="org.bobj.order.domain.OrderBookVO">
+        SELECT *
+        FROM
+        ORDER_BOOKS
+        WHERE
+        funding_id = #{fundingId}
+        AND order_type = #{oppositeOrderType} -- 반대편 주문 타입 조회
+        AND (status = 'PENDING' OR status = 'PARTIALLY_FILLED')
+        <choose>
+            <when test="newOrderType == 'BUY'">
+                -- 신규 주문이 '매수'일 경우: 가장 낮은 '매도' 가격부터, 그리고 같은 가격이면 먼저 들어온 주문부터
+                AND order_price_per_share &lt;= #{newOrderPrice}
+                ORDER BY order_price_per_share ASC, created_at ASC
+            </when>
+            <otherwise>
+                -- 신규 주문이 '매도'일 경우: 가장 높은 '매수' 가격부터, 그리고 같은 가격이면 먼저 들어온 주문부터
+                AND order_price_per_share &gt;= #{newOrderPrice}
+                ORDER BY order_price_per_share DESC, created_at ASC
+            </otherwise>
+        </choose>
+        FOR UPDATE
+    </select>
+
 
     <resultMap id="orderBookMap" type="org.bobj.order.domain.OrderBookVO">
         <id property="orderId" column="order_id"/>

@@ -32,6 +32,9 @@ public class PointService {
         pointRepository.delete(pointId);
     }
 
+    public PointVO findByUserIdForUpdate(Long userId){
+        return pointRepository.findByUserIdForUpdate(userId);
+    }
 
 
 }

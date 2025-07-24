@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @Builder
 public class TradeVO {
     private Long tradeId;
-    private Long orderId;
-    private Long shareId;
-    private Long userId;
-    private TradeRole tradeRole; // BUYER,SELLER
+    private Long buyOrderId;
+    private Long sellOrderId;
+    private Long buyerUserId;
+    private Long sellerUserId;
     private Integer tradeCount;
     private BigDecimal tradePricePerShare;
-    private LocalDateTime tradeDate;
+    private LocalDateTime createdAt;
 }
