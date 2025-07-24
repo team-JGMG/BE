@@ -14,6 +14,12 @@
     select * from point where user_id = #{userId};
   </select>
 
+  <select id="findByUserIdForUpdate" resultType="org.bobj.point.domain.PointVO">
+    select *
+    from point
+    where user_id = #{userId} FOR UPDATE;
+  </select>
+
   <insert id="insert" parameterType="PointVO">
     insert into point(user_id,amount,created_at) //db 칼럼
     VALUES (#{userId}, #{amount}, NOW())

@@ -9,6 +9,7 @@ import org.bobj.order.dto.request.OrderBookRequestDTO;
 import org.bobj.order.dto.response.OrderBookResponseDTO;
 import org.bobj.order.mapper.OrderBookMapper;
 import org.bobj.share.mapper.ShareMapper;
+import org.bobj.share.service.ShareService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +23,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class OrderBookServiceImpl implements OrderBookService {
 
-    final private OrderBookMapper orderBookMapper;
-    final private ShareMapper shareMapper;
+    private final OrderBookMapper orderBookMapper;
+    private final ShareMapper shareMapper;
 //    final private TradeMapper tradeMapper;
+    private final ShareService shareService;
+
+    //주문 체결 서비스
+    private final OrderMatchingService orderMatchingService;
 
     @Override
     public OrderBookResponseDTO getOrderById(Long orderId) {
@@ -77,7 +82,11 @@ public class OrderBookServiceImpl implements OrderBookService {
 //        }
 
 
+        // 주문 저장
         orderBookMapper.create(orderBookVO);
+
+        //체결 시도
+        orderMatchingService.processOrderMatching(orderBookVO);
 
         return getOrderById(orderBookVO.getOrderId());
     }
@@ -103,8 +112,8 @@ public class OrderBookServiceImpl implements OrderBookService {
     public void cancelOrder(Long orderId) {
         OrderBookVO orderBook = orderBookMapper.getForUpdate(orderId);
 
-        if (orderBook.getStatus() == OrderStatus.MATCHED) {
-            throw new IllegalStateException("이미 체결된 주문은 취소할 수 없습니다.");
+        if (orderBook.getStatus() == OrderStatus.FULLY_FILLED) {
+            throw new IllegalStateException("이미 전량 체결된 주문은 취소할 수 없습니다.");
         }
 
         if (orderBook.getStatus() == OrderStatus.CANCELLED) {

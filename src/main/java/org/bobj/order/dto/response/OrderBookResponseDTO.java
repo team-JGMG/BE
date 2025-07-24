@@ -27,6 +27,9 @@ public class OrderBookResponseDTO {
     @ApiModelProperty(value = "펀딩 ID", example = "1", required = true)
     private Long fundingId;
 
+    @ApiModelProperty(value = "건물 이름", example = "강남센트럴아이파크", required = false)
+    private String propertyTitle;
+
     @ApiModelProperty(value = "주문 타입 (BUY 또는 SELL)", example = "BUY", required = true, allowableValues = "BUY, SELL")
     private String orderType;
 
@@ -36,7 +39,7 @@ public class OrderBookResponseDTO {
     @ApiModelProperty(value = "주문 수량", example = "10", required = true)
     private Integer orderShareCount;
 
-    @ApiModelProperty(value = "주문 상태 (기본값: PENDING)", example = "PENDING", required = false, allowableValues = "PENDING, MATCHED, CANCELLED")
+    @ApiModelProperty(value = "주문 상태 (기본값: PENDING)", example = "PENDING", required = false, allowableValues = "PENDING,PARTIALLY_FILLED,FULLY_FILLED,CANCELLED")
     private String status;
 
     @ApiModelProperty(value = "남은 수량", example = "10", required = false)
@@ -55,6 +58,7 @@ public class OrderBookResponseDTO {
                 .orderId(vo.getOrderId())
                 .userId(vo.getUserId())
                 .fundingId(vo.getFundingId())
+                .propertyTitle(vo.getPropertyTitle())
                 .orderType(vo.getOrderType().name())
                 .orderPricePerShare(vo.getOrderPricePerShare())
                 .orderShareCount(vo.getOrderShareCount())
