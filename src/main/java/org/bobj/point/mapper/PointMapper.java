@@ -10,7 +10,7 @@ public interface PointMapper {
 
     PointVO findById(@Param("pointId") Long pointId);
 
-    List<PointVO> findByUserId(@Param("userId") Long userId);
+    PointVO findByUserId(@Param("userId") Long userId);
 
     void insert(PointVO point);
 

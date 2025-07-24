@@ -16,7 +16,7 @@ public class PointService {
         return pointRepository.findById(pointId);
     }
 
-    public List<PointVO> findByUserId(Long userId) {
+    public PointVO findByUserId(Long userId) {
         return pointRepository.findByUserId(userId);
     }
 
