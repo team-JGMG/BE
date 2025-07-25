@@ -16,7 +16,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -171,31 +170,6 @@ public class UserService {
         return user;
     }
 
-
-    /**
-     * Refresh Token으로 새로운 Access Token 발급
-     */
-    @Transactional
-    public TokenDTO refreshAccessToken(String refreshToken) {
-        Claims claims = jwtTokenProvider.getClaims(refreshToken);
-        String email = claims.getSubject();
-
-        // DB에서 저장된 Refresh Token과 비교
-        SocialLoginsVO socialLogin = userMapper.findSocialLoginByRefreshToken(refreshToken);
-        if (socialLogin == null) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
-        }
-
-        UserVO user = userMapper.findUserById(socialLogin.getUserId());
-        if (user == null) {
-            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
-        }
-
-        // 새로운 Access Token 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getIsAdmin());
-
-        return new TokenDTO(newAccessToken, refreshToken, user.getIsAdmin());
-    }
 
     /**
      * 이메일로 Refresh Token을 조회하여 새로운 Access Token 발급
