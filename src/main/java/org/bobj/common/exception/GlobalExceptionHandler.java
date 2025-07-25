@@ -4,6 +4,8 @@ package org.bobj.common.exception;
 
 import javax.servlet.http.HttpServletRequest;
 import org.bobj.common.constants.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,11 +14,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
 
 
     // 일반 예외
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest requeset) {
+        log.error("IllegalArgumentException 발생: {}, URI: {}", ex.getMessage(), requeset.getRequestURI(), ex);
         ErrorResponse errorResponse = ErrorResponse.from(HttpStatus.BAD_REQUEST, ex.getMessage(), requeset.getRequestURI());
         return ResponseEntity.badRequest().body(errorResponse);
     }
@@ -37,6 +42,8 @@ public class GlobalExceptionHandler {
     // 그 외 모든 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
+        // 실제 예외 정보를 로그에 출력
+        log.error("예상치 못한 서버 오류 발생: {}, URI: {}", ex.getMessage(), request.getRequestURI(), ex);
         ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request.getRequestURI());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
