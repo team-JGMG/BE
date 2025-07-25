@@ -3,7 +3,13 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.property.mapper.PropertyMapper">
-    <select id="findById" parameterType="long" resultMap="PropertyResultMap">
+    <update id="update">
+        UPDATE properties set
+                              status = #{status},
+                              update_date = now()
+        where property_id = #{propertyId}
+    </update>
+    <select id="findByPropertyId" parameterType="long" resultMap="PropertyResultMap">
         SELECT
             p.*,
             u.user_id AS seller_user_id,
@@ -37,8 +43,7 @@
         <result property="address" column="address"/>
         <result property="area" column="area"/>
         <result property="price" column="price"/>
-        <result property="fundingStartDate" column="funding_start_date"/>
-        <result property="fundingEndDate" column="funding_end_date"/>
+        <result property="postingPeriod" column="posting_period"/>
         <result property="status" column="status"/>
         <result property="usageDistrict" column="usage_district"/>
         <result property="landArea" column="land_area"/>
@@ -83,33 +88,58 @@
 
     <select id="findTotal" resultMap="PropertySummaryMap">
         SELECT p.*,
-               (SELECT photo_url
-                FROM property_photos
-                WHERE property_id = p.property_id
-                ORDER BY created_at ASC
-                LIMIT 1) AS thumbnail_url
+        (SELECT photo_url
+        FROM property_photos
+        WHERE property_id = p.property_id
+        ORDER BY created_at ASC
+        LIMIT 1) AS thumbnail_url
         FROM properties p
+        WHERE p.status = #{status}
+        LIMIT #{limit} OFFSET #{offset}
     </select>
+
     <resultMap id="PropertySummaryMap" type="org.bobj.property.domain.PropertyVO">
         <id property="propertyId" column="property_id"/>
         <result property="title" column="title"/>
         <result property="address" column="address"/>
         <result property="price" column="price"/>
+        <result property="postingPeriod" column="posting_period"/>
         <result property="status" column="status"/>
-        <result property="fundingStartDate" column="funding_start_date"/>
-        <result property="fundingEndDate" column="funding_end_date"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="PropertyUserMap">
+        SELECT
+            p.*,
+            (SELECT photo_url
+             FROM property_photos
+             WHERE property_id = p.property_id
+             ORDER BY created_at ASC
+             LIMIT 1) AS thumbnail_url
+        FROM properties p
+        WHERE p.user_id = #{userId}
+          AND p.status != 'REJECTED';
+    </select>
+    <resultMap id="PropertyUserMap" type="org.bobj.property.domain.PropertyVO">
+        <id property="propertyId" column="property_id"/>
+        <result property="title" column="title"/>
+        <result property="price" column="price"/>
+        <result property="status" column="status"/>
         <result property="thumbnailUrl" column="thumbnail_url"/>
     </resultMap>
 
     <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO">
         INSERT INTO properties (
-            user_id, title, address, area, price, funding_start_date, funding_end_date,
+            user_id, title, address, area, price,
+            user_id, title, address, area, price, posting_period,
             usage_district, land_area, building_area, total_floor_area_property,
             total_floor_area_building, basement_floors, ground_floors,
             approval_date, official_land_price, unit_price_per_pyeong,
             property_type, room_count, bathroom_count, floor, description
         ) VALUES (
-                     #{userId}, #{title}, #{address}, #{area}, #{price}, #{fundingStartDate}, #{fundingEndDate},
+                     #{userId}, #{title}, #{address}, #{area}, #{price},
+                     #{userId}, #{title}, #{address}, #{area}, #{price}, #{postingPeriod},
                      #{usageDistrict}, #{landArea}, #{buildingArea}, #{totalFloorAreaProperty},
                      #{totalFloorAreaBuilding}, #{basementFloors}, #{groundFloors},
                      #{approvalDate}, #{officialLandPrice}, #{unitPricePerPyeong},

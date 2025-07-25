@@ -22,19 +22,12 @@ public class PropertyCreateDTO {
     private String title;
     @ApiModelProperty(value = "주소", example = "서울 강남구 테헤란로 123")
     private String address;
-    @ApiModelProperty(value = "면적", example = "84㎡")
-    private String area;
+    @ApiModelProperty(value = "면적", example = "84.00")
+    private BigDecimal area;
     @ApiModelProperty(value = "가격", example = "500000000")
     private BigDecimal price;
-
-
-    @ApiModelProperty(value = "펀딩 시작일", example = "2025-07-23")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate fundingStartDate;
-
-    @ApiModelProperty(value = "펀딩 종료일", example = "2026-07-23")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate fundingEndDate;
+    @ApiModelProperty(value = "희망 공고 기간", example = "12")
+    private Integer postingPeriod;
 
     @ApiModelProperty(value = "용도지역", example = "아파트")
     private String usageDistrict;
@@ -81,8 +74,7 @@ public class PropertyCreateDTO {
                 .address(vo.getAddress())
                 .area(vo.getArea())
                 .price(vo.getPrice())
-                .fundingStartDate(vo.getFundingStartDate())
-                .fundingEndDate(vo.getFundingEndDate())
+                .postingPeriod(vo.getPostingPeriod())
                 .usageDistrict(vo.getUsageDistrict())
                 .landArea(vo.getLandArea() != null ? vo.getLandArea().doubleValue() : null)
                 .buildingArea(vo.getBuildingArea() != null ? vo.getBuildingArea().doubleValue() : null)
@@ -108,8 +100,7 @@ public class PropertyCreateDTO {
                 .address(address)
                 .area(area)
                 .price(price)
-                .fundingStartDate(fundingStartDate)
-                .fundingEndDate(fundingEndDate)
+                .postingPeriod(postingPeriod)
                 .usageDistrict(usageDistrict)
                 .landArea(BigDecimal.valueOf(landArea))
                 .buildingArea(BigDecimal.valueOf(buildingArea))

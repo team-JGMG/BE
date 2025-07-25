@@ -15,12 +15,15 @@ import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
 
 
 @Configuration
 @PropertySource("classpath:/application.properties")
-@ComponentScan(basePackages = "org.bobj")
 @MapperScan(basePackages = {
         "org.bobj.order.mapper",
         "org.bobj.share.mapper",
@@ -30,7 +33,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.user.mapper"})
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
-@Import({
+@Import({SwaggerConfig.class,
         AppConfig.class,
         OAuth2ClientConfig.class
 })

@@ -28,20 +28,29 @@ public class PropertyService {
     }
 
     /**
-     * 매물 전체 조회
+     * 매물 전체 조회 -> 관리자용
      */
-    public List<PropertyTotalDTO> getAllProperties() {
-        List<PropertyVO> propertyVOs = propertyMapper.findTotal();
-        return propertyVOs.stream()
+    public List<PropertyTotalDTO> getAllPropertiesByStatus(String status,int page, int size) {
+        int offset = page * size;
+        List<PropertyVO> vos = propertyMapper.findTotal(status, offset, size);
+        return vos.stream()
+                .map(PropertyTotalDTO::of)
+                .collect(Collectors.toList());
+    }
+
+    // User 매물 조회
+    public List<PropertyTotalDTO> getAllPropertiesByUserId(Long userId) {
+        List<PropertyVO> vos = propertyMapper.findByUserId(userId);
+        return vos.stream()
                 .map(PropertyTotalDTO::of)
                 .collect(Collectors.toList());
     }
 
     /**
-     * 매물 단건 조회
+     * 매물 단건 조회 -> 관리자용, 마이페이지용
      */
     public PropertyDetailDTO getPropertyById(Long propertyId) {
-        PropertyVO vo = propertyMapper.findById(propertyId);
+        PropertyVO vo = propertyMapper.findByPropertyId(propertyId);
         return PropertyDetailDTO.of(vo);
     }
 
