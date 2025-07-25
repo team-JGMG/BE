@@ -2,6 +2,7 @@ package org.bobj.user.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -17,12 +18,15 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@ControllerAdvice
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     // UserMapper 의존성을 제거합니다.
+
+    @Value("${custom.oauth2.redirect-uri}")
+    private String frontendRedirectUri;
+
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -51,7 +55,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         // 프론트엔드로 이 임시 토큰을 전달합니다.
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8081/auth/callback")
                 .queryParam("token", preAuthToken)
-                .queryParam("status", "PRE_AUTH") // 프론트엔드가 상태를 쉽게 파악하도록 쿼리 파라미터 추가
+                .queryParam("status", "PRE_AUTH")
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
