@@ -21,7 +21,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // userMapper의 결과가 null일 수 있으므로, Optional.ofNullable()로 안전하게 감싸줍니다.
         return Optional.ofNullable(userMapper.findUserByEmail(username))
-                .flatMap(optionalUser -> optionalUser) // 중첩된 Optional을 풀어줍니다.
                 .map(user -> new User(
                         user.getEmail(),
                         "", // JWT 방식에서는 비밀번호를 사용하지 않으므로 비워둡니다.
