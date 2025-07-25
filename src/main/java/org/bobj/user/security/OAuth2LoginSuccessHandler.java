@@ -53,7 +53,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
 
         // 프론트엔드로 이 임시 토큰을 전달합니다.
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8081/auth/callback")
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri) // 주입받은 값 사용
                 .queryParam("token", preAuthToken)
                 .queryParam("status", "PRE_AUTH")
                 .build().toUriString();
