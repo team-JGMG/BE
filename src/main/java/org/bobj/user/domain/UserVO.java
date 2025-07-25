@@ -26,4 +26,7 @@ public class UserVO {
     private String accountNumber; // account_number VARCHAR(50)
 
 
+    public boolean getIsAdmin() {
+        return isAdmin;
+    }
 }
