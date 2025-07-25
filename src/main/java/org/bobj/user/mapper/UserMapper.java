@@ -4,7 +4,6 @@ import org.bobj.user.domain.SocialLoginsVO;
 import org.bobj.user.domain.UserVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
