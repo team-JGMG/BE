@@ -10,7 +10,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AdditionalInfoDTO {
     private String name;
-    private String nickname;
     private String ssn;
     private String phone;
     private String bankCode;
