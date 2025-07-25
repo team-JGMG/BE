@@ -19,12 +19,17 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.servlet.http.HttpServletResponse;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // JwtTokenProvider만 주입받습니다.
-    @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    
+    @Autowired
+    private org.bobj.user.service.UserService userService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,18 +39,42 @@ public class SecurityConfig {
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                // --- 👇 이 부분이 핵심입니다 ---
                 .authorizeRequests(authorize -> authorize
+                        // 인증이 필요한 API들을 먼저 명시 (더 구체적인 패턴)
+                        .antMatchers(
+                                "/api/auth/logout",                   // 로그아웃
+                                "/api/auth/token/refresh",            // 토큰 갱신
+                                "/api/users/**"                       // 모든 사용자 관련 API
+                        ).authenticated()
+
+                        // 인증 불필요한 API들 (덜 구체적인 패턴을 뒤에)
                         .antMatchers(
                                 "/", "/error",
-                                "/api/auth/**", // 최종 회원가입 API 경로는 인증 없이 접근 허용
-                                "/api/user/**",
-                                "/login/oauth2/code/kakao", // 카카오 로그인 리다이렉트 경로
-                                "/swagger-ui.html", "/swagger-resources/**", "/v2/api-docs", "/webjars/**"
+                                "/test",                               // 테스트 API
+                                "/api/auth/oauth/**",                 // OAuth 관련 (kakao-url, callback)
+                                "/api/auth/signup/complete",          // 회원가입 완료
+                                "/login/oauth2/code/**",              // 카카오 리다이렉트
+                                "/oauth2/**","/test-tokens/**",                         // OAuth2 관련 경로
+                                "/swagger-ui.html", "/swagger-resources/**",
+                                "/v2/api-docs", "/webjars/**"
                         ).permitAll()
-                        .anyRequest().authenticated() // 그 외 모든 요청은 인증 필요
+
+                        // 그 외 모든 요청도 인증 필요
+                        .anyRequest().authenticated()
                 )
-                // ----------------------------
+                // 인증 실패 시 JSON 응답 반환하도록 설정
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Authentication required\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Access denied\"}");
+                        })
+                )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2LoginSuccessHandler())
                         .userInfoEndpoint(userInfo -> userInfo
@@ -53,12 +82,12 @@ public class SecurityConfig {
                         )
                 );
 
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+        // JWT 인증 필터 추가
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-    // 필요한 서비스들을 Bean으로 등록합니다.
-    // 이 서비스들은 더 이상 DB(UserMapper)에 직접 접근하지 않습니다.
+
     @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
         return new OAuth2LoginSuccessHandler(jwtTokenProvider);
@@ -69,7 +98,6 @@ public class SecurityConfig {
         return new CustomOAuth2UserService();
     }
 
-    // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
