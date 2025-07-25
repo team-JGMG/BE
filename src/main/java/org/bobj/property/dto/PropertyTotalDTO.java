@@ -11,6 +11,7 @@ import org.bobj.property.domain.PropertyVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 @Data
@@ -26,14 +27,12 @@ public class PropertyTotalDTO {
     private String address;
     @ApiModelProperty(value = "희망 매매가", example = "750000000")
     private BigDecimal price;
+    @ApiModelProperty(value = "희망 공고 기간", example = "12")
+    private Integer postingPeriod;
     @ApiModelProperty(value = "매물 상태", example = "PENDING")
     private PropertyStatus status;
-    @ApiModelProperty(value = "펀딩 시작일", example = "2025-07-23")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fundingStartDate;
-    @ApiModelProperty(value = "펀딩 종료일", example = "2025-08-23")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fundingEndDate;
+    @ApiModelProperty(value = "등록일시", example = "2025-07-23T12:00:00")
+    private LocalDateTime createdAt;
 
     // 첫 번째 사진을 썸네일으로
     @ApiModelProperty(value = "썸네일 이미지 정보")
@@ -52,9 +51,9 @@ public class PropertyTotalDTO {
                 .title(vo.getTitle())
                 .address(vo.getAddress())
                 .price(vo.getPrice())
+                .postingPeriod(vo.getPostingPeriod())
                 .status(vo.getStatus())
-                .fundingStartDate(vo.getFundingStartDate())
-                .fundingEndDate(vo.getFundingEndDate())
+                .createdAt(vo.getCreatedAt())
                 .thumbnail(thumbnail)
                 .build();
     }
@@ -65,9 +64,9 @@ public class PropertyTotalDTO {
                 .title(this.title)
                 .address(this.address)
                 .price(this.price)
+                .postingPeriod(this.postingPeriod)
                 .status(this.status)
-                .fundingStartDate(this.fundingStartDate)
-                .fundingEndDate(this.fundingEndDate);
+                .createdAt(this.createdAt);
 
         if (this.thumbnail != null) {
             builder.photos(Collections.singletonList(this.thumbnail.toVO()));

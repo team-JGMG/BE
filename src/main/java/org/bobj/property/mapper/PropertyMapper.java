@@ -8,9 +8,16 @@ import java.util.List;
 
 @Mapper
 public interface PropertyMapper {
-    PropertyVO findById(@Param("propertyId") Long propertyId);
+    PropertyVO findByPropertyId(@Param("propertyId") Long propertyId);
 
-    List<PropertyVO> findTotal();
+    List<PropertyVO> findByUserId(@Param("userId") Long userId);
+
+    List<PropertyVO> findTotal(
+            @Param("status") String status,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
+    void update(@Param("propertyId") Long propertyId, @Param("status") String status);
 
     void insert(PropertyVO propertyVO);
 

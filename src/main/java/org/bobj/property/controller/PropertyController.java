@@ -30,11 +30,22 @@ public class PropertyController {
         return ResponseEntity.ok("매물 등록 완료");
     }
 
-    @GetMapping
-    @ApiOperation(value = "전체 매물 목록 조회", notes = "요약 정보가 담긴 매물 목록을 반환합니다.")
-    public ResponseEntity<List<PropertyTotalDTO>> getAllProperties() {
-        List<PropertyTotalDTO> result = propertyService.getAllProperties();
-        return ResponseEntity.ok(result);
+    @GetMapping("/status/{status}")
+    @ApiOperation(value = "status 상태의 매물 목록 조회", notes = "[관리자용] 요약 정보가 담긴 매물 목록을 반환합니다.")
+    public ResponseEntity<List<PropertyTotalDTO>> getPropertiesByStatus(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @PathVariable("status") String status) {
+        List<PropertyTotalDTO> list = propertyService.getAllPropertiesByStatus(status, page, size);
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/user/{userId}")
+    @ApiOperation(value = "사용자 매물 목록 조회", notes = "[마이페이지용] 특정 사용자가 등록한 매물 목록을 조회합니다.")
+    public ResponseEntity<List<PropertyTotalDTO>> getUserProperties(
+            @PathVariable @ApiParam(value = "사용자 ID", required = true, example = "1") Long userId) {
+        List<PropertyTotalDTO> list = propertyService.getAllPropertiesByUserId(userId);
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/{id}")

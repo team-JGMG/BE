@@ -24,10 +24,9 @@ public class PropertyVO {
     // 기본 정보
     private String title;
     private String address;
-    private String area;
+    private BigDecimal area;
     private BigDecimal price;
-    private LocalDate fundingStartDate;
-    private LocalDate fundingEndDate;
+    private Integer postingPeriod;
     private PropertyStatus status;
 
     // 건축 정보

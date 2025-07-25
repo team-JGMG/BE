@@ -34,16 +34,12 @@ public class PropertyDetailDTO {
     private String title;
     @ApiModelProperty(value = "주소", example = "서울 강남구 테헤란로 123")
     private String address;
-    @ApiModelProperty(value = "면적", example = "84㎡")
-    private String area;
+    @ApiModelProperty(value = "면적", example = "84.00")
+    private BigDecimal area;
     @ApiModelProperty(value = "희망 매매가", example = "750000000")
     private BigDecimal price;
-    @ApiModelProperty(value = "펀딩 시작일", example = "2025-07-23")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fundingStartDate;
-    @ApiModelProperty(value = "펀딩 종료일", example = "2025-08-23")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate fundingEndDate;
+    @ApiModelProperty(value = "희망 공고 기간", example = "12")
+    private Integer postingPeriod;
     @ApiModelProperty(value = "매물 상태", example = "PENDING")
     private PropertyStatus status;
 
@@ -113,8 +109,7 @@ public class PropertyDetailDTO {
                 .address(vo.getAddress())
                 .area(vo.getArea())
                 .price(vo.getPrice())
-                .fundingStartDate(vo.getFundingStartDate())
-                .fundingEndDate(vo.getFundingEndDate())
+                .postingPeriod(vo.getPostingPeriod())
                 .status(vo.getStatus())
                 .usageDistrict(vo.getUsageDistrict())
                 .landArea(vo.getLandArea())
@@ -153,8 +148,7 @@ public class PropertyDetailDTO {
                 .address(this.address)
                 .area(this.area)
                 .price(this.price)
-                .fundingStartDate(this.fundingStartDate)
-                .fundingEndDate(this.fundingEndDate)
+                .postingPeriod(postingPeriod)
                 .status(this.status)
                 .usageDistrict(this.usageDistrict)
                 .landArea(this.landArea)
