@@ -20,13 +20,13 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getMyInfo(@AuthenticationPrincipal User userDetails) {
         String userEmail = userDetails.getUsername();
-        UserResponseDTO myInfo = userService.getUserInfoByEmail(userEmail);
+        UserResponseDTO myInfo = userService.findUserInfoByEmail(userEmail);
         return ResponseEntity.ok(myInfo);
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponseDTO> getUserInfo(@PathVariable Long userId) {
-        UserResponseDTO userInfo = userService.getUserInfo(userId);
+        UserResponseDTO userInfo = userService.findUserInfoById(userId);
         return ResponseEntity.ok(userInfo);
     }
 }
