@@ -18,9 +18,9 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
-@MapperScan(basePackages = {"org.bobj.user.mapper"})
 @Configuration
 @PropertySource("classpath:/application.properties")
+@MapperScan(basePackages = {"org.bobj.user.mapper"})
 @ComponentScan(basePackages = "org.bobj")
 @MapperScan(basePackages = {
         "org.bobj.order.mapper",
