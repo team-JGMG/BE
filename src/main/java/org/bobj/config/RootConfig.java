@@ -11,20 +11,13 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
-/**
- * @MapperScan 어노테이션을 추가하여 MyBatis 매퍼 인터페이스를 스캔할 패키지를 지정합니다.
- */
 @MapperScan(basePackages = {"org.bobj.user.mapper"})
 @Configuration
 @PropertySource("classpath:/application.properties")
@@ -39,8 +32,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @Import({
         AppConfig.class,
-        SwaggerConfig.class,
-        SecurityConfig.class,
         OAuth2ClientConfig.class
 })
 
