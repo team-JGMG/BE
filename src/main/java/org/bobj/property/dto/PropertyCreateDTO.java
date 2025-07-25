@@ -22,6 +22,7 @@ public class PropertyCreateDTO {
     private String title;
     @ApiModelProperty(value = "주소", example = "서울 강남구 테헤란로 123")
     private String address;
+
     @ApiModelProperty(value = "면적", example = "84.00")
     private BigDecimal area;
     @ApiModelProperty(value = "가격", example = "500000000")

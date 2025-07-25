@@ -54,6 +54,7 @@ public class PropertyTotalDTO {
                 .postingPeriod(vo.getPostingPeriod())
                 .status(vo.getStatus())
                 .createdAt(vo.getCreatedAt())
+
                 .thumbnail(thumbnail)
                 .build();
     }

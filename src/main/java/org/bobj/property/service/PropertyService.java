@@ -28,6 +28,7 @@ public class PropertyService {
     }
 
     /**
+
      * 매물 전체 조회 -> 관리자용
      */
     public List<PropertyTotalDTO> getAllPropertiesByStatus(String status,int page, int size) {
@@ -47,6 +48,7 @@ public class PropertyService {
     }
 
     /**
+
      * 매물 단건 조회 -> 관리자용, 마이페이지용
      */
     public PropertyDetailDTO getPropertyById(Long propertyId) {

@@ -30,6 +30,7 @@ public class PropertyController {
         return ResponseEntity.ok("매물 등록 완료");
     }
 
+
     @GetMapping("/status/{status}")
     @ApiOperation(value = "status 상태의 매물 목록 조회", notes = "[관리자용] 요약 정보가 담긴 매물 목록을 반환합니다.")
     public ResponseEntity<List<PropertyTotalDTO>> getPropertiesByStatus(

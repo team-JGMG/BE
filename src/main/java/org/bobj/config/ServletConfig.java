@@ -19,8 +19,8 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.property.controller",
         "org.bobj.share.controller",
         "org.bobj.user.controller"})
-public class ServletConfig implements WebMvcConfigurer {
 
+public class ServletConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

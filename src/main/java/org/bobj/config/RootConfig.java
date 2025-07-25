@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.trade.mapper",
         "org.bobj.point.mapper",
         "org.bobj.user.mapper"})
+
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
 @Import({SwaggerConfig.class,

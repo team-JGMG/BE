@@ -3,6 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.property.mapper.PropertyMapper">
+
     <update id="update">
         UPDATE properties set
                               status = #{status},
@@ -131,14 +132,12 @@
 
     <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO">
         INSERT INTO properties (
-            user_id, title, address, area, price,
             user_id, title, address, area, price, posting_period,
             usage_district, land_area, building_area, total_floor_area_property,
             total_floor_area_building, basement_floors, ground_floors,
             approval_date, official_land_price, unit_price_per_pyeong,
             property_type, room_count, bathroom_count, floor, description
         ) VALUES (
-                     #{userId}, #{title}, #{address}, #{area}, #{price},
                      #{userId}, #{title}, #{address}, #{area}, #{price}, #{postingPeriod},
                      #{usageDistrict}, #{landArea}, #{buildingArea}, #{totalFloorAreaProperty},
                      #{totalFloorAreaBuilding}, #{basementFloors}, #{groundFloors},

@@ -8,6 +8,7 @@ import java.util.List;
 
 @Mapper
 public interface PropertyMapper {
+
     PropertyVO findByPropertyId(@Param("propertyId") Long propertyId);
 
     List<PropertyVO> findByUserId(@Param("userId") Long userId);

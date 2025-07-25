@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,7 +27,9 @@ public class PropertyVO {
     private String address;
     private BigDecimal area;
     private BigDecimal price;
+
     private Integer postingPeriod;
+
     private PropertyStatus status;
 
     // 건축 정보
