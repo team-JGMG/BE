@@ -5,33 +5,36 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.bobj.user.config.OAuth2ClientConfig;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
 
 
 @Configuration
 @PropertySource("classpath:/application.properties")
+@ComponentScan(basePackages = "org.bobj")
 @MapperScan(basePackages = {
         "org.bobj.order.mapper",
         "org.bobj.share.mapper",
         "org.bobj.property.mapper",
         "org.bobj.trade.mapper",
-        "org.bobj.point.mapper"})
+        "org.bobj.point.mapper",
+        "org.bobj.user.mapper"})
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
-@Import(SwaggerConfig.class)
+@Import({
+        AppConfig.class,
+        OAuth2ClientConfig.class
+})
+
 public class RootConfig {
 
     @Bean
@@ -78,6 +81,9 @@ public class RootConfig {
         SqlSessionFactoryBean factory = new SqlSessionFactoryBean();
         factory.setDataSource(dataSource());
         factory.setConfigLocation(applicationContext.getResource("classpath:/mybatis-config.xml"));
+        factory.setMapperLocations(
+                new PathMatchingResourcePatternResolver().getResources("classpath*:mappers/**/*.xml")
+        );
         return factory.getObject();
     }
 

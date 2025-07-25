@@ -1,20 +1,25 @@
 package org.bobj.config;
 
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.mvc.Controller;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
 @EnableWebMvc
+@ComponentScan(basePackages = {"org.bobj.controller"})  // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
 @ComponentScan(basePackages = {
         "org.bobj.common.exception",
         "org.bobj.controller",
         "org.bobj.order.controller",
         "org.bobj.property.controller",
-        "org.bobj.share.controller"})
+        "org.bobj.share.controller",
+        "org.bobj.user.controller"})
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
