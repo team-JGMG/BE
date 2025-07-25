@@ -4,26 +4,25 @@
 
     <!-- USERS 테이블 쿼리 -->
     <select id="findUserByEmail" resultType="org.bobj.user.domain.UserVO">
-        SELECT * FROM USERS WHERE email = #{email}
+        SELECT * FROM users WHERE email = #{email}
     </select>
 
     <select id="findUserById" resultType="org.bobj.user.domain.UserVO">
-        SELECT * FROM USERS WHERE user_id = #{userId}
+        SELECT * FROM users WHERE user_id = #{userId}
     </select>
 
 
 
     <insert id="saveUser" useGeneratedKeys="true" keyProperty="userId">
-        <!-- 최초 가입 시에는 소셜로그인으로 받은 최소 정보만 저장 -->
-        INSERT INTO USERS (name, email, nickname, created_at, updated_at, is_admin, ssn, phone, bank_code, account_number)
-        VALUES(#{name}, #{email}, #{nickname}, NOW(), NOW(), FALSE, #{ssn}, #{phone}, #{bankCode}, #{accountNumber})
+        INSERT INTO users (name, email, nickname, ssn, phone, bank_code, account_number, is_admin, created_at, updated_at)
+        VALUES(#{name}, #{email}, #{nickname}, #{ssn}, #{phone}, #{bankCode}, #{accountNumber}, #{isAdmin}, NOW(), NOW())
     </insert>
 
+
     <update id="updateUser" parameterType="org.bobj.user.domain.UserVO">
-        UPDATE USERS
+        UPDATE users
         SET
             name = #{name},
-            nickname = #{nickname},
             ssn = #{ssn},
             phone = #{phone},
             bank_code = #{bankCode},
@@ -40,13 +39,13 @@
     </select>
 
 
-    <insert id="saveSocialLogin" parameterType="org.bobj.user.domain.SocialLoginsVO">
-        INSERT INTO social_logins (user_id, provider, provider_id, profile_data, created_at)
-        VALUES (#{userId}, #{provider}, #{providerId}, #{profileData}, NOW())
+    <insert id="saveSocialLogin" parameterType="org.bobj.user.domain.SocialLoginsVO" useGeneratedKeys="true" keyProperty="socialId">
+        INSERT INTO social_logins (user_id, provider, provider_id, refresh_token, profile_data, created_at)
+        VALUES (#{userId}, #{provider}, #{providerId}, #{refreshToken}, #{profileData}, #{createdAt})
     </insert>
 
     <update id="updateRefreshToken" parameterType="org.bobj.user.domain.SocialLoginsVO">
-        UPDATE SOCIAL_LOGINS
+        UPDATE social_logins
         SET refresh_token = #{refreshToken}
         WHERE social_id = #{socialId}
     </update>
@@ -55,6 +54,19 @@
         SELECT * FROM social_logins WHERE user_id = #{userId}
     </select>
 
+    <!-- Refresh Token으로 소셜 로그인 정보 조회 -->
+    <select id="findSocialLoginByRefreshToken" parameterType="string" resultType="org.bobj.user.domain.SocialLoginsVO">
+        SELECT social_id, user_id, provider, provider_id, profile_data, refresh_token, created_at
+        FROM social_logins
+        WHERE refresh_token = #{refreshToken}
+          AND refresh_token IS NOT NULL
+    </select>
 
+    <!-- 특정 사용자의 Refresh Token 삭제 -->
+    <update id="clearRefreshTokenByUserId" parameterType="long">
+        UPDATE social_logins
+        SET refresh_token = NULL
+        WHERE user_id = #{userId}
+    </update>
 
 </mapper>
