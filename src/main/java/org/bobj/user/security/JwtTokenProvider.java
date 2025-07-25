@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.Cookie;
@@ -213,13 +212,5 @@ public class JwtTokenProvider {
     public String getUserRole(String token) {
         Claims claims = getClaims(token);
         return claims.get("role", String.class);
-    }
-
-    /**
-     * 토큰에서 관리자 여부 확인 (role 기반)
-     */
-    public boolean isAdminFromToken(String token) {
-        String role = getUserRole(token);
-        return "ADMIN".equals(role);
     }
 }
