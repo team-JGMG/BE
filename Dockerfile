@@ -1,4 +1,4 @@
-FROM tomcat:9.0-jdk8
+FROM tomcat:9.0-jdk17-temurin
 
 # 기존 webapps 폴더 비우기
 RUN rm -rf /usr/local/tomcat/webapps/*
