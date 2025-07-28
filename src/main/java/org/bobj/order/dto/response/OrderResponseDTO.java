@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.bobj.order.domain.OrderBookVO;
+import org.bobj.order.domain.OrderVO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @ApiModel(description = "거래 주문 응답 DTO")
-public class OrderBookResponseDTO {
+public class OrderResponseDTO {
 
     @ApiModelProperty(value = "주문 ID", example = "1", required = false)
     private Long orderId;
@@ -53,8 +53,8 @@ public class OrderBookResponseDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    public static OrderBookResponseDTO of(OrderBookVO vo){
-        return vo == null? null : OrderBookResponseDTO.builder()
+    public static OrderResponseDTO of(OrderVO vo){
+        return vo == null? null : OrderResponseDTO.builder()
                 .orderId(vo.getOrderId())
                 .userId(vo.getUserId())
                 .fundingId(vo.getFundingId())

@@ -1,21 +1,20 @@
 package org.bobj.order.mapper;
 
 import org.apache.ibatis.annotations.Param;
-import org.bobj.order.domain.OrderBookVO;
-import org.bobj.order.domain.OrderStatus;
+import org.bobj.order.domain.OrderVO;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-public interface OrderBookMapper {
+public interface OrderMapper {
 
-    void create(OrderBookVO orderBookVO);
+    void create(OrderVO orderVO);
 
-    OrderBookVO get(Long orderId);
+    OrderVO get(Long orderId);
 
-    List<OrderBookVO> getOrderHistoryByUserId( @Param("userId") Long userId,
-                                               @Param("orderType") String orderType);
-    OrderBookVO getForUpdate(Long orderId);
+    List<OrderVO> getOrderHistoryByUserId(@Param("userId") Long userId,
+                                          @Param("orderType") String orderType);
+    OrderVO getForUpdate(Long orderId);
 
     void cancelOrder(Long orderId);
 
@@ -25,10 +24,12 @@ public interface OrderBookMapper {
             @Param("remainingShareCount") int remainingShareCount
     );
 
-    List<OrderBookVO> findMatchingOrders(
+    List<OrderVO> findMatchingOrders(
             @Param("fundingId") Long fundingId,
             @Param("newOrderPrice") BigDecimal newOrderPrice,
             @Param("oppositeOrderType") String oppositeOrderType,
             @Param("newOrderType") String newOrderType
     );
+
+    List<OrderVO> findOrdersByFundingId(Long fundingId);
 }

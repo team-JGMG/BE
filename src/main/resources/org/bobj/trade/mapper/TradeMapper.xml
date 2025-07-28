@@ -25,4 +25,50 @@
             SELECT LAST_INSERT_ID()
         </selectKey>
     </insert>
+
+    <!-- 특정 펀딩에 대한 거래 내역을 날짜 범위로 조회-->
+    <select id="findTradesForHistory"  resultMap="tradeMap">
+        SELECT
+            t.trade_id,
+            t.buy_order_id,
+            t.sell_order_id,
+            t.buyer_user_id,
+            t.seller_user_id,
+            t.trade_count,
+            t.trade_price_per_share,
+            t.created_at
+        FROM
+            TRADES t
+        JOIN
+            ORDER_BOOKS ob_buy ON t.buy_order_id = ob_buy.order_id
+        WHERE
+            ob_buy.funding_id = #{fundingId}
+        AND t.created_at BETWEEN #{startDate} AND #{endDate}
+        ORDER BY
+            t.created_at ASC
+    </select>
+
+    <select id="findLatestTradePriceByFundingId" resultType="java.math.BigDecimal">
+        SELECT t.trade_price_per_share
+        FROM TRADES t
+         JOIN
+             ORDER_BOOKS ob_buy ON t.buy_order_id = ob_buy.order_id
+        WHERE
+            ob_buy.funding_id = #{fundingId}
+        ORDER BY
+            t.created_at DESC
+        LIMIT 1
+    </select>
+
+    <resultMap id="tradeMap" type="org.bobj.trade.domain.TradeVO">
+        <id property="tradeId" column="trade_id"/>
+        <result property="buyOrderId" column="buy_order_id"/>
+        <result property="sellOrderId" column="sell_order_id"/>
+        <result property="buyerUserId" column="buyer_user_id"/>
+        <result property="sellerUserId" column="seller_user_id"/>
+        <result property="tradeCount" column="trade_count"/>
+        <result property="tradePricePerShare" column="trade_price_per_share"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
 </mapper>

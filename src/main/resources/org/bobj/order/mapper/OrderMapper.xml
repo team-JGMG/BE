@@ -2,10 +2,10 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.bobj.order.mapper.OrderBookMapper">
+<mapper namespace="org.bobj.order.mapper.OrderMapper">
 
     <!--주문 생성-->
-    <insert id="create" parameterType="org.bobj.order.domain.OrderBookVO">
+    <insert id="create" parameterType="org.bobj.order.domain.OrderVO">
         INSERT INTO order_books (
             user_id,
             funding_id,
@@ -36,7 +36,7 @@
     </select>
 
     <!-- 사용자별 주문 내역 조회-->
-    <select id="getOrderHistoryByUserId" resultType="org.bobj.order.domain.OrderBookVO">
+    <select id="getOrderHistoryByUserId" resultType="org.bobj.order.domain.OrderVO">
         SELECT
             ob.*,
             p.title AS propertyTitle
@@ -55,7 +55,7 @@
         ORDER BY created_at DESC
     </select>
 
-    <select id="getForUpdate" resultType="org.bobj.order.domain.OrderBookVO">
+    <select id="getForUpdate" resultType="org.bobj.order.domain.OrderVO">
         SELECT *
         FROM order_books
         WHERE order_id = #{orderId}
@@ -83,7 +83,7 @@
     </update>
 
     <!-- 매칭 가능한 주문 조회-->
-    <select id="findMatchingOrders" resultType="org.bobj.order.domain.OrderBookVO">
+    <select id="findMatchingOrders" resultType="org.bobj.order.domain.OrderVO">
         SELECT *
         FROM
         ORDER_BOOKS
@@ -106,8 +106,20 @@
         FOR UPDATE
     </select>
 
+    <!-- 해당 펀딩 주문 내역 조회(체결 안된 것만)   -->
+    <select id="findOrdersByFundingId" resultMap="orderBookMap">
+        SELECT
+            order_price_per_share,   -- 주문 가격
+            remaining_share_count,   -- 잔여 수량
+            order_type               -- 주문 타입 (BUY/SELL)
+        FROM
+            ORDER_BOOKS
+        WHERE
+            funding_id = #{fundingId}
+            AND status IN ('PENDING', 'PARTIALLY_FILLED')
+    </select>
 
-    <resultMap id="orderBookMap" type="org.bobj.order.domain.OrderBookVO">
+    <resultMap id="orderBookMap" type="org.bobj.order.domain.OrderVO">
         <id property="orderId" column="order_id"/>
         <result property="userId" column="user_id"/>
         <result property="fundingId" column="funding_id"/>

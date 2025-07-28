@@ -8,7 +8,7 @@
   <select id="findFundingById" resultType="FundingVO">
     SELECT *
     FROM FUNDINGS
-    where fungding_id = #{fundingId}
+    where funding_id = #{fundingId}
   </select>
 
   <!-- 펀딩 참여 -->

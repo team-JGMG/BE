@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderBookVO {
+public class OrderVO {
     private Long orderId;
     private Long userId;
     private Long fundingId;

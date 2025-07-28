@@ -2,12 +2,12 @@ package org.bobj.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.bobj.order.domain.OrderBookVO;
+import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderStatus;
 import org.bobj.order.domain.OrderType;
-import org.bobj.order.dto.request.OrderBookRequestDTO;
-import org.bobj.order.dto.response.OrderBookResponseDTO;
-import org.bobj.order.mapper.OrderBookMapper;
+import org.bobj.order.dto.request.OrderRequestDTO;
+import org.bobj.order.dto.response.OrderResponseDTO;
+import org.bobj.order.mapper.OrderMapper;
 import org.bobj.share.mapper.ShareMapper;
 import org.bobj.share.service.ShareService;
 import org.springframework.stereotype.Service;
@@ -21,9 +21,9 @@ import java.util.Optional;
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class OrderBookServiceImpl implements OrderBookService {
+public class OrderServiceImpl implements OrderService {
 
-    private final OrderBookMapper orderBookMapper;
+    private final OrderMapper orderMapper;
     private final ShareMapper shareMapper;
 //    final private TradeMapper tradeMapper;
     private final ShareService shareService;
@@ -32,8 +32,8 @@ public class OrderBookServiceImpl implements OrderBookService {
     private final OrderMatchingService orderMatchingService;
 
     @Override
-    public OrderBookResponseDTO getOrderById(Long orderId) {
-        OrderBookResponseDTO board =OrderBookResponseDTO.of(orderBookMapper.get(orderId));
+    public OrderResponseDTO getOrderById(Long orderId) {
+        OrderResponseDTO board = OrderResponseDTO.of(orderMapper.get(orderId));
 
         return Optional.ofNullable(board).orElseThrow(NoSuchElementException::new);
     }
@@ -41,9 +41,9 @@ public class OrderBookServiceImpl implements OrderBookService {
 
     @Transactional
     @Override
-    public OrderBookResponseDTO placeOrder(OrderBookRequestDTO orderBookRequestDTO) {
+    public OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO) {
 
-        OrderBookVO orderBookVO = orderBookRequestDTO.toVo();
+        OrderVO orderVO = orderRequestDTO.toVo();
 
         // 1. 펀딩 상태 확인
 //        String fundingStatus = mapper.findFundingStatusByFundingId(orderBookVO.getFundingId());
@@ -52,8 +52,8 @@ public class OrderBookServiceImpl implements OrderBookService {
 //        }
 
         // 2. 매도인일 경우 주식 보유 수량 확인
-        if ("SELL".equalsIgnoreCase(String.valueOf(orderBookVO.getOrderType()))) {
-            Integer userShareCount = shareMapper.findUserShareCount(orderBookVO.getUserId(), orderBookVO.getFundingId());
+        if ("SELL".equalsIgnoreCase(String.valueOf(orderVO.getOrderType()))) {
+            Integer userShareCount = shareMapper.findUserShareCount(orderVO.getUserId(), orderVO.getFundingId());
 
             // 보유 수량이 없는 경우
             if (userShareCount == null || userShareCount == 0) {
@@ -61,7 +61,7 @@ public class OrderBookServiceImpl implements OrderBookService {
             }
 
             // 수량은 있으나 매도 수량보다 적은 경우
-            if (userShareCount < orderBookVO.getOrderShareCount()) {
+            if (userShareCount < orderVO.getOrderShareCount()) {
                 throw new IllegalArgumentException("보유 주식 수량보다 많은 수량을 매도할 수 없습니다.");
             }
         }
@@ -83,16 +83,16 @@ public class OrderBookServiceImpl implements OrderBookService {
 
 
         // 주문 저장
-        orderBookMapper.create(orderBookVO);
+        orderMapper.create(orderVO);
 
-        //체결 시도
-        orderMatchingService.processOrderMatching(orderBookVO);
+        // 체결 시도
+        orderMatchingService.processOrderMatching(orderVO);
 
-        return getOrderById(orderBookVO.getOrderId());
+        return getOrderById(orderVO.getOrderId());
     }
 
     @Override
-    public List<OrderBookResponseDTO> getOrderHistoryByUserId(Long userId, String orderTypeStr) {
+    public List<OrderResponseDTO> getOrderHistoryByUserId(Long userId, String orderTypeStr) {
         OrderType orderType = null;
 
         if (orderTypeStr != null && !orderTypeStr.trim().isEmpty()) {
@@ -103,14 +103,14 @@ public class OrderBookServiceImpl implements OrderBookService {
             }
         }
 
-        List<OrderBookVO> orderBooks = orderBookMapper.getOrderHistoryByUserId(userId, orderType != null ? orderType.name() : null);
-        return orderBooks.stream().map(OrderBookResponseDTO::of).toList();
+        List<OrderVO> orderBooks = orderMapper.getOrderHistoryByUserId(userId, orderType != null ? orderType.name() : null);
+        return orderBooks.stream().map(OrderResponseDTO::of).toList();
     }
 
     @Transactional
     @Override
     public void cancelOrder(Long orderId) {
-        OrderBookVO orderBook = orderBookMapper.getForUpdate(orderId);
+        OrderVO orderBook = orderMapper.getForUpdate(orderId);
 
         if (orderBook.getStatus() == OrderStatus.FULLY_FILLED) {
             throw new IllegalStateException("이미 전량 체결된 주문은 취소할 수 없습니다.");
@@ -120,6 +120,7 @@ public class OrderBookServiceImpl implements OrderBookService {
             throw new IllegalStateException("이미 취소된 주문입니다.");
         }
 
-        orderBookMapper.cancelOrder(orderId);
+        orderMapper.cancelOrder(orderId);
     }
+
 }
