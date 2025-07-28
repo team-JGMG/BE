@@ -2,9 +2,9 @@ package org.bobj.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.bobj.order.domain.OrderBookVO;
+import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderType;
-import org.bobj.order.mapper.OrderBookMapper;
+import org.bobj.order.mapper.OrderMapper;
 import org.bobj.point.domain.PointVO;
 import org.bobj.point.service.PointService;
 import org.bobj.share.domain.ShareVO;
@@ -22,13 +22,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderMatchingService {
 
-    private final OrderBookMapper orderBookMapper;
+    private final OrderMapper orderMapper;
     private final TradeMapper tradeMapper;
     private final ShareMapper shareMapper;
     private final PointService pointService;
 
     @Transactional
-    public void processOrderMatching(OrderBookVO newOrder) {
+    public void processOrderMatching(OrderVO newOrder) {
 
         // 1. 매칭될 반대편 주문 조회
         // 신규 주문이 BUY 이면 SELL 주문을, SELL 이면 BUY 주문을 찾는다.
@@ -38,7 +38,7 @@ public class OrderMatchingService {
 
         // 매칭 가능한 주문들을 조회
         // 2. 대기 상태이면서, 같은 종목에 대한 반대 주문 리스트 가져오기
-        List<OrderBookVO> matchingOrders = orderBookMapper.findMatchingOrders(
+        List<OrderVO> matchingOrders = orderMapper.findMatchingOrders(
                 newOrder.getFundingId(),
                 newOrder.getOrderPricePerShare(),
                 oppositeOrderType,
@@ -49,7 +49,7 @@ public class OrderMatchingService {
         int remainingNewOrderCount = newOrder.getOrderShareCount(); // 신규 주문의 남은 수량
         BigDecimal tradePrice = newOrder.getOrderPricePerShare(); // 체결 가격
 
-        for (OrderBookVO matchedOrder : matchingOrders) {
+        for (OrderVO matchedOrder : matchingOrders) {
             if (remainingNewOrderCount <= 0) {
                 break;
             }
@@ -96,7 +96,7 @@ public class OrderMatchingService {
 
             // 신규 주문 상태 업데이트
             String newOrderStatus = (remainingNewOrderCount == 0) ? "FULLY_FILLED" : "PARTIALLY_FILLED";
-            orderBookMapper.updateOrderBookStatusAndRemainingCount(
+            orderMapper.updateOrderBookStatusAndRemainingCount(
                     newOrder.getOrderId(),
                     newOrderStatus,
                     remainingNewOrderCount
@@ -104,7 +104,7 @@ public class OrderMatchingService {
 
             // 매칭된 상대 주문 상태 업데이트
             String matchedOrderStatus = (newMatchedOrderRemainingCount == 0) ? "FULLY_FILLED" : "PARTIALLY_FILLED";
-            orderBookMapper.updateOrderBookStatusAndRemainingCount(
+            orderMapper.updateOrderBookStatusAndRemainingCount(
                     matchedOrder.getOrderId(),
                     matchedOrderStatus,
                     newMatchedOrderRemainingCount

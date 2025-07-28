@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.bobj.order.domain.OrderBookVO;
+import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderType;
 
 import java.math.BigDecimal;
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @ApiModel(description = "거래 주문 등록 요청 DTO")
-public class OrderBookRequestDTO {
+public class OrderRequestDTO {
 
     @ApiModelProperty(value = "사용자 ID", example = "1", required = true)
     private Long userId;
@@ -33,8 +33,8 @@ public class OrderBookRequestDTO {
     @ApiModelProperty(value = "주문 수량", example = "10", required = true)
     private Integer orderShareCount;
 
-    public OrderBookVO toVo() {
-        return OrderBookVO.builder()
+    public OrderVO toVo() {
+        return OrderVO.builder()
                 .userId(userId)
                 .fundingId(fundingId)
                 .orderType(OrderType.valueOf(orderType))

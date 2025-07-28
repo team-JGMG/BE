@@ -5,22 +5,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
-import org.bobj.order.dto.response.OrderBookResponseDTO;
-import org.bobj.order.service.OrderBookService;
-import org.springframework.http.HttpStatus;
+import org.bobj.order.dto.request.OrderRequestDTO;
+import org.bobj.order.dto.response.OrderResponseDTO;
+import org.bobj.order.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/order-books")
+@RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags="거래 주문 API")
-public class OrderBookController {
+public class OrderController {
 
-    private final OrderBookService service;
+    private final OrderService service;
 
     @PostMapping("")
     @ApiOperation(value = "거래 주문 등록", notes = "새로운 거래 주문 정보를 등록합니다.")
@@ -82,12 +82,12 @@ public class OrderBookController {
                     response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public  ResponseEntity<ApiCommonResponse<OrderBookResponseDTO>> placeOrder(
-            @RequestBody @ApiParam(value = "거래 주문 DTO", required = true) org.bobj.order.dto.request.OrderBookRequestDTO dto) {
+    public  ResponseEntity<ApiCommonResponse<OrderResponseDTO>> placeOrder(
+            @RequestBody @ApiParam(value = "거래 주문 DTO", required = true) OrderRequestDTO dto) {
 
-        OrderBookResponseDTO created = service.placeOrder(dto);
+        OrderResponseDTO created = service.placeOrder(dto);
 
-        ApiCommonResponse<OrderBookResponseDTO> response = ApiCommonResponse.createSuccess(created);
+        ApiCommonResponse<OrderResponseDTO> response = ApiCommonResponse.createSuccess(created);
 
         return ResponseEntity.ok(response);
     }
@@ -99,16 +99,16 @@ public class OrderBookController {
             @ApiImplicitParam(name = "orderType", value = "주문 타입 (BUY, SELL)", required = false, dataType = "string", paramType = "query")
     })
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "거래 주문 내역 조회 성공", response = OrderBookResponseDTO.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "거래 주문 내역 조회 성공", response = OrderResponseDTO.class, responseContainer = "List"),
             @ApiResponse(code = 400, message = "잘못된 요청 (예: 유효하지 않은 파라미터)", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "조회된 주문 내역 없음", response = ErrorResponse.class), // 404는 보통 조회 결과가 없을 때 사용. 200 OK에 빈 리스트 반환이 일반적
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public ResponseEntity<ApiCommonResponse<List<OrderBookResponseDTO>>> getOrderHistory(
+    public ResponseEntity<ApiCommonResponse<List<OrderResponseDTO>>> getOrderHistory(
             @PathVariable Long userId,
             @RequestParam(value = "orderType", required = false) String orderType
     ) {
-        List<OrderBookResponseDTO> orderHistory = service.getOrderHistoryByUserId(userId, orderType);
+        List<OrderResponseDTO> orderHistory = service.getOrderHistoryByUserId(userId, orderType);
 
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(orderHistory));
     }
