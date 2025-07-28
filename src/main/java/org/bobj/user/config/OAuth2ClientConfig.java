@@ -17,7 +17,6 @@ import java.util.Collections;
 
 /**
  * OAuth2 클라이언트(카카오 등)의 등록 정보를 설정하는 클래스.
- * non-Spring Boot 환경에서는 이처럼 수동으로 Bean을 등록해야 합니다.
  */
 @Configuration
 @PropertySource("classpath:application.properties") // application.properties 파일의 내용을 읽어옵니다.
@@ -28,9 +27,7 @@ public class OAuth2ClientConfig {
     private Environment env;
 
     /**
-     * OAuth2 클라이언트들의 정보를 담고 있는 저장소(Repository) Bean을 생성합니다.
-     * Spring Security는 이 Bean을 참조하여 사용할 OAuth2 클라이언트 정보를 찾습니다.
-     *
+     * OAuth2 클라이언트들의 정보를 담고 있는 저장소(Repository) Bean을 생성합니다
      * @return 구성된 ClientRegistrationRepository 객체.
      */
     @Bean
