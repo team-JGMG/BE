@@ -33,6 +33,25 @@ public class UserPrincipal implements UserDetails {
         this.role = user.getIsAdmin() ? "ADMIN" : "USER";
     }
 
+    /**
+     * JWT 토큰 정보로 UserPrincipal 생성 (인증 필터용)
+     */
+    public UserPrincipal(Long userId, String email, String role) {
+        this.userId = userId;
+        this.email = email;
+        this.name = null;  // JWT에는 name 정보 없음
+        this.nickname = null;  // JWT에는 nickname 정보 없음 (필요시 추가)
+        this.isAdmin = "ADMIN".equals(role);
+        this.role = role;
+    }
+
+    /**
+     * JWT 토큰 정보로 UserPrincipal 생성 - 정적 팩토리 메서드
+     */
+    public static UserPrincipal fromJwtClaims(Long userId, String email, String role) {
+        return new UserPrincipal(userId, email, role);
+    }
+
     // 정적 팩토리 메소드
     public static UserPrincipal create(UserVO user) {
         return new UserPrincipal(user);
