@@ -6,6 +6,7 @@ import org.bobj.user.domain.SocialLoginsVO;
 import org.bobj.user.domain.UserVO;
 import org.bobj.user.service.UserService;
 import org.bobj.user.util.CookieUtil;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -15,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -23,90 +25,104 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        String path = request.getRequestURI();
-        String method = request.getMethod();
-
-        log.debug("JWT Filter 처리: {} {}", method, path);
-
-        // 토큰 추출 (Authorization Header 또는 Cookie에서)
-        String token = jwtTokenProvider.resolveToken(request);
-
-        if (token == null) {
-            // 토큰이 없는 경우는 Spring Security가 처리 (permitAll이면 통과, 아니면 401)
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 토큰 유효성 검사
-        if (jwtTokenProvider.validateToken(token)) {
-            // 정상 토큰 → 기존 로직
-            if (!handleValidToken(token, path, response)) {
-                return; // 응답을 이미 보냈으므로 필터 체인 중단
-            }
-        } else if (jwtTokenProvider.isTokenExpired(token)) {
-            // 만료된 토큰 → 자동 갱신 시도
-            String refreshedToken = attemptTokenRefresh(token, request, response);
-            if (refreshedToken != null) {
-                if (!handleValidToken(refreshedToken, path, response)) {
-                    return; // 응답을 이미 보냈으므로 필터 체인 중단
-                }
-            } else {
-                // 갱신 실패 → 401 처리
-                log.warn("토큰 자동 갱신 실패: {}", path);
-                sendUnauthorizedResponse(response, "Token refresh failed");
-                return;
-            }
-        } else {
-            // 잘못된 토큰 → 401 처리
-            log.warn("유효하지 않은 토큰: {}", path);
-            sendUnauthorizedResponse(response, "Invalid token");
-            return;
-        }
-
-        filterChain.doFilter(request, response);
-    }
-
-    /**
-     * 유효한 토큰 처리
-     * @return true: 계속 진행, false: 응답을 이미 보냈으므로 필터 체인 중단
-     */
     private boolean handleValidToken(String token, String path, HttpServletResponse response) throws IOException {
         try {
             String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
 
             if ("access".equals(tokenType)) {
-                // Access Token - 일반적인 API 인증
-                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                // 액세스 토큰 처리 (UserPrincipal 사용)
+                String email = jwtTokenProvider.getUserPk(token);
+                Long userId = jwtTokenProvider.getClaims(token).get("userId", Long.class);
+                String role = jwtTokenProvider.getClaims(token).get("role", String.class);
+
+                // JWT 정보로 UserPrincipal 생성
+                UserPrincipal userPrincipal = UserPrincipal.fromJwtClaims(userId, email, role);
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        userPrincipal, null, userPrincipal.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("Access Token 인증 성공: {}", authentication.getName());
-                return true;
+
+                return true;  //성공 시 true
 
             } else if ("pre-auth".equals(tokenType)) {
-                // Pre-Auth Token - 특정 경로에서만 허용
+                // Pre-auth 토큰 처리
                 if (isPreAuthAllowedPath(path)) {
-                    log.debug("Pre-Auth Token 허용 경로: {}", path);
-                    // 인증 컨텍스트는 설정하지 않고 통과
-                    return true;
+                    String email = jwtTokenProvider.getUserPk(token);
+
+                    // Pre-auth는 임시 인증이므로 최소 정보만
+                    UserPrincipal tempPrincipal = UserPrincipal.fromJwtClaims(null, email, "USER");
+
+                    // 권한 없는 임시 인증
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            tempPrincipal, null, Collections.emptyList());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    return true;  // 성공 시 true
                 } else {
                     log.warn("Pre-Auth Token 비허용 경로: {}", path);
                     sendUnauthorizedResponse(response, "Pre-auth token not allowed for this endpoint");
-                    return false;
+                    return false;  // 실패 시 false
                 }
             } else {
                 log.warn("알 수 없는 토큰 타입: {}", tokenType);
                 sendUnauthorizedResponse(response, "Invalid token type");
-                return false;
+                return false;  // 실패 시 false
             }
 
         } catch (Exception e) {
             log.error("토큰 처리 중 오류 발생", e);
             sendUnauthorizedResponse(response, "Token processing error");
-            return false;
+            return false;  // 예외 시 false
+        }
+    }
+
+    // Pre-auth 허용 경로 업데이트
+    private boolean isPreAuthAllowedPath(String path) {
+        return "/api/auth/login/callback".equals(path) ||
+                "/api/auth/signup".equals(path);  // oauth/signup → signup으로 수정
+    }
+
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+        log.debug("JWT Filter 처리: {} {}", method, path);
+
+        String token = jwtTokenProvider.resolveToken(request);
+
+        if (token == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (jwtTokenProvider.validateToken(token)) {
+            // 올바른 로직: 성공 시 true, 실패 시 false
+            if (handleValidToken(token, path, response)) {
+                // 성공 시 다음 필터로 진행
+                filterChain.doFilter(request, response);
+            }
+            // 실패 시 handleValidToken에서 응답 처리했으므로 return
+            return;
+
+        } else if (jwtTokenProvider.isTokenExpired(token)) {
+            String refreshedToken = attemptTokenRefresh(token, request, response);
+            if (refreshedToken != null) {
+                if (handleValidToken(refreshedToken, path, response)) {
+                    filterChain.doFilter(request, response);
+                }
+                return;
+            } else {
+                log.warn("토큰 자동 갱신 실패: {}", path);
+                sendUnauthorizedResponse(response, "Token refresh failed");
+                return;
+            }
+        } else {
+            log.warn("유효하지 않은 토큰: {}", path);
+            sendUnauthorizedResponse(response, "Invalid token");
+            return;
         }
     }
 
@@ -160,14 +176,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.error("토큰 자동 갱신 중 예외 발생", e);
             return null;
         }
-    }
-
-    /**
-     * Pre-Auth 토큰이 허용되는 경로인지 확인
-     */
-    private boolean isPreAuthAllowedPath(String path) {
-        return "/api/auth/login/callback".equals(path) ||
-                "/api/auth/signup".equals(path);
     }
 
     /**
