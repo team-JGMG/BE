@@ -45,12 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 토큰 유효성 검사
         if (jwtTokenProvider.validateToken(token)) {
             // 정상 토큰 → 기존 로직
-            handleValidToken(token, path, response);
+            if (!handleValidToken(token, path, response)) {
+                return; // 응답을 이미 보냈으므로 필터 체인 중단
+            }
         } else if (jwtTokenProvider.isTokenExpired(token)) {
             // 만료된 토큰 → 자동 갱신 시도
             String refreshedToken = attemptTokenRefresh(token, request, response);
             if (refreshedToken != null) {
-                handleValidToken(refreshedToken, path, response);
+                if (!handleValidToken(refreshedToken, path, response)) {
+                    return; // 응답을 이미 보냈으므로 필터 체인 중단
+                }
             } else {
                 // 갱신 실패 → 401 처리
                 log.warn("토큰 자동 갱신 실패: {}", path);
@@ -69,8 +73,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * 유효한 토큰 처리
+     * @return true: 계속 진행, false: 응답을 이미 보냈으므로 필터 체인 중단
      */
-    private void handleValidToken(String token, String path, HttpServletResponse response) throws IOException {
+    private boolean handleValidToken(String token, String path, HttpServletResponse response) throws IOException {
         try {
             String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
 
@@ -79,27 +84,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.debug("Access Token 인증 성공: {}", authentication.getName());
+                return true;
 
             } else if ("pre-auth".equals(tokenType)) {
                 // Pre-Auth Token - 특정 경로에서만 허용
                 if (isPreAuthAllowedPath(path)) {
                     log.debug("Pre-Auth Token 허용 경로: {}", path);
                     // 인증 컨텍스트는 설정하지 않고 통과
+                    return true;
                 } else {
                     log.warn("Pre-Auth Token 비허용 경로: {}", path);
                     sendUnauthorizedResponse(response, "Pre-auth token not allowed for this endpoint");
-                    return;
+                    return false;
                 }
             } else {
                 log.warn("알 수 없는 토큰 타입: {}", tokenType);
                 sendUnauthorizedResponse(response, "Invalid token type");
-                return;
+                return false;
             }
 
         } catch (Exception e) {
             log.error("토큰 처리 중 오류 발생", e);
             sendUnauthorizedResponse(response, "Token processing error");
-            return;
+            return false;
         }
     }
 
@@ -141,7 +148,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             
             // 5. 새로운 Access Token 생성
-            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getIsAdmin());
+            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.getIsAdmin());
             
             // 6. 쿠키에 새 Access Token 설정
             CookieUtil.setAccessTokenCookie(response, newAccessToken);
@@ -159,8 +166,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * Pre-Auth 토큰이 허용되는 경로인지 확인
      */
     private boolean isPreAuthAllowedPath(String path) {
-        return "/api/auth/oauth/callback".equals(path) ||
-                "/api/auth/signup/complete".equals(path);
+        return "/api/auth/login/callback".equals(path) ||
+                "/api/auth/signup".equals(path);
     }
 
     /**
