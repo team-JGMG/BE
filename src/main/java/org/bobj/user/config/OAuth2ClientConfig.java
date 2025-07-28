@@ -11,6 +11,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -33,27 +36,45 @@ public class OAuth2ClientConfig {
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
 
-        // 1. 프로퍼티 파일에서 값들을 읽어옵니다.
-        String scope = env.getProperty("spring.security.oauth2.client.registration.kakao.scope");
-        String clientName = env.getProperty("spring.security.oauth2.client.registration.kakao.client-name");
-        String grantType = env.getProperty("spring.security.oauth2.client.registration.kakao.authorization-grant-type");
+        // 환경변수에서 값 읽기 (null 안전성 보장)
+        String clientId = Optional.ofNullable(System.getenv("KAKAO_CLIENT_ID"))
+                .orElse("d6f410db14e162483d6845398daf3718");
+        String clientSecret = Optional.ofNullable(System.getenv("KAKAO_CLIENT_SECRET"))
+                .orElse("37dIrL5vdJT4uE4PrAjr7HrNc2LqKTgm");
+        String redirectUri = Optional.ofNullable(System.getenv("OAUTH_REDIRECT_URI"))
+                .orElse("http://localhost:8080/login/oauth2/code/kakao");
 
-        // 2. ClientRegistration 빌더를 사용하여 클라이언트 정보를 설정합니다.
+        // NPE 방지: 스코프 처리 안전성 보장
+        String scopeString = Optional.ofNullable(System.getenv("OAUTH_SCOPE"))
+                .orElse("profile_nickname,account_email");
+
+        Set<String> scopes = new HashSet<>();
+        if (scopeString != null && !scopeString.trim().isEmpty()) {
+            String[] scopeArray = scopeString.trim().split(",");  // 이제 NPE 안전
+            for (String scope : scopeArray) {
+                if (scope != null && !scope.trim().isEmpty()) {
+                    scopes.add(scope.trim());
+                }
+            }
+        } else {
+            scopes.add("profile_nickname");
+            scopes.add("account_email");
+        }
+
         ClientRegistration kakaoClientRegistration = ClientRegistration.withRegistrationId("kakao")
-                .clientId(env.getProperty("spring.security.oauth2.client.registration.kakao.client-id"))
-                .clientSecret(env.getProperty("spring.security.oauth2.client.registration.kakao.client-secret"))
-                // 3. 읽어온 값들을 사용하여 설정합니다.
-                .scope(scope.split(",")) // 쉼표로 구분된 문자열을 배열로 변환
-                .authorizationGrantType(new AuthorizationGrantType(grantType))
-                .clientName(clientName)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.POST)
-                .redirectUriTemplate(env.getProperty("spring.security.oauth2.client.registration.kakao.redirect-uri"))
-                .authorizationUri(env.getProperty("spring.security.oauth2.client.provider.kakao.authorization-uri"))
-                .tokenUri(env.getProperty("spring.security.oauth2.client.provider.kakao.token-uri"))
-                .userInfoUri(env.getProperty("spring.security.oauth2.client.provider.kakao.user-info-uri"))
-                .userNameAttributeName(env.getProperty("spring.security.oauth2.client.provider.kakao.user-name-attribute"))
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri(redirectUri)  // redirectUriTemplate → redirectUri
+                .scope(scopes)
+                .authorizationUri("https://kauth.kakao.com/oauth/authorize")
+                .tokenUri("https://kauth.kakao.com/oauth/token")
+                .userInfoUri("https://kapi.kakao.com/v2/user/me")
+                .userNameAttributeName("id")
+                .clientName("Kakao")
                 .build();
 
-        return new InMemoryClientRegistrationRepository(Collections.singletonList(kakaoClientRegistration));
+        return new InMemoryClientRegistrationRepository(kakaoClientRegistration);
     }
 }
