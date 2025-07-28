@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.user.domain.SocialLoginsVO;
 import org.bobj.user.domain.UserVO;
-import org.bobj.user.dto.AdditionalInfoDTO;
-import org.bobj.user.dto.TokenDTO;
-import org.bobj.user.dto.UserResponseDTO;
+import org.bobj.user.dto.request.UserRegistrationRequestDTO;
+import org.bobj.user.dto.response.AuthResponseDTO;
+import org.bobj.user.dto.response.UserResponseDTO;
 import org.bobj.user.mapper.UserMapper;
 import org.bobj.user.security.JwtTokenProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -49,7 +49,7 @@ public class UserService {
      * 기존 소셜 계정 사용자의 로그인을 처리하고 최종 토큰을 발급합니다.
      */
     @Transactional
-    public TokenDTO loginExistingSocialUser(String provider, String providerId) {
+    public AuthResponseDTO loginExistingSocialUser(String provider, String providerId) {
         log.info("기존 소셜 계정 로그인 처리 시작: provider={}, providerId={}", provider, providerId);
 
         try {
@@ -66,8 +66,8 @@ public class UserService {
             log.info("사용자 정보 조회 성공: email={}, nickname={}", user.getEmail(), user.getNickname());
 
             // isAdmin 정보를 AccessToken 생성 시 넘김
-            log.info("JWT 토큰 생성 시작: email={}, isAdmin={}", user.getEmail(), user.getIsAdmin());
-            String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getIsAdmin());
+            log.info("JWT 토큰 생성 시작: email={}, userId={}, isAdmin={}", user.getEmail(), user.getUserId(), user.getIsAdmin());
+            String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getUserId(), user.getIsAdmin());
             String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
             log.info("JWT 토큰 생성 성공");
 
@@ -77,7 +77,7 @@ public class UserService {
             log.info("Refresh Token DB 저장 완료. userId: {}", user.getUserId());
 
             log.info("기존 소셜 계정 로그인 처리 완료");
-            return new TokenDTO(accessToken, refreshToken, user.getIsAdmin());
+            return new AuthResponseDTO(accessToken, refreshToken, user.getUserId(), user.getIsAdmin());
         } catch (Exception e) {
             log.error("기존 소셜 계정 로그인 처리 중 예외 발생: provider={}, providerId={}", provider, providerId, e);
             throw e;
@@ -89,7 +89,7 @@ public class UserService {
      * 완전한 인증 토큰을 발급하는 메소드.
      */
     @Transactional
-    public TokenDTO registerUserAndCreateFinalToken(AdditionalInfoDTO dto, Claims preAuthClaims) {
+    public AuthResponseDTO registerUserAndCreateFinalToken(UserRegistrationRequestDTO dto, Claims preAuthClaims) {
         log.info("최종 회원가입 및 토큰 발급 절차 시작");
 
         String email = preAuthClaims.getSubject();
@@ -119,7 +119,7 @@ public class UserService {
 
         saveNewSocialLogin(newUser.getUserId(), provider, providerId, preAuthClaims);
 
-        String finalAccessToken = jwtTokenProvider.createAccessToken(newUser.getEmail(), newUser.getIsAdmin());
+        String finalAccessToken = jwtTokenProvider.createAccessToken(newUser.getEmail(), newUser.getUserId(), newUser.getIsAdmin());
         String finalRefreshToken = jwtTokenProvider.createRefreshToken(newUser.getEmail());
         // (선택) 발급된 Refresh Token을 DB에 바로 저장
         SocialLoginsVO savedSocialLogin = findSocialLoginByProviderAndProviderId(provider, providerId).get();
@@ -127,7 +127,7 @@ public class UserService {
         userMapper.updateRefreshToken(savedSocialLogin);
 
         log.info("최종 인증 토큰 발급 완료. email: {}", newUser.getEmail());
-        return new TokenDTO(finalAccessToken, finalRefreshToken, newUser.getIsAdmin());    }
+        return new AuthResponseDTO(finalAccessToken, finalRefreshToken, newUser.getUserId(), newUser.getIsAdmin());    }
 
     private void saveNewSocialLogin(Long userId, String provider, String providerId, Claims attributes) {
         try {
@@ -176,7 +176,7 @@ public class UserService {
      * 클라이언트가 Refresh Token을 모르는 경우 사용
      */
     @Transactional
-    public TokenDTO refreshAccessTokenByEmail(String email) {
+    public AuthResponseDTO refreshAccessTokenByEmail(String email) {
         log.info("이메일로 토큰 갱신 시도: {}", email);
         
         // 사용자 정보 조회
@@ -200,10 +200,10 @@ public class UserService {
         }
         
         // 새로운 Access Token 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getIsAdmin());
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getUserId(), user.getIsAdmin());
         
         log.info("토큰 갱신 성공: {}", email);
-        return new TokenDTO(newAccessToken, socialLogin.getRefreshToken(), user.getIsAdmin());
+        return new AuthResponseDTO(newAccessToken, socialLogin.getRefreshToken(), user.getUserId(), user.getIsAdmin());
     }
 
     /**

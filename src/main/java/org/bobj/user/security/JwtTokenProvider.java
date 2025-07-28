@@ -63,13 +63,15 @@ public class JwtTokenProvider {
 
     /**
      * @param email 이메일 (subject)
+     * @param userId 사용자 ID
      * @param isAdmin 관리자 여부 (true: ADMIN, false: USER)
      * @return JWT Access Token 문자열
      */
-    public String createAccessToken(String email, boolean isAdmin) {
+    public String createAccessToken(String email, Long userId, boolean isAdmin) {
         Claims claims = Jwts.claims().setSubject(email);
         claims.put("type", "access");
-        claims.put("role", isAdmin ? "ADMIN" : "USER");  // role만 사용
+        claims.put("userId", userId);  // userId 추가
+        claims.put("role", isAdmin ? "ADMIN" : "USER");
 
         Date now = new Date();
         return Jwts.builder()
@@ -78,6 +80,14 @@ public class JwtTokenProvider {
                 .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    /**
+     * 이전 버전 호환용 (deprecated)
+     */
+    @Deprecated
+    public String createAccessToken(String email, boolean isAdmin) {
+        return createAccessToken(email, null, isAdmin);
     }
 
     /**
@@ -125,12 +135,28 @@ public class JwtTokenProvider {
     }
 
     /**
+     * 토큰에서 userId 추출
+     */
+    public Long getUserId(String token) {
+        Claims claims = getClaims(token);
+        Object userIdObj = claims.get("userId");
+        if (userIdObj == null) {
+            return null;
+        }
+        // Integer나 Long으로 저장될 수 있으므로 안전하게 변환
+        return userIdObj instanceof Integer ? 
+            ((Integer) userIdObj).longValue() : 
+            (Long) userIdObj;
+    }
+
+    /**
      * HTTP 요청 헤더에서 토큰 값 추출 ("Authorization: Bearer [TOKEN]")
      */
     /**
      * HTTP 요청에서 토큰 값 추출
      * 1순위: Authorization Header ("Authorization: Bearer [TOKEN]")
-     * 2순위: Cookie에서 accessToken 추출
+     * 2순위: Cookie에서 accessToken 추출 (일반 인증용)
+     * 3순위: Cookie에서 preAuthToken 추출 (사전 인증용)
      */
     public String resolveToken(HttpServletRequest request) {
         // 1. Authorization Header에서 토큰 추출
@@ -139,11 +165,16 @@ public class JwtTokenProvider {
             return bearerToken.substring(7);
         }
 
-        // 2. Cookie에서 Access Token 추출
+        // 2. Cookie에서 토큰 추출
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
+                // Access Token (일반 인증용)
                 if ("accessToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+                // Pre-Auth Token (사전 인증용)
+                if ("preAuthToken".equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }
