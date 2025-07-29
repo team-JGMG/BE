@@ -145,8 +145,4 @@
                      #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}
                  )
     </insert>
-
-    <delete id="delete">
-        DELETE FROM properties WHERE property_id = #{propertyId}
-    </delete>
 </mapper>

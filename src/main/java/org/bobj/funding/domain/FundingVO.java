@@ -20,9 +20,8 @@ public class FundingVO {
     private BigDecimal targetAmount;
     private BigDecimal currentShareAmount;
     private Integer totalShares;
-    private Integer participantCount;
-    private LocalDate fundingEndDate;
+
     private FundingStatus status;
-    private LocalDateTime createdAt;
-    private LocalDateTime endedAt;
+    private LocalDateTime fundingStartDate;
+    private LocalDateTime fundingEndDate;
 }
