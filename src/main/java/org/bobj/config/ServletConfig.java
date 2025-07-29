@@ -18,6 +18,7 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.order.controller",
         "org.bobj.property.controller",
         "org.bobj.share.controller",
+        "org.bobj.funding.controller",
         "org.bobj.user.controller",
         "org.bobj.orderbook.controller"})
 public class ServletConfig implements WebMvcConfigurer {

@@ -1,19 +1,34 @@
 package org.bobj.funding.mapper;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.domain.FundingVO;
+import org.bobj.funding.dto.FundingDetailResponseDTO;
+import org.bobj.funding.dto.FundingEndedResponseDTO;
+import org.bobj.funding.dto.FundingTotalResponseDTO;
 
 @Mapper
 public interface FundingMapper {
-    FundingVO findFundingById(@Param("fundingId") Long fundingId);
+    FundingDetailResponseDTO findFundingById(@Param("fundingId") Long fundingId);
 
-    void insertFundingOrder(FundingOrderVO fundingOrder);
+    List<FundingTotalResponseDTO> findTotal(
+            @Param("category") String category,
+            @Param("sort") String sort,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
 
-    void cancelFundingOrder(@Param("orderId") Long orderId);
+    List<FundingEndedResponseDTO> findEndedFundingProperties(@Param("offset") int offset, @Param("limit") int limit);
 
-    List<FundingOrderVO> findOrdersByUserIdAndFundingId(@Param("userId") Long userId, @Param("fundingId") Long fundingId);
+    void insertFunding(@Param("propertyId") Long propertyId);
+
+    void increaseCurrentAmount(@Param("fundingId") Long fundingId, @Param("orderPrice") BigDecimal orderPrice);
+
+    void decreaseCurrentAmount(@Param("fundingId") Long fundingId, @Param("orderPrice") BigDecimal orderPrice);
+
+    void expireFunding(@Param("fundingId") Long fundingId);
 }

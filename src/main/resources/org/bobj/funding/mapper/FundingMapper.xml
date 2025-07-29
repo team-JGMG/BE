@@ -3,41 +3,183 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.funding.mapper.FundingMapper">
+  <resultMap id="FundingDetailResultMap" type="org.bobj.funding.dto.FundingDetailResponseDTO">
+    <id property="fundingId" column="funding_id"/>
+    <result property="propertyId" column="property_id"/>
+    <result property="title" column="title"/>
+    <result property="address" column="address"/>
+    <result property="targetAmount" column="target_amount"/>
+    <result property="currentAmount" column="current_amount"/>
+    <result property="fundingEndDate" column="funding_end_date"/>
+    <result property="currentShareAmount" column="current_share_amount"/>
+    <result property="fundingRate" column="funding_rate"/>
+    <result property="daysLeft" column="days_left"/>
+    <result property="usageDistrict" column="usage_district"/>
+    <result property="landArea" column="land_area"/>
+    <result property="buildingArea" column="building_area"/>
+    <result property="totalFloorAreaProperty" column="total_floor_area_property"/>
+    <result property="totalFloorAreaBuilding" column="total_floor_area_building"/>
+    <result property="basementFloors" column="basement_floors"/>
+    <result property="groundFloors" column="ground_floors"/>
+    <result property="approvalDate" column="approval_date"/>
+    <result property="officialLandPrice" column="official_land_price"/>
+    <result property="unitPricePerPyeong" column="unit_price_per_pyeong"/>
+    <result property="description" column="description"/>
 
+    <association property="seller" javaType="org.bobj.property.dto.SellerDTO">
+      <result property="userId" column="user_id"/>
+      <result property="name" column="name"/>
+      <result property="email" column="email"/>
+      <result property="phone" column="phone"/>
+    </association>
+    <collection property="photos" ofType="org.bobj.property.domain.PropertyPhotoVO">
+      <id property="photoId" column="photo_id"/>
+      <result property="propertyId" column="photo_property_id"/>
+      <result property="photoUrl" column="photo_url"/>
+      <result property="createdAt" column="photo_created_at"/>
+    </collection>
+  </resultMap>
   <!--  펀딩 상세 조회  -->
-  <select id="findFundingById" resultType="FundingVO">
-    SELECT *
-    FROM FUNDINGS
-    where funding_id = #{fundingId}
+  <select id="findFundingById" resultMap="FundingDetailResultMap">
+    SELECT
+      f.funding_id,
+      f.property_id,
+      f.target_amount,
+      f.current_amount,
+      f.current_share_amount,
+      f.funding_end_date,
+      FLOOR((f.current_amount / f.target_amount) * 100) AS funding_rate,
+      DATEDIFF(DATE(f.funding_end_date), DATE(NOW())) AS days_left,
+      p.title,
+      p.address,
+      p.usage_district,
+      p.land_area,
+      p.building_area,
+      p.total_floor_area_property,
+      p.total_floor_area_building,
+      p.basement_floors,
+      p.ground_floors,
+      p.approval_date,
+      p.official_land_price,
+      p.unit_price_per_pyeong,
+      p.description,
+      u.user_id,
+      u.name,
+      u.email,
+      u.phone,
+      ph.photo_id,
+      ph.property_id AS photo_property_id,
+      ph.photo_url,
+      ph.created_at AS photo_created_at
+    FROM fundings f
+           LEFT JOIN properties p ON f.property_id = p.property_id
+           LEFT JOIN users u ON p.user_id = u.user_id
+           LEFT JOIN property_photos ph ON p.property_id = ph.property_id
+    WHERE f.funding_id = #{fundingId}
   </select>
 
-  <!-- 펀딩 참여 -->
-  <insert id="insertFundingOrder" parameterType="FundingOrderVO">
-    INSERT INTO funding_order (
-      user_id, funding_id, share_count, status, created_at, order_price
-    ) VALUES (
-               #{userId}, #{fundingId}, #{shareCount}, #{status}, #{createdAt}, #{orderPrice}
-             )
+<!--  &lt;!&ndash; 펀딩 참여 &ndash;&gt;-->
+<!--  <insert id="insertFundingOrder" parameterType="FundingOrderVO">-->
+<!--    INSERT INTO funding_order (-->
+<!--      user_id, funding_id, share_count, status, created_at, order_price-->
+<!--    ) VALUES (-->
+<!--               #{userId}, #{fundingId}, #{shareCount}, #{status}, #{createdAt}, #{orderPrice}-->
+<!--             )-->
+<!--  </insert>-->
+
+  <!-- 펀딩 생성 -->
+  <insert id="insertFunding" parameterType="FundingVO">
+    INSERT INTO fundings (
+      property_id, target_amount,total_shares, funding_end_date
+    )
+    SELECT
+      p.property_id,
+      p.price,
+      FLOOR(p.price / 5000),
+      DATE_ADD(NOW(), INTERVAL p.posting_period MONTH)
+    FROM properties p
+    WHERE p.property_id = #{propertyId}
   </insert>
 
-  <!-- 펀딩 취소 -->
-  <update id="cancelFundingOrder">
-    UPDATE funding_order
-    SET status = 'REFUNDED'
-    WHERE order_id = #{orderId}
+  <!-- 펀딩 주문 후 모집 금액 수정 -->
+  <update id="increaseCurrentAmount">
+    UPDATE fundings
+        SET current_amount = current_amount + #{orderPrice}
+    WHERE funding_id = #{fundingId};
   </update>
 
-  <!-- 사용자의 펀딩 참여 내역 조회 -->
-  <select id="findOrdersByUserIdAndFundingId" resultType="FundingOrderVO">
-    SELECT *
-    FROM funding_order
-    WHERE user_id = #{userId}
-      AND funding_id = #{fundingId}
+  <!-- 펀딩 취소 후 모집 금액 수정 -->
+  <update id="decreaseCurrentAmount">
+    UPDATE fundings
+        SET current_amount = current_amount - #{orderPrice}
+    WHERE funding_id = #{fundingId};
+  </update>
+
+  <!-- 펀딩 만료 후 일괄 환불 -->
+  <update id="expireFunding">
+    UPDATE fundings f
+        JOIN funding_order o ON f.funding_id = o.funding_id
+        SET
+            o.status = 'REFUNDED',
+            f.current_amount = 0
+    WHERE f.funding_id = #{fundingId}
+  </update>
+
+<!--  &lt;!&ndash; 사용자의 펀딩 참여 내역 조회 &ndash;&gt;-->
+<!--  <select id="findOrdersByUserIdAndFundingId" resultType="FundingOrderVO">-->
+<!--    SELECT *-->
+<!--    FROM funding_order-->
+<!--    WHERE user_id = #{userId}-->
+<!--      AND funding_id = #{fundingId}-->
+<!--  </select>-->
+  <!-- 매물 목록 리스트에 들어갈 전체 데이터 조회 -->
+  <select id="findTotal" resultType="org.bobj.funding.dto.FundingTotalResponseDTO">
+    SELECT
+      f.funding_id,
+      f.property_id,
+      p.title,
+      p.address,
+      f.target_amount,
+      FLOOR((f.current_amount / f.target_amount) * 100) AS fundingRate,
+      DATEDIFF(DATE(NOW()),DATE(f.funding_end_date)) AS daysLeft
+      (SELECT photo_url
+      FROM property_photos
+      WHERE property_id = p.property_id
+      ORDER BY created_at ASC
+      LIMIT 1) AS thumbnail_url
+    FROM fundings f
+    JOIN properties p ON f.property_id = p.property_id
+    WHERE
+      <choose>
+        <when test="category == 'funding'">
+          f.status = 'FUNDING'
+        </when>
+        <when test="category == 'ended'">
+          f.status = 'ENDED'
+        </when>
+        <when test="category == 'sold'">
+          p.status = 'SOLD'
+        </when>
+      </choose>
+    <choose>
+      <when test="sort == 'timeLeft'">
+        ORDER BY DATEDIFF(DATE(NOW()),DATE(f.funding_end_date)) ASC
+      </when>
+      <when test="sort == 'rate'">
+        ORDER BY (f.current_amount / f.target_amount) DESC
+      </when>
+      <otherwise>
+        ORDER BY f.funding_start_date ASC
+      </otherwise>
+    </choose>
+    LIMIT #{limit} OFFSET #{offset}
   </select>
-
-
-
-
-
-
+  <select id="findEndedFundingProperties" resultType="org.bobj.funding.dto.FundingEndedResponseDTO">
+    SELECT f.funding_id, p.title
+    FROM fundings f
+           JOIN properties p ON f.property_id = p.property_id
+    WHERE f.status = 'ENDED'
+    ORDER BY f.funding_end_date DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
 </mapper>

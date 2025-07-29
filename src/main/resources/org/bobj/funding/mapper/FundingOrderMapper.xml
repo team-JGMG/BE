@@ -26,26 +26,18 @@
   </select>
 
   <!-- 주문 삽입 -->
-  <insert id="insert" parameterType="FundingOrderVO">
+  <insert id="insertFundingOrder" parameterType="FundingOrderVO">
     INSERT INTO funding_order (
-      user_id, funding_id, share_count, status, created_at, order_price
+      user_id, funding_id, share_count, order_price
     ) VALUES (
-               #{userId}, #{fundingId}, #{shareCount}, #{status}, #{createdAt}, #{orderPrice}
+               #{userId}, #{fundingId}, #{shareCount}, #{shareCount} * 5000
              )
   </insert>
 
-  <!-- 주문 상태 수정 -->
-  <update id="updateStatus">
+  <!-- 주문 취소 -->
+  <update id="refundFundingOrder">
     UPDATE funding_order
-    SET status = #{status}
+    SET status = 'REFUNDED'
     WHERE order_id = #{orderId}
   </update>
-
-  <!-- 주문 삭제 -->
-  <delete id="delete">
-    DELETE FROM funding_order
-    WHERE order_id = #{orderId}
-  </delete>
-
-
 </mapper>

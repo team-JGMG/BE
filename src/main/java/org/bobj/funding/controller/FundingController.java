@@ -1,15 +1,79 @@
 package org.bobj.funding.controller;
 
-import io.swagger.annotations.Api;
+import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.bobj.common.dto.CustomSlice;
+import org.bobj.common.exception.ErrorResponse;
+import org.bobj.common.response.ApiCommonResponse;
+import org.bobj.funding.dto.FundingDetailResponseDTO;
+import org.bobj.funding.dto.FundingEndedResponseDTO;
+import org.bobj.funding.dto.FundingTotalResponseDTO;
+import org.bobj.funding.service.FundingService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/fundings")
+@RequestMapping("/api/funding")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags="펀딩 API")
 public class FundingController {
+    private final FundingService fundingService;
+
+    @GetMapping("/{fundingId}")
+    @ApiOperation(value = "펀딩 상세 조회", notes = "특정 펀딩에 관련된 매물 정보를 조회합니다.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "fundingId", value = "조회할 펀딩 ID", required = true, dataType = "long", paramType = "path")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "펀딩 상세 조회 성공", response = FundingDetailResponseDTO.class),
+            @ApiResponse(code = 400, message = "잘못된 요청 (예: 유효하지 않은 펀딩 ID)", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+    })
+    public ResponseEntity<ApiCommonResponse<FundingDetailResponseDTO>> getFundingDetail(
+            @PathVariable @ApiParam(value = "펀딩 ID", required = true) Long fundingId) {
+        FundingDetailResponseDTO detail = fundingService.getFundingDetail(fundingId);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(detail));
+    }
+
+    @GetMapping
+    @ApiOperation(value= "펀딩 목록 조회", notes = "카테고리 필터, 정렬 필터에 따른 펀딩 목록을 조회합니다.(무한스크롤 구현)")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "category", value = "카테고리 필터명", defaultValue = "funding", dataType = "string", paramType = "query"),
+            @ApiImplicitParam(name = "sort", value = "정렬 필터명", defaultValue = "date" ,dataType = "string", paramType = "query"),
+            @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
+            @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "펀딩 목록 조회 성공", response = FundingTotalResponseDTO.class, responseContainer = "CustomSlice"),
+            @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+    })
+    public ResponseEntity<ApiCommonResponse<CustomSlice<FundingTotalResponseDTO>>> getFundingList(
+            @RequestParam(value = "category", defaultValue = "funding") String category,
+            @RequestParam(value = "sort", defaultValue = "date") String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        CustomSlice<FundingTotalResponseDTO> detail = fundingService.getFundingList(category, sort, page, size);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(detail));
+    }
+
+    @GetMapping("/ended")
+    @ApiOperation(value="성공된 펀딩 목록 조회" , notes = "성공한 펀딩 목록을 조회합니다. (무한 스크롤 구현)")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
+            @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "성공된 목록 조회 성공", response = FundingEndedResponseDTO.class, responseContainer = "CustomSlice"),
+            @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+    })
+    public ResponseEntity<ApiCommonResponse<CustomSlice<FundingEndedResponseDTO>>> getEndedFundingProperties(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        CustomSlice<FundingEndedResponseDTO> detail = fundingService.getEndedFundingProperties(page, size);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(detail));
+    }
 }

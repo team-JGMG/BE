@@ -21,6 +21,4 @@ public interface PropertyMapper {
     void update(@Param("propertyId") Long propertyId, @Param("status") String status);
 
     void insert(PropertyVO propertyVO);
-
-    void delete(@Param("propertyId") Long propertyId);
 }
