@@ -31,9 +31,20 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private static final long PRE_AUTH_TOKEN_EXPIRE_TIME = 10 * 60 * 1000L;      // 10분
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 30 * 60 * 1000L;      // 30분
-    private static final long REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L; // 7일
+    @Value("${jwt.access-token-expire-minutes:30}")
+    private int accessTokenExpireMinutes;
+
+    @Value("${jwt.refresh-token-expire-days:7}")
+    private int refreshTokenExpireDays;
+
+    @Value("${jwt.pre-auth-token-expire-minutes:10}")
+    private int preAuthTokenExpireMinutes;
+
+    @Value("${jwt.preemptive-refresh-minutes:5}")
+    private int preemptiveRefreshMinutes;
+
+    @Value("${jwt.preemptive-refresh-enabled:true}")
+    private boolean preemptiveRefreshEnabled;
 
     private Key key;
     private final UserDetailsService userDetailsService;
@@ -53,10 +64,11 @@ public class JwtTokenProvider {
         claims.put("type", "pre-auth"); // 토큰 타입 명시
 
         Date now = new Date();
+        long expireTime = preAuthTokenExpireMinutes * 60 * 1000L; // 설정값 사용
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + PRE_AUTH_TOKEN_EXPIRE_TIME))
+                .setExpiration(new Date(now.getTime() + expireTime))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -74,20 +86,13 @@ public class JwtTokenProvider {
         claims.put("role", isAdmin ? "ADMIN" : "USER");
 
         Date now = new Date();
+        long expireTime = accessTokenExpireMinutes * 60 * 1000L; // 설정값 사용
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_EXPIRE_TIME))
+                .setExpiration(new Date(now.getTime() + expireTime))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-    }
-
-    /**
-     * 이전 버전 호환용 (deprecated)
-     */
-    @Deprecated
-    public String createAccessToken(String email, boolean isAdmin) {
-        return createAccessToken(email, null, isAdmin);
     }
 
     /**
@@ -99,10 +104,11 @@ public class JwtTokenProvider {
         claims.put("type", "refresh");
 
         Date now = new Date();
+        long expireTime = refreshTokenExpireDays * 24 * 60 * 60 * 1000L; // 설정값 사용
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_EXPIRE_TIME))
+                .setExpiration(new Date(now.getTime() + expireTime))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -219,6 +225,7 @@ public class JwtTokenProvider {
         }
     }
 
+
     /**
      * 토큰이 만료되었는지만 확인 (서명은 유효한지 체크)
      * 자동 토큰 갱신을 위해 사용
@@ -234,6 +241,76 @@ public class JwtTokenProvider {
             return true; // 만료된 토큰 (서명은 유효)
         } catch (Exception e) {
             return false; // 잘못된 토큰
+        }
+    }
+
+    /**
+     * 토큰이 곧 만료될 예정인지 확인 (사전 갱신용)
+     * @param token 확인할 토큰
+     * @param minutesBeforeExpiry 만료 몇 분 전인지 (기본: 설정값 사용)
+     * @return true: 사전 갱신 필요, false: 아직 충분한 시간 남음
+     */
+    public boolean isTokenNearExpiry(String token, int minutesBeforeExpiry) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            
+            Date expiration = claims.getExpiration();
+            Date now = new Date();
+            
+            long timeUntilExpiry = expiration.getTime() - now.getTime();
+            long thresholdTime = minutesBeforeExpiry * 60 * 1000L; // 분 → 밀리초 변환
+            
+            // 만료까지 남은 시간이 임계값보다 적으면 true
+            boolean nearExpiry = timeUntilExpiry > 0 && timeUntilExpiry < thresholdTime;
+            
+            if (nearExpiry) {
+                log.debug("토큰 만료 임박 감지: {}분 후 만료 예정", timeUntilExpiry / (60 * 1000));
+            }
+            
+            return nearExpiry;
+            
+        } catch (ExpiredJwtException e) {
+            // 이미 만료된 토큰 - 사전 갱신 대상 아님 (기존 만료 갱신 로직에서 처리)
+            return false;
+        } catch (Exception e) {
+            log.warn("토큰 만료 임박 체크 중 오류: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 토큰이 곧 만료될 예정인지 확인 (설정값 기본 사용)
+     */
+    public boolean isTokenNearExpiry(String token) {
+        return isTokenNearExpiry(token, preemptiveRefreshMinutes); // 설정값 사용
+    }
+
+    /**
+     * 사전 갱신이 활성화되어 있고 토큰이 곧 만료될 예정인지 확인
+     */
+    public boolean shouldPreemptivelyRefresh(String token) {
+        return preemptiveRefreshEnabled && isTokenNearExpiry(token);
+    }
+
+    /**
+     * 토큰의 남은 만료 시간을 분 단위로 반환
+     */
+    public long getTokenRemainingMinutes(String token) {
+        try {
+            Claims claims = getClaims(token);
+            Date expiration = claims.getExpiration();
+            Date now = new Date();
+            
+            long timeUntilExpiry = expiration.getTime() - now.getTime();
+            return Math.max(0, timeUntilExpiry / (60 * 1000L)); // 밀리초 → 분 변환
+            
+        } catch (Exception e) {
+            log.warn("토큰 만료 시간 계산 중 오류: {}", e.getMessage());
+            return 0;
         }
     }
 
