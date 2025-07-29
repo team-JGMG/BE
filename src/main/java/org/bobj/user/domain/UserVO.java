@@ -1,5 +1,6 @@
 package org.bobj.user.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,12 +22,21 @@ public class UserVO {
     private String phone;         // phone VARCHAR(20)
     private Date createdAt;       // created_at DATETIME
     private Date updatedAt;       // updated_at DATETIME
-    private boolean isAdmin;      // is_admin BOOLEAN
+    
+    @JsonProperty("isAdmin")      // ← JSON 응답에서는 "isAdmin"으로 표시
+    private boolean admin;        // ← 필드명 변경: isAdmin → admin
+    
     private String bankCode;      // bank_code VARCHAR(50)
     private String accountNumber; // account_number VARCHAR(50)
 
-
+    // ✅ 기존 코드 호환성을 위한 메서드 (deprecated)
+    @Deprecated
     public boolean getIsAdmin() {
-        return isAdmin;
+        return admin;
+    }
+    
+    @Deprecated  
+    public void setIsAdmin(boolean admin) {
+        this.admin = admin;
     }
 }

@@ -2,31 +2,82 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.user.mapper.UserMapper">
 
+    <!-- 개인정보 암호화 적용 ResultMap -->
+    <resultMap id="encryptedUserResultMap" type="org.bobj.user.domain.UserVO">
+        <id property="userId" column="user_id"/>
+        <result property="name" column="name" typeHandler="org.bobj.common.crypto.typehandler.NameTypeHandler"/>
+        <result property="email" column="email"/>
+        <result property="nickname" column="nickname"/>
+        <result property="ssn" column="ssn" typeHandler="org.bobj.common.crypto.typehandler.SsnTypeHandler"/>
+        <result property="phone" column="phone" typeHandler="org.bobj.common.crypto.typehandler.PhoneTypeHandler"/>
+        <result property="bankCode" column="bank_code" typeHandler="org.bobj.common.crypto.typehandler.BankCodeTypeHandler"/>
+        <result property="accountNumber" column="account_number" typeHandler="org.bobj.common.crypto.typehandler.AccountNumberTypeHandler"/>
+        <result property="admin" column="is_admin"/><!-- 🔧 isAdmin → admin으로 변경 -->
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
     <!-- USERS 테이블 쿼리 -->
-    <select id="findUserByEmail" resultType="org.bobj.user.domain.UserVO">
-        SELECT * FROM users WHERE email = #{email}
+    <select id="findUserByEmail" resultMap="encryptedUserResultMap">
+        SELECT 
+            user_id,
+            name,
+            email, 
+            nickname,
+            ssn,
+            phone,
+            bank_code,
+            account_number,
+            is_admin,
+            created_at,
+            updated_at
+        FROM users 
+        WHERE email = #{email}
     </select>
 
-    <select id="findUserById" resultType="org.bobj.user.domain.UserVO">
-        SELECT * FROM users WHERE user_id = #{userId}
+    <select id="findUserById" resultMap="encryptedUserResultMap">
+        SELECT 
+            user_id,
+            name,
+            email, 
+            nickname,
+            ssn,
+            phone,
+            bank_code,
+            account_number,
+            is_admin,
+            created_at,
+            updated_at
+        FROM users 
+        WHERE user_id = #{userId}
     </select>
 
 
 
     <insert id="saveUser" useGeneratedKeys="true" keyProperty="userId">
-        INSERT INTO users (name, email, nickname, ssn, phone, bank_code, account_number, is_admin, created_at, updated_at)
-        VALUES(#{name}, #{email}, #{nickname}, #{ssn}, #{phone}, #{bankCode}, #{accountNumber}, #{isAdmin}, NOW(), NOW())
+        INSERT INTO users
+        SET
+            name = #{name,typeHandler=org.bobj.common.crypto.typehandler.NameTypeHandler},
+            email = #{email},
+            nickname = #{nickname},
+            ssn = #{ssn,typeHandler=org.bobj.common.crypto.typehandler.SsnTypeHandler},
+            phone = #{phone,typeHandler=org.bobj.common.crypto.typehandler.PhoneTypeHandler},
+            bank_code = #{bankCode,typeHandler=org.bobj.common.crypto.typehandler.BankCodeTypeHandler},
+            account_number = #{accountNumber,typeHandler=org.bobj.common.crypto.typehandler.AccountNumberTypeHandler},
+            is_admin = #{admin},   <!-- 🔧 isAdmin → admin으로 변경 -->
+            created_at = NOW(),
+            updated_at = NOW()
     </insert>
 
 
     <update id="updateUser" parameterType="org.bobj.user.domain.UserVO">
         UPDATE users
         SET
-            name = #{name},
-            ssn = #{ssn},
-            phone = #{phone},
-            bank_code = #{bankCode},
-            account_number = #{accountNumber},
+            name = #{name,typeHandler=org.bobj.common.crypto.typehandler.NameTypeHandler},
+            ssn = #{ssn,typeHandler=org.bobj.common.crypto.typehandler.SsnTypeHandler},
+            phone = #{phone,typeHandler=org.bobj.common.crypto.typehandler.PhoneTypeHandler},
+            bank_code = #{bankCode,typeHandler=org.bobj.common.crypto.typehandler.BankCodeTypeHandler},
+            account_number = #{accountNumber,typeHandler=org.bobj.common.crypto.typehandler.AccountNumberTypeHandler},
             updated_at = NOW()
         WHERE
             user_id = #{userId}

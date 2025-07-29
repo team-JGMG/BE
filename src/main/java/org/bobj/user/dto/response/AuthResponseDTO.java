@@ -54,7 +54,7 @@ public class AuthResponseDTO {
         this.expiresIn = 1800L; // 30분
         this.issuedAt = LocalDateTime.now();
     }
-//
+
     public AuthResponseDTO(String accessToken, String refreshToken, Long userId, boolean isAdmin) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
@@ -65,59 +65,4 @@ public class AuthResponseDTO {
         this.expiresIn = 1800L; // 30분
         this.issuedAt = LocalDateTime.now();
     }
-//
-//    /**
-//     * 성공적인 로그인 응답 생성
-//     */
-//    public static AuthResponseDTO loginSuccess(String accessToken, String refreshToken, Long userId, boolean isAdmin) {
-//        return AuthResponseDTO.builder()
-//                .accessToken(accessToken)
-//                .refreshToken(refreshToken)
-//                .userId(userId)
-//                .isAdmin(isAdmin)
-//                .role(isAdmin ? "ADMIN" : "USER")
-//                .tokenType("Bearer")
-//                .expiresIn(1800L)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//    }
-//
-//    /**
-//     * 토큰 갱신 응답 생성
-//     */
-//    public static AuthResponseDTO tokenRefresh(String accessToken, String refreshToken, Long userId, boolean isAdmin) {
-//        return AuthResponseDTO.builder()
-//                .accessToken(accessToken)
-//                .refreshToken(refreshToken)
-//                .userId(userId)
-//                .isAdmin(isAdmin)
-//                .role(isAdmin ? "ADMIN" : "USER")
-//                .tokenType("Bearer")
-//                .expiresIn(1800L)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//    }
-//
-//    /**
-//     * 액세스 토큰만 갱신하는 응답 생성
-//     */
-//    public static AuthResponseDTO accessTokenOnly(String accessToken, Long userId, boolean isAdmin) {
-//        return AuthResponseDTO.builder()
-//                .accessToken(accessToken)
-//                .userId(userId)
-//                .isAdmin(isAdmin)
-//                .role(isAdmin ? "ADMIN" : "USER")
-//                .tokenType("Bearer")
-//                .expiresIn(1800L)
-//                .issuedAt(LocalDateTime.now())
-//                .build();
-//    }
-//
-//    /**
-//     * 민감정보 마스킹 (로깅용)
-//     */
-//    public String toMaskedString() {
-//        return String.format("AuthResponse{userId=%d, role='%s', issuedAt=%s}",
-//                userId, role, issuedAt);
-//    }
 }

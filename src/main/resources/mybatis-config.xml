@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration
-  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
   <settings>
     <setting name="mapUnderscoreToCamelCase" value="true"/>
   </settings>
-
 
   <typeAliases>
     <typeAlias alias="PointVO" type="org.bobj.point.domain.PointVO"/>
@@ -14,6 +13,15 @@
     <typeAlias alias="PointChargeRequestVO" type="org.bobj.point.domain.PointChargeRequestVO"/>
     <typeAlias alias="FundingVO" type="org.bobj.funding.domain.FundingVO"/>
     <typeAlias alias="FundingOrderVO" type="org.bobj.funding.domain.FundingOrderVO"/>
-
   </typeAliases>
+
+<!--  &lt;!&ndash; 개인정보 암호화 TypeHandler 등록 &ndash;&gt;-->
+<!--  <typeHandlers>-->
+<!--    <typeHandler handler="org.bobj.common.crypto.typehandler.NameTypeHandler"/>-->
+<!--    <typeHandler handler="org.bobj.common.crypto.typehandler.SsnTypeHandler"/>-->
+<!--    <typeHandler handler="org.bobj.common.crypto.typehandler.PhoneTypeHandler"/>-->
+<!--    <typeHandler handler="org.bobj.common.crypto.typehandler.AccountNumberTypeHandler"/>-->
+<!--    <typeHandler handler="org.bobj.common.crypto.typehandler.BankCodeTypeHandler"/>-->
+<!--  </typeHandlers>-->
+
 </configuration>

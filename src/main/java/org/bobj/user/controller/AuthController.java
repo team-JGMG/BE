@@ -30,11 +30,6 @@ public class AuthController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-//    @GetMapping("/oauth/kakao-url") //url 제공.
-//    public ResponseEntity<Map<String, String>> getKakaoLoginUrl() {
-//        String kakaoLoginUrl = "http://localhost:8080/oauth2/authorization/kakao";
-//        return ResponseEntity.ok(Collections.singletonMap("url", kakaoLoginUrl));
-//    }
     /**
      * 카카오 로그인 시작 API
      * 클라이언트가 이 API를 호출하면 카카오 로그인 URL을 받고,

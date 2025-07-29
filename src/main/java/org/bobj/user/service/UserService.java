@@ -146,28 +146,42 @@ public class UserService {
         }
     }
 
-    public UserResponseDTO findUserInfoByEmail(String email) {
-        UserVO user = userMapper.findUserByEmail(email);
-        if (user == null) {
-            throw new IllegalArgumentException("해당 이메일의 사용자를 찾을 수 없습니다.");
-        }
-        return new UserResponseDTO(user);
-    }
-
-    public UserResponseDTO findUserInfoById(Long userId) {
-        UserVO user = userMapper.findUserById(userId);
-        if (user == null) {
-            throw new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다.");
-        }
-        return new UserResponseDTO(user);
-    }
-
+    /**
+     * 이메일로 사용자 조회 (UserVO 반환)
+     */
     public UserVO findUserVOByEmail(String email) {
         UserVO user = userMapper.findUserByEmail(email);
         if (user == null) {
             throw new UsernameNotFoundException("유저를 찾을 수 없습니다: " + email);
         }
         return user;
+    }
+
+    /**
+     * 사용자 ID로 사용자 조회 (UserVO 반환)
+     */
+    public UserVO findUserVOById(Long userId) {
+        UserVO user = userMapper.findUserById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다: " + userId);
+        }
+        return user;
+    }
+
+    /**
+     * 이메일로 사용자 정보 조회 (DTO 반환)
+     */
+    public UserResponseDTO findUserInfoByEmail(String email) {
+        UserVO user = findUserVOByEmail(email);
+        return new UserResponseDTO(user);
+    }
+
+    /**
+     * 사용자 ID로 사용자 정보 조회 (DTO 반환)
+     */
+    public UserResponseDTO findUserInfoById(Long userId) {
+        UserVO user = findUserVOById(userId);
+        return new UserResponseDTO(user);
     }
 
 

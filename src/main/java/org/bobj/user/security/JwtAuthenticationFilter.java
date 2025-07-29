@@ -9,6 +9,7 @@ import org.bobj.user.util.CookieUtil;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -83,6 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
@@ -93,21 +95,113 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = jwtTokenProvider.resolveToken(request);
 
+        // ================================
+        // 🚀 개발용 설정: 토큰이 없으면 그냥 통과
+        // ================================
+        if (token == null) {
+            log.debug("개발 모드: 토큰 없음 - 인증 없이 통과: {}", path);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // ================================
+        // 🚀 개발용 설정: 토큰이 있으면 처리 시도, 실패해도 통과
+        // ================================
+        if (jwtTokenProvider.validateToken(token)) {
+            // 1. 토큰이 유효한 경우
+
+            // 1-1. 사전 갱신 체크 (Access Token만 대상)
+            String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
+            if ("access".equals(tokenType) && jwtTokenProvider.shouldPreemptivelyRefresh(token)) {
+                log.info("토큰 만료 임박 - 사전 갱신 시도: {} ({}분 후 만료)",
+                        path, jwtTokenProvider.getTokenRemainingMinutes(token));
+
+                String preRefreshedToken = attemptPreemptiveTokenRefresh(token, request, response);
+                if (preRefreshedToken != null) {
+                    // 사전 갱신 성공 - 새 토큰으로 처리
+                    log.info("사전 갱신 성공 - 새 토큰으로 인증 처리");
+                    token = preRefreshedToken;
+                } else {
+                    // 사전 갱신 실패 - 기존 토큰으로 계속 진행 (아직 유효하므로 문제없음)
+                    log.warn("사전 갱신 실패 - 기존 토큰으로 계속 진행");
+                }
+            }
+
+            // 1-2. 토큰 인증 처리 (기존 토큰 또는 새 토큰)
+            if (handleValidToken(token, path, response)) {
+                log.debug("개발 모드: 유효한 토큰으로 인증 성공: {}", path);
+                filterChain.doFilter(request, response);
+            } else {
+                log.warn("개발 모드: 토큰 처리 실패했지만 통과시킴: {}", path);
+                filterChain.doFilter(request, response);  // 🚀 개발용: 실패해도 통과
+            }
+            return;
+
+        } else if (jwtTokenProvider.isTokenExpired(token)) {
+            // 2. 토큰이 만료된 경우 - 기존 갱신 로직
+            log.info("토큰 만료 감지 - 강제 갱신 시도: {}", path);
+            String refreshedToken = attemptTokenRefresh(token, request, response);
+            if (refreshedToken != null) {
+                if (handleValidToken(refreshedToken, path, response)) {
+                    log.debug("개발 모드: 토큰 갱신 후 인증 성공: {}", path);
+                    filterChain.doFilter(request, response);
+                } else {
+                    log.warn("개발 모드: 갱신된 토큰 처리 실패했지만 통과시킴: {}", path);
+                    filterChain.doFilter(request, response);  // 🚀 개발용: 실패해도 통과
+                }
+                return;
+            } else {
+                log.warn("개발 모드: 토큰 자동 갱신 실패했지만 통과시킴: {}", path);
+                filterChain.doFilter(request, response);  // 🚀 개발용: 갱신 실패해도 통과
+                return;
+            }
+        } else {
+            // 3. 유효하지 않은 토큰
+            log.warn("개발 모드: 유효하지 않은 토큰이지만 통과시킴: {}", path);
+            filterChain.doFilter(request, response);  // 🚀 개발용: 무효한 토큰이어도 통과
+            return;
+        }
+
+    }
+        /* ================================
+         * 🔒 운영용 JWT 필터 로직 (주석 처리)
+         * 배포 시 위의 개발용 로직을 주석처리하고 아래 로직을 활성화하세요
+         * ================================
+
         if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         if (jwtTokenProvider.validateToken(token)) {
-            // 올바른 로직: 성공 시 true, 실패 시 false
+            // 1. 토큰이 유효한 경우
+            
+            // 1-1. 사전 갱신 체크 (Access Token만 대상)
+            String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
+            if ("access".equals(tokenType) && jwtTokenProvider.shouldPreemptivelyRefresh(token)) {
+                log.info("토큰 만료 임박 - 사전 갱신 시도: {} ({}분 후 만료)", 
+                    path, jwtTokenProvider.getTokenRemainingMinutes(token));
+                
+                String preRefreshedToken = attemptPreemptiveTokenRefresh(token, request, response);
+                if (preRefreshedToken != null) {
+                    // 사전 갱신 성공 - 새 토큰으로 처리
+                    log.info("사전 갱신 성공 - 새 토큰으로 인증 처리");
+                    token = preRefreshedToken;
+                } else {
+                    // 사전 갱신 실패 - 기존 토큰으로 계속 진행 (아직 유효하므로 문제없음)
+                    log.warn("사전 갱신 실패 - 기존 토큰으로 계속 진행");
+                }
+            }
+            
+            // 1-2. 토큰 인증 처리 (기존 토큰 또는 새 토큰)
             if (handleValidToken(token, path, response)) {
-                // 성공 시 다음 필터로 진행
                 filterChain.doFilter(request, response);
             }
-            // 실패 시 handleValidToken에서 응답 처리했으므로 return
             return;
 
         } else if (jwtTokenProvider.isTokenExpired(token)) {
+            // 2. 토큰이 만료된 경우 - 기존 갱신 로직
+            log.info("토큰 만료 감지 - 강제 갱신 시도: {}", path);
             String refreshedToken = attemptTokenRefresh(token, request, response);
             if (refreshedToken != null) {
                 if (handleValidToken(refreshedToken, path, response)) {
@@ -120,18 +214,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
         } else {
+            // 3. 유효하지 않은 토큰
             log.warn("유효하지 않은 토큰: {}", path);
             sendUnauthorizedResponse(response, "Invalid token");
             return;
         }
-    }
+        */
+
 
     /**
-     * 자동 토큰 갱신 시도
+     * 자동 토큰 갱신 시도 (만료 후 강제 갱신)
      */
     private String attemptTokenRefresh(String expiredToken, HttpServletRequest request, HttpServletResponse response) {
         try {
-            log.info("Access Token 자동 갱신 시도");
+            log.info("Access Token 자동 갱신 시도 (만료 후)");
             
             // 1. 만료된 토큰에서 이메일 추출
             String email = jwtTokenProvider.getUserEmailFromExpiredToken(expiredToken);
@@ -140,10 +236,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return null;
             }
             
-            // 2. 사용자 정보 조회
-            UserVO user = userService.findUserVOByEmail(email);
-            if (user == null) {
-                log.warn("사용자를 찾을 수 없음: {}", email);
+            // 2. 사용자 정보 조회 (예외 처리 추가)
+            UserVO user;
+            try {
+                user = userService.findUserVOByEmail(email);
+            } catch (UsernameNotFoundException e) {
+                log.warn("강제 갱신: 사용자를 찾을 수 없음: {} (테스트 환경일 가능성)", email);
                 return null;
             }
             
@@ -169,11 +267,73 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 6. 쿠키에 새 Access Token 설정
             CookieUtil.setAccessTokenCookie(response, newAccessToken);
             
-            log.info("Access Token 자동 갱신 성공: {}", email);
+            log.info("Access Token 자동 갱신 성공 (만료 후): {}", email);
             return newAccessToken;
             
         } catch (Exception e) {
-            log.error("토큰 자동 갱신 중 예외 발생", e);
+            log.error("토큰 자동 갱신 중 예외 발생: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 사전 토큰 갱신 시도 (만료 전)
+     * 실패해도 기존 토큰이 유효하므로 서비스 중단 없음
+     */
+    private String attemptPreemptiveTokenRefresh(String validToken, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            log.info("Access Token 사전 갱신 시도 (만료 {}분 전)", 
+                jwtTokenProvider.getTokenRemainingMinutes(validToken));
+            
+            // 1. 유효한 토큰에서 사용자 정보 추출
+            String email = jwtTokenProvider.getUserPk(validToken);
+            Long userId = jwtTokenProvider.getUserId(validToken);
+            
+            if (email == null || userId == null) {
+                log.warn("사전 갱신: 토큰에서 사용자 정보 추출 실패");
+                return null;
+            }
+            
+            // 2. 사용자 정보 조회 (예외 처리 추가)
+            UserVO user;
+            try {
+                user = userService.findUserVOByEmail(email);
+            } catch (UsernameNotFoundException e) {
+                log.warn("사전 갱신: 사용자를 찾을 수 없음: {} (테스트 환경일 가능성)", email);
+                return null;
+            }
+            
+            // 3. 소셜 로그인 정보에서 Refresh Token 조회
+            SocialLoginsVO socialLogin = userService.findSocialLoginByUserId(user.getUserId());
+            if (socialLogin == null || socialLogin.getRefreshToken() == null) {
+                log.warn("사전 갱신: Refresh Token을 찾을 수 없음: {}", email);
+                return null;
+            }
+            
+            // 4. Refresh Token 유효성 검증
+            if (!jwtTokenProvider.validateToken(socialLogin.getRefreshToken())) {
+                log.warn("사전 갱신: Refresh Token이 만료됨: {}", email);
+                // 사전 갱신에서는 강제 로그아웃 하지 않음 (기존 토큰이 아직 유효)
+                return null;
+            }
+            
+            // 5. 새로운 Access Token 생성
+            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.getIsAdmin());
+            
+            // 6. 쿠키에 새 Access Token 설정
+            CookieUtil.setAccessTokenCookie(response, newAccessToken);
+            
+            // 7. 사전 갱신 표시 헤더 추가 (선택사항)
+            response.setHeader("X-Token-Preemptively-Refreshed", "true");
+            response.setHeader("X-Token-Remaining-Minutes", String.valueOf(jwtTokenProvider.getTokenRemainingMinutes(validToken)));
+            
+            log.info("Access Token 사전 갱신 성공: {} (기존 토큰 {}분 남음)", 
+                email, jwtTokenProvider.getTokenRemainingMinutes(validToken));
+            return newAccessToken;
+            
+        } catch (Exception e) {
+            log.warn("사전 토큰 갱신 중 예외 발생 (기존 토큰으로 계속 진행): {}", e.getMessage());
+            // 사전 갱신 실패는 심각한 문제가 아님 - 기존 토큰으로 계속 진행
             return null;
         }
     }

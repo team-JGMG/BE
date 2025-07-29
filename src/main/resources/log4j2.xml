@@ -24,6 +24,12 @@
 
     <!-- MyBatis 관련 로깅(옵션) -->
     <Logger name="org.mybatis" level="DEBUG" additivity="false">
+
+    <logger name="org.bobj.common.crypto" level="DEBUG" />
+    <logger name="org.bobj.user.service" level="DEBUG" />
+    <logger name="org.springframework.security.oauth2" level="DEBUG" />
+    <logger name="org.mybatis" level="DEBUG" />
+
       <AppenderRef ref="console"/>
     </Logger>
   </Loggers>

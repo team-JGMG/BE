@@ -33,6 +33,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        // ================================
+        // 🚀 개발용 설정 (API 테스트 편의성)
+        // ================================
+        http
+                .cors().configurationSource(corsConfigurationSource())
+                .and()
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests(authorize -> authorize
+                        // 🔓 개발 중 - 모든 API 접근 허용 (JWT 토큰 없어도 OK)
+                        .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler())
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService())
+                        )
+                );
+
+        // JWT 필터는 유지 (토큰이 있으면 인증 처리, 없어도 통과)
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+        
+        /* ================================
+         * 🔒 운영용 보안 설정 (주석 처리)
+         * 배포 시 위의 개발용 설정을 주석처리하고 아래 설정을 활성화하세요
+         * ================================
+         
         http
                 .cors().configurationSource(corsConfigurationSource())
                 .and()
@@ -90,7 +122,8 @@ public class SecurityConfig {
         http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
+        */
+
 
     @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
