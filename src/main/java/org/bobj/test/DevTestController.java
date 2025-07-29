@@ -184,4 +184,89 @@ public class DevTestController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    /**
+     * 🔓 자동 복호화 시스템 테스트 (개발용)
+     */
+    @GetMapping("/test/auto-decrypt/{userId}")
+    public ResponseEntity<Map<String, Object>> testAutoDecryption(@PathVariable Long userId) {
+        try {
+            // 이 API 응답은 ResponseBodyAdvice에 의해 자동으로 복호화됩니다!
+            UserVO user = userService.findUserVOById(userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "🔓 자동 복호화 테스트 - 이 응답의 개인정보는 자동으로 복호화됩니다!");
+            response.put("userId", user.getUserId());
+            response.put("email", user.getEmail());
+            response.put("name", user.getName());           // 🔓 ResponseBodyAdvice가 자동 복호화!
+            response.put("nickname", user.getNickname());   
+            response.put("phone", user.getPhone());         // 🔓 ResponseBodyAdvice가 자동 복호화!
+            response.put("accountNumber", user.getAccountNumber()); // 🔓 ResponseBodyAdvice가 자동 복호화!
+            response.put("bankCode", user.getBankCode());   // 🔓 ResponseBodyAdvice가 자동 복호화!
+            response.put("isAdmin", user.getIsAdmin());
+            response.put("timestamp", LocalDateTime.now());
+            response.put("note", "✨ DB에는 암호화되어 저장되어 있지만, API 응답에서는 복호화되어 나갑니다!");
+            
+            log.info("🔓 자동 복호화 테스트 API 호출됨 - userId: {}, 응답에서 개인정보가 자동 복호화됩니다", userId);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "❌ 자동 복호화 테스트 실패");
+            error.put("error", e.getMessage());
+            error.put("userId", userId);
+            error.put("timestamp", LocalDateTime.now());
+            
+            log.error("❌ 자동 복호화 테스트 실패 - userId: {}", userId, e);
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * 📊 복호화 시스템 상태 확인
+     */
+    @GetMapping("/crypto/status")
+    public ResponseEntity<Map<String, Object>> getCryptoStatus() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("title", "🔓 복호화 시스템 상태");
+        status.put("timestamp", LocalDateTime.now());
+        
+        status.put("responseBodyAdvice", Map.of(
+            "status", "✅ 활성화됨",
+            "description", "모든 API 응답에서 개인정보 자동 복호화",
+            "package", "org.bobj.common.crypto.DecryptionResponseAdvice"
+        ));
+        
+        status.put("supportedTypes", Map.of(
+            "UserResponseDTO", "이름, 전화번호, 계좌번호, 은행코드",
+            "SellerDTO", "판매자 이름, 전화번호",
+            "PropertyDetailDTO", "포함된 판매자 정보",
+            "List<위객체들>", "리스트 형태 객체들",
+            "ApiCommonResponse<위객체들>", "래핑된 응답 객체들"
+        ));
+        
+        status.put("fieldTypes", Map.of(
+            "NAME", "사용자/판매자 이름",
+            "PHONE", "전화번호", 
+            "ACCOUNT_NUMBER", "계좌번호",
+            "BANK_CODE", "은행코드",
+            "SSN", "주민번호 (구현되어 있으나 현재 미사용)"
+        ));
+        
+        status.put("testEndpoints", Map.of(
+            "자동 복호화 테스트", "GET /api/dev/test/auto-decrypt/{userId}",
+            "기존 사용자 조회", "GET /api/dev/users/{userId}",
+            "원본 사용자 API", "GET /api/users/me"
+        ));
+        
+        status.put("howItWorks", Map.of(
+            "1단계", "DB에서 암호화된 상태로 조회",
+            "2단계", "Service/Controller에서는 암호화된 상태로 처리",
+            "3단계", "HTTP 응답 직전에 ResponseBodyAdvice가 자동 복호화",
+            "4단계", "클라이언트는 복호화된 데이터 수신",
+            "장점", "기존 코드 변경 없이 자동 복호화, 보안성 유지"
+        ));
+        
+        return ResponseEntity.ok(status);
+    }
 }

@@ -34,7 +34,7 @@ public class UserResponseDTO {
     @ApiModelProperty(value = "닉네임", example = "길동이", required = true)
     private String nickname;
 
-    @ApiModelProperty(value = "휴대폰 번호", example = "010-1234-5678", required = false)
+    @ApiModelProperty(value = "휴대폰 번호", example = "01012345678", required = false)
     private String phone;
 
     @ApiModelProperty(value = "계좌번호", example = "123456789012", required = false)
