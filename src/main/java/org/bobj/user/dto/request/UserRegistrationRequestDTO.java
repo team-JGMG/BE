@@ -20,7 +20,7 @@ public class UserRegistrationRequestDTO {
     @ApiModelProperty(value = "주민등록번호", example = "901010-1******", required = true)
     private String ssn;
 
-    @ApiModelProperty(value = "휴대폰 번호", example = "010-1234-5678", required = true)
+    @ApiModelProperty(value = "휴대폰 번호", example = "01012345678", required = true)
     private String phone;
 
     @ApiModelProperty(value = "은행 코드", example = "004", required = true)
@@ -49,8 +49,8 @@ public class UserRegistrationRequestDTO {
         }
         
         // 휴대폰 번호 검증
-        if (phone == null || !phone.matches("^01[0-9]\\\\d{7,8}$")) {
-            result.addError("phone", "휴대폰 번호 형식이 올바르지 않습니다 (예: 010-1234-5678)");
+        if (phone == null || !phone.matches("^01[0-9]\\d{7,8}$")) {
+            result.addError("phone", "휴대폰 번호 형식이 올바르지 않습니다 (예: 01012345678)");
         }
         
         // 은행 코드 검증
@@ -68,20 +68,20 @@ public class UserRegistrationRequestDTO {
         return result;
     }
 
-//    /**
-//     * 간단한 유효성 확인
-//     */
-//    public boolean isValid() {
-//        return validate().isValid();
-//    }
-
     /**
      * 민감정보 마스킹 (로깅용)
      */
     public String toMaskedString() {
+        String maskedPhone = null;
+        if (phone != null && phone.length() >= 11) {
+            maskedPhone = phone.substring(0, 3) + "****" + phone.substring(7);
+        } else if (phone != null) {
+            maskedPhone = phone.substring(0, Math.min(3, phone.length())) + "****";
+        }
+        
         return String.format("UserRegistrationRequest{name='%s', phone='%s', bankCode='%s'}",
                 name != null ? name.charAt(0) + "*".repeat(Math.max(0, name.length() - 1)) : null,
-                phone != null ? phone.substring(0, 3) + "-****-" + phone.substring(9) : null,
+                maskedPhone,
                 bankCode);
     }
 
@@ -99,10 +99,6 @@ public class UserRegistrationRequestDTO {
         public boolean isValid() {
             return errors.isEmpty();
         }
-        
-//        public String getFirstError() {
-//            return errors.values().stream().findFirst().orElse(null);
-//        }
         
         public java.util.Map<String, String> getErrors() {
             return errors;
