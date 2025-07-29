@@ -95,6 +95,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = jwtTokenProvider.resolveToken(request);
 
+        // Swagger 요청은 JWT 인증 건너뜀
+        if (path.startsWith("/swagger-ui") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/webjars/") ||
+                path.contains("swagger") ||
+                path.endsWith("favicon.ico")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // ================================
         // 🚀 개발용 설정: 토큰이 없으면 그냥 통과
         // ================================
@@ -175,13 +185,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (jwtTokenProvider.validateToken(token)) {
             // 1. 토큰이 유효한 경우
-            
+
             // 1-1. 사전 갱신 체크 (Access Token만 대상)
             String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
             if ("access".equals(tokenType) && jwtTokenProvider.shouldPreemptivelyRefresh(token)) {
-                log.info("토큰 만료 임박 - 사전 갱신 시도: {} ({}분 후 만료)", 
+                log.info("토큰 만료 임박 - 사전 갱신 시도: {} ({}분 후 만료)",
                     path, jwtTokenProvider.getTokenRemainingMinutes(token));
-                
+
                 String preRefreshedToken = attemptPreemptiveTokenRefresh(token, request, response);
                 if (preRefreshedToken != null) {
                     // 사전 갱신 성공 - 새 토큰으로 처리
@@ -192,7 +202,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.warn("사전 갱신 실패 - 기존 토큰으로 계속 진행");
                 }
             }
-            
+
             // 1-2. 토큰 인증 처리 (기존 토큰 또는 새 토큰)
             if (handleValidToken(token, path, response)) {
                 filterChain.doFilter(request, response);
@@ -228,14 +238,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String attemptTokenRefresh(String expiredToken, HttpServletRequest request, HttpServletResponse response) {
         try {
             log.info("Access Token 자동 갱신 시도 (만료 후)");
-            
+
             // 1. 만료된 토큰에서 이메일 추출
             String email = jwtTokenProvider.getUserEmailFromExpiredToken(expiredToken);
             if (email == null) {
                 log.warn("만료된 토큰에서 이메일 추출 실패");
                 return null;
             }
-            
+
             // 2. 사용자 정보 조회 (예외 처리 추가)
             UserVO user;
             try {
@@ -244,14 +254,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.warn("강제 갱신: 사용자를 찾을 수 없음: {} (테스트 환경일 가능성)", email);
                 return null;
             }
-            
+
             // 3. 소셜 로그인 정보에서 Refresh Token 조회
             SocialLoginsVO socialLogin = userService.findSocialLoginByUserId(user.getUserId());
             if (socialLogin == null || socialLogin.getRefreshToken() == null) {
                 log.warn("Refresh Token을 찾을 수 없음: {}", email);
                 return null;
             }
-            
+
             // 4. Refresh Token 유효성 검증
             if (!jwtTokenProvider.validateToken(socialLogin.getRefreshToken())) {
                 log.warn("Refresh Token이 만료됨: {}", email);
@@ -260,16 +270,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 CookieUtil.deleteAccessTokenCookie(response);
                 return null;
             }
-            
+
             // 5. 새로운 Access Token 생성
             String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.getIsAdmin());
-            
+
             // 6. 쿠키에 새 Access Token 설정
             CookieUtil.setAccessTokenCookie(response, newAccessToken);
-            
+
             log.info("Access Token 자동 갱신 성공 (만료 후): {}", email);
             return newAccessToken;
-            
+
         } catch (Exception e) {
             log.error("토큰 자동 갱신 중 예외 발생: {}", e.getMessage(), e);
             return null;
@@ -282,18 +292,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     private String attemptPreemptiveTokenRefresh(String validToken, HttpServletRequest request, HttpServletResponse response) {
         try {
-            log.info("Access Token 사전 갱신 시도 (만료 {}분 전)", 
+            log.info("Access Token 사전 갱신 시도 (만료 {}분 전)",
                 jwtTokenProvider.getTokenRemainingMinutes(validToken));
-            
+
             // 1. 유효한 토큰에서 사용자 정보 추출
             String email = jwtTokenProvider.getUserPk(validToken);
             Long userId = jwtTokenProvider.getUserId(validToken);
-            
+
             if (email == null || userId == null) {
                 log.warn("사전 갱신: 토큰에서 사용자 정보 추출 실패");
                 return null;
             }
-            
+
             // 2. 사용자 정보 조회 (예외 처리 추가)
             UserVO user;
             try {
@@ -302,35 +312,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.warn("사전 갱신: 사용자를 찾을 수 없음: {} (테스트 환경일 가능성)", email);
                 return null;
             }
-            
+
             // 3. 소셜 로그인 정보에서 Refresh Token 조회
             SocialLoginsVO socialLogin = userService.findSocialLoginByUserId(user.getUserId());
             if (socialLogin == null || socialLogin.getRefreshToken() == null) {
                 log.warn("사전 갱신: Refresh Token을 찾을 수 없음: {}", email);
                 return null;
             }
-            
+
             // 4. Refresh Token 유효성 검증
             if (!jwtTokenProvider.validateToken(socialLogin.getRefreshToken())) {
                 log.warn("사전 갱신: Refresh Token이 만료됨: {}", email);
                 // 사전 갱신에서는 강제 로그아웃 하지 않음 (기존 토큰이 아직 유효)
                 return null;
             }
-            
+
             // 5. 새로운 Access Token 생성
             String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.getIsAdmin());
-            
+
             // 6. 쿠키에 새 Access Token 설정
             CookieUtil.setAccessTokenCookie(response, newAccessToken);
-            
+
             // 7. 사전 갱신 표시 헤더 추가 (선택사항)
             response.setHeader("X-Token-Preemptively-Refreshed", "true");
             response.setHeader("X-Token-Remaining-Minutes", String.valueOf(jwtTokenProvider.getTokenRemainingMinutes(validToken)));
-            
-            log.info("Access Token 사전 갱신 성공: {} (기존 토큰 {}분 남음)", 
+
+            log.info("Access Token 사전 갱신 성공: {} (기존 토큰 {}분 남음)",
                 email, jwtTokenProvider.getTokenRemainingMinutes(validToken));
             return newAccessToken;
-            
+
         } catch (Exception e) {
             log.warn("사전 토큰 갱신 중 예외 발생 (기존 토큰으로 계속 진행): {}", e.getMessage());
             // 사전 갱신 실패는 심각한 문제가 아님 - 기존 토큰으로 계속 진행
