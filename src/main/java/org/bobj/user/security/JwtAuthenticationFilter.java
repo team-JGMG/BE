@@ -143,7 +143,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
             } else {
                 log.warn("개발 모드: 토큰 처리 실패했지만 통과시킴: {}", path);
-                filterChain.doFilter(request, response);  // 🚀 개발용: 실패해도 통과
+//                filterChain.doFilter(request, response);  // 🚀 개발용: 실패해도 통과
             }
             return;
 

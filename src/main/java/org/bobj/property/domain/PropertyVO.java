@@ -51,6 +51,8 @@ public class PropertyVO {
     private Integer floor;
     private String description;
 
+    private String rawdCd; //법정동코드
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime soldAt;

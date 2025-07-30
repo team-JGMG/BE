@@ -136,13 +136,13 @@
             usage_district, land_area, building_area, total_floor_area_property,
             total_floor_area_building, basement_floors, ground_floors,
             approval_date, official_land_price, unit_price_per_pyeong,
-            property_type, room_count, bathroom_count, floor, description
+            property_type, room_count, bathroom_count, floor, description, rawd_cd
         ) VALUES (
                      #{userId}, #{title}, #{address}, #{area}, #{price}, #{postingPeriod},
                      #{usageDistrict}, #{landArea}, #{buildingArea}, #{totalFloorAreaProperty},
                      #{totalFloorAreaBuilding}, #{basementFloors}, #{groundFloors},
                      #{approvalDate}, #{officialLandPrice}, #{unitPricePerPyeong},
-                     #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}
+                     #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}, #{rawdCd}
                  )
     </insert>
 </mapper>
