@@ -103,7 +103,7 @@ public class DevTestController {
             response.put("name", user.getName());           // 🔓 복호화된 이름
             response.put("nickname", user.getNickname());   // 평문 닉네임
             response.put("phone", user.getPhone());         // 🔓 복호화된 휴대폰
-            response.put("isAdmin", user.getIsAdmin());
+            response.put("isAdmin", user.isAdmin());
             response.put("timestamp", LocalDateTime.now());
             
             log.info("개발 모드: 사용자 정보 조회 성공 - userId: {}, name: {}", userId, user.getName());
@@ -203,7 +203,7 @@ public class DevTestController {
             response.put("phone", user.getPhone());         // 🔓 ResponseBodyAdvice가 자동 복호화!
             response.put("accountNumber", user.getAccountNumber()); // 🔓 ResponseBodyAdvice가 자동 복호화!
             response.put("bankCode", user.getBankCode());   // 🔓 ResponseBodyAdvice가 자동 복호화!
-            response.put("isAdmin", user.getIsAdmin());
+            response.put("isAdmin", user.isAdmin());
             response.put("timestamp", LocalDateTime.now());
             response.put("note", "✨ DB에는 암호화되어 저장되어 있지만, API 응답에서는 복호화되어 나갑니다!");
             

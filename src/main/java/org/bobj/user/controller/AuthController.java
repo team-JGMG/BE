@@ -12,6 +12,7 @@ import org.bobj.user.dto.response.SimpleResponseDTO;
 import org.bobj.user.security.JwtTokenProvider;
 import org.bobj.user.service.UserService;
 import org.bobj.user.util.CookieUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
@@ -30,13 +31,16 @@ public class AuthController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
+    @Value("${server.domain}")
+    private String serverDomain;
+
     /**
      * 카카오 로그인 시작 API
      * 클라이언트가 이 API를 호출하면 카카오 로그인 URL을 받고,
-     * 로그인 후 pre-auth 토큰을 받아서 추가 단계를 진행해야 합니다.
+     * 로그인 후 pre-auth or access 토큰을 받아서 추가 단계를 진행해야 합니다.
      */
     @GetMapping("/login/kakao")
-    @ApiOperation(value = "카카오 로그인 시작", notes = "카카오 로그인 URL과 로그인 플로우 안내를 제공합니다. 로그인 완료 시 pre-auth 토큰이 HttpOnly 쿠키로 설정됩니다.")
+    @ApiOperation(value = "카카오 로그인 시작", notes = "카카오 로그인 URL과 로그인 플로우 안내를 제공합니다. 로그인 완료 시 토큰이 HttpOnly 쿠키로 설정됩니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "카카오 로그인 URL 제공 성공", response = SimpleResponseDTO.class),
             @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
@@ -51,105 +55,23 @@ public class AuthController {
                     "```", response = ErrorResponse.class)
     })
     public ResponseEntity<SimpleResponseDTO> startKakaoLogin() {
-        String kakaoLoginUrl = "http://localhost:8080/oauth2/authorization/kakao";
+        String kakaoLoginUrl = serverDomain + "/oauth2/authorization/kakao";
         
         Map<String, Object> loginData = Map.of(
                 "loginUrl", kakaoLoginUrl,
                 "flow", Map.of(
                         "step1", "카카오 로그인 완료 후 pre-auth 토큰이 HttpOnly 쿠키로 설정됩니다.",
-                        "step2", "쿠키의 pre-auth 토큰으로 /api/auth/login/callback API를 호출해서 사용자 존재 여부를 확인합니다.",
-                        "step3a", "기존 사용자면 바로 최종 토큰을 받고 pre-auth 쿠키가 삭제됩니다.",
-                        "step3b", "신규 사용자면 추가 정보 입력 후 /api/auth/signup API로 최종 회원가입 시 pre-auth 쿠키가 삭제됩니다."
+                        "step2a", "기존 사용자면 바로 최종 토큰을 받습니다.",
+                        "step2b", "신규 사용자면 추가 정보 입력 후 /api/auth/signup API로 최종 회원가입 시 pre-auth 쿠키가 삭제되고 최종 토큰 발급."
                 ),
-                "callbackInfo", "로그인 완료 시 " + System.getProperty("custom.oauth2.redirect-uri", "http://localhost:8080/auth/callback") +
+                "callbackInfo", "로그인 완료 시 " + System.getProperty("custom.oauth2.redirect-uri", "http://localhost:5173/auth/callback") +
                                "?status=PRE_AUTH 형태로 리다이렉트 (토큰은 쿠키에 있음)"
         );
         
         return ResponseEntity.ok(SimpleResponseDTO.success("카카오 로그인 URL을 제공합니다.", loginData));
     }
 
-    @GetMapping("/login/callback")
-    @ApiOperation(value = "OAuth 콜백 처리", notes = "카카오 로그인 후 HttpOnly 쿠키의 pre-auth 토큰으로 사용자 존재 여부 확인 및 로그인 처리를 수행합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "기존 사용자 로그인 성공", response = AuthResponseDTO.class),
-            @ApiResponse(code = 200, message = "신규 사용자 감지 (추가 정보 입력 필요)", response = SimpleResponseDTO.class),
-            @ApiResponse(code = 401, message = "유효하지 않은 토큰\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH002\",\n" +
-                    "  \"message\": \"유효하지 않은 토큰입니다.\",\n" +
-                    "  \"path\": \"/api/auth/login/callback\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "소셜 로그인 정보 불일치\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 404,\n" +
-                    "  \"code\": \"AUTH003\",\n" +
-                    "  \"message\": \"해당 소셜 로그인 정보를 찾을 수 없습니다.\",\n" +
-                    "  \"path\": \"/api/auth/login/callback\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH004\",\n" +
-                    "  \"message\": \"OAuth 처리 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/login/callback\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class)
-    })
 
-    public ResponseEntity<?> checkUserExist(HttpServletRequest request, HttpServletResponse response) {
-        log.info("=== OAuth Callback 시작 ===");
-        
-        String token = jwtTokenProvider.resolveToken(request);
-        if (token == null || !jwtTokenProvider.validateToken(token)) {
-            log.warn("유효하지 않은 토큰으로 요청");
-            return ResponseEntity.status(401).body(SimpleResponseDTO.error("유효하지 않은 토큰입니다."));
-        }
-
-        Claims claims = jwtTokenProvider.getClaims(token);
-        String email = claims.getSubject();
-        String provider = claims.get("provider", String.class);
-        String providerId = claims.get("providerId", String.class);
-        
-        log.info("토큰에서 추출한 정보 - email: {}, provider: {}, providerId: {}", email, provider, providerId);
-
-        try {
-            // 이메일로 사용자 존재 확인
-            log.info("이메일로 사용자 조회 시작: {}", email);
-            UserVO user = userService.findUserVOByEmail(email);
-            log.info("사용자 조회 성공 - userId: {}, nickname: {}", user.getUserId(), user.getNickname());
-            
-            // 소셜 로그인 정보도 함께 확인하고 기존 사용자 로그인 처리
-            log.info("소셜 로그인 처리 시작 - provider: {}, providerId: {}", provider, providerId);
-            AuthResponseDTO authResponseDTO = userService.loginExistingSocialUser(provider, providerId);
-            // Access Token을 쿠키로 설정
-            CookieUtil.setAccessTokenCookie(response, authResponseDTO.getAccessToken());
-            // Pre-Auth Token 쿠키 삭제 (일회성 사용 완료)
-            CookieUtil.deletePreAuthTokenCookie(response);
-            
-            log.info("소셜 로그인 처리 성공 - 토큰 발급 완료");
-
-            return ResponseEntity.ok(authResponseDTO);
-        } catch (UsernameNotFoundException e) {
-            log.info("신규 사용자 감지 - email: {}", email);
-            return ResponseEntity.ok(SimpleResponseDTO.success("신규 사용자입니다. 추가 정보를 입력해주세요.", 
-                Map.of("exists", false, "email", email)));
-        } catch (Exception e) {
-            log.error("OAuth Callback 처리 중 예외 발생 - email: {}, provider: {}, providerId: {}", 
-                email, provider, providerId, e);
-            // 오류 발생시 pre-auth 토큰 삭제
-            CookieUtil.deletePreAuthTokenCookie(response);
-            throw e; // GlobalExceptionHandler가 처리하도록 다시 던짐
-        }
-    }
 
     @PostMapping("/signup")
     @ApiOperation(value = "OAuth 회원가입 완료", notes = "HttpOnly 쿠키의 pre-auth 토큰과 추가 정보를 받아 최종 회원가입을 완료합니다. 완료 후 pre-auth 쿠키가 삭제되고 access 토큰 쿠키가 설정됩니다.")
