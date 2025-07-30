@@ -78,15 +78,6 @@
     WHERE f.funding_id = #{fundingId}
   </select>
 
-<!--  &lt;!&ndash; 펀딩 참여 &ndash;&gt;-->
-<!--  <insert id="insertFundingOrder" parameterType="FundingOrderVO">-->
-<!--    INSERT INTO funding_order (-->
-<!--      user_id, funding_id, share_count, status, created_at, order_price-->
-<!--    ) VALUES (-->
-<!--               #{userId}, #{fundingId}, #{shareCount}, #{status}, #{createdAt}, #{orderPrice}-->
-<!--             )-->
-<!--  </insert>-->
-
   <!-- 펀딩 생성 -->
   <insert id="insertFunding" parameterType="FundingVO">
     INSERT INTO fundings (
@@ -125,15 +116,22 @@
     WHERE f.funding_id = #{fundingId}
   </update>
 
-<!--  &lt;!&ndash; 사용자의 펀딩 참여 내역 조회 &ndash;&gt;-->
-<!--  <select id="findOrdersByUserIdAndFundingId" resultType="FundingOrderVO">-->
-<!--    SELECT *-->
-<!--    FROM funding_order-->
-<!--    WHERE user_id = #{userId}-->
-<!--      AND funding_id = #{fundingId}-->
-<!--  </select>-->
-  <!-- 매물 목록 리스트에 들어갈 전체 데이터 조회 -->
-  <select id="findTotal" resultType="org.bobj.funding.dto.FundingTotalResponseDTO">
+  <resultMap id="FundingTotalResultMap" type="org.bobj.funding.dto.FundingTotalResponseDTO">
+    <id property="fundingId" column="funding_id"/>
+    <result property="propertyId" column="property_id"/>
+    <result property="title" column="title"/>
+    <result property="address" column="address"/>
+    <result property="targetAmount" column="target_amount"/>
+    <result property="fundingRate" column="fundingRate"/>
+    <result property="daysLeft" column="daysLeft"/>
+
+    <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
+      <result property="photoUrl" column="thumbnail_url"/>
+    </association>
+  </resultMap>
+
+  <!-- 펀딩 모집 페이지에서 펀딩 리스트 조회 -->
+  <select id="findTotal" resultMap="FundingTotalResultMap">
     SELECT
       f.funding_id,
       f.property_id,
@@ -141,7 +139,7 @@
       p.address,
       f.target_amount,
       FLOOR((f.current_amount / f.target_amount) * 100) AS fundingRate,
-      DATEDIFF(DATE(NOW()),DATE(f.funding_end_date)) AS daysLeft
+      DATEDIFF(DATE(f.funding_end_date),DATE(NOW())) AS daysLeft,
       (SELECT photo_url
       FROM property_photos
       WHERE property_id = p.property_id
@@ -163,7 +161,7 @@
       </choose>
     <choose>
       <when test="sort == 'timeLeft'">
-        ORDER BY DATEDIFF(DATE(NOW()),DATE(f.funding_end_date)) ASC
+        ORDER BY DATEDIFF(DATE(f.funding_end_date),DATE(NOW())) ASC
       </when>
       <when test="sort == 'rate'">
         ORDER BY (f.current_amount / f.target_amount) DESC

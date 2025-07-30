@@ -3,27 +3,53 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.funding.mapper.FundingOrderMapper">
-  <!-- 주문 단건 조회 -->
-  <select id="findById" resultType="FundingOrderVO">
-    SELECT *
-    FROM funding_order
-    WHERE order_id = #{orderId}
+  <!-- 내가 투자한 주문 리스트 -->
+  <select id="findFundingOrdersByUserId" resultType="org.bobj.funding.dto.FundingOrderUserResponseDTO">
+    SELECT
+        p.property_id AS property_id,
+        p.title,
+        f.funding_id AS funding_id,
+        f.target_amount,
+        f.current_amount,
+        FLOOR((f.current_amount / f.target_amount) * 100) AS achievement_rate,
+        (f.target_amount - f.current_amount) / 5000 AS remaining_shares,
+        (f.target_amount - f.current_amount) AS remaining_amount,
+        fo.share_count,
+        (SELECT photo_url
+        FROM property_photos
+        WHERE property_id = p.property_id
+        ORDER BY created_at ASC
+        LIMIT 1) AS thumbnail_url
+    FROM funding_order fo
+           JOIN fundings f ON fo.funding_id = f.funding_id
+           JOIN properties p ON f.property_id = p.property_id
+    WHERE fo.user_id = #{userId}
+    <choose>
+      <when test="status == 'PENDING'">
+        AND fo.status = 'PENDING'
+      </when>
+      <when test="status == 'REFUNDED'">
+        AND fo.status = 'REFUNDED'
+        AND f.status = 'FAILED'
+      </when>
+    </choose>
+    ORDER BY fo.created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
   </select>
-
-  <!-- 특정 펀딩에 대한 모든 주문 조회 -->
-  <select id="findByFundingId" resultType="FundingOrderVO">
-    SELECT *
-    FROM funding_order
-    WHERE funding_id = #{fundingId}
-  </select>
-
-  <!-- 특정 유저의 특정 펀딩 참여 내역 조회 -->
-  <select id="findByUserIdAndFundingId" resultType="FundingOrderVO">
-    SELECT *
-    FROM funding_order
-    WHERE user_id = #{userId}
-      AND funding_id = #{fundingId}
-  </select>
+  <resultMap id="FundingOrderUserMap" type="org.bobj.funding.dto.FundingOrderUserResponseDTO">
+    <id property="propertyId" column="property_id"/>
+    <id property="fundingId" column="funding_id"/>
+    <result property="title" column="title"/>
+    <result property="shareCount" column="share_count"/>
+    <result property="targetAmount" column="target_amount"/>
+    <result property="currentAmount" column="current_amount"/>
+    <result property="achievementRate" column="achievement_rate"/>
+    <result property="remainingShares" column="remaining_shares"/>
+    <result property="remainingAmount" column="remaining_amount"/>
+    <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
+      <result property="photoUrl" column="thumbnail_url"/>
+    </association>
+  </resultMap>
 
   <!-- 주문 삽입 -->
   <insert id="insertFundingOrder" parameterType="FundingOrderVO">

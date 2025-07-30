@@ -2,7 +2,10 @@ package org.bobj.property.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.bobj.property.domain.PropertyStatus;
 import org.bobj.property.domain.PropertyVO;
+import org.bobj.property.dto.PropertySoldResponseDTO;
+import org.bobj.property.dto.PropertyUserResponseDTO;
 
 import java.util.List;
 
@@ -11,10 +14,17 @@ public interface PropertyMapper {
 
     PropertyVO findByPropertyId(@Param("propertyId") Long propertyId);
 
-    List<PropertyVO> findByUserId(@Param("userId") Long userId);
+    List<PropertyUserResponseDTO> findByUserId(
+            @Param("userId") Long userId,
+            @Param("status") String status,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
+
+    List<PropertySoldResponseDTO> findSold();
 
     List<PropertyVO> findTotal(
-            @Param("status") String status,
+            @Param("category") String category,
             @Param("offset") int offset,
             @Param("limit") int limit
     );
