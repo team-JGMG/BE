@@ -272,7 +272,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             // 5. 새로운 Access Token 생성
-            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.getIsAdmin());
+            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.isAdmin());
 
             // 6. 쿠키에 새 Access Token 설정
             CookieUtil.setAccessTokenCookie(response, newAccessToken);
@@ -328,7 +328,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             // 5. 새로운 Access Token 생성
-            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.getIsAdmin());
+            String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.isAdmin());
 
             // 6. 쿠키에 새 Access Token 설정
             CookieUtil.setAccessTokenCookie(response, newAccessToken);
