@@ -69,5 +69,6 @@ jobs:
             -e KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}" \
             -e OAUTH_REDIRECT_URI="${{ secrets.OAUTH_REDIRECT_URI }}" \
             -e FRONTEND_REDIRECT_URI="${{ secrets.FRONTEND_REDIRECT_URI }}" \
+            -e SERVER_DOMAIN="${{ secrets.SERVER_DOMAIN }}" \
             yyssjjj/bobj:latest
           EOF
