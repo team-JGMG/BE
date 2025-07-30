@@ -127,7 +127,7 @@ public class SecurityConfig {
 
     @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
-        return new OAuth2LoginSuccessHandler(jwtTokenProvider);
+        return new OAuth2LoginSuccessHandler(jwtTokenProvider, userService);
     }
 
     @Bean
@@ -151,11 +151,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Vue3 개발 환경 도메인 설정
+        // 개발 환경 도메인
         configuration.addAllowedOrigin("http://localhost:3000");    // Vue3 + Vite 대안 포트
         configuration.addAllowedOrigin("http://localhost:5173");    // Vue3 + Vite 기본 포트
         configuration.addAllowedOrigin("http://localhost:8080");    // Vue3 + Vue CLI 기본 포트
-        configuration.addAllowedOrigin("http://localhost:8081");    // 현재 프론트엔드 포트 (기존 설정)
+        configuration.addAllowedOrigin("http://localhost:8081");    // 기존 프론트엔드 포트
+        
+        // 배포 환경 도메인
+        configuration.addAllowedOrigin("https://half-to-half.site");        // 백엔드 배포 URL
+        configuration.addAllowedOrigin("https://half-to-half.vercel.app");  // 프론트엔드 배포 URL
 
         // HTTP 메서드 허용 설정
         configuration.addAllowedMethod("GET");       // 데이터 조회 (로그인 시작, 콜백 등)
