@@ -7,7 +7,7 @@
     <update id="update">
         UPDATE properties set
                               status = #{status},
-                              update_date = now()
+                              updated_at = now()
         where property_id = #{propertyId}
     </update>
     <select id="findByPropertyId" parameterType="long" resultMap="PropertyResultMap">
@@ -95,7 +95,25 @@
         ORDER BY created_at ASC
         LIMIT 1) AS thumbnail_url
         FROM properties p
-        WHERE p.status = #{status}
+        <where>
+            <choose>
+                <when test="category == 'pending'">
+                    p.status = 'PENDING'
+                </when>
+                <when test="category == 'approved'">
+                    p.status = 'APPROVED'
+                </when>
+                <when test="category == 'failed'">
+                    p.status = 'APPROVED'
+                    AND EXISTS (
+                    SELECT 1
+                    FROM fundings f
+                    WHERE f.property_id = p.property_id
+                    AND f.status = 'FAILED'
+                    )
+                </when>
+            </choose>
+        </where>
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
@@ -112,22 +130,67 @@
 
     <select id="findByUserId" resultMap="PropertyUserMap">
         SELECT
-            p.*,
+            p.property_id AS property_id,
+            p.title,
+            p.price,
+            p.status,
+            (SELECT photo_url
+             FROM property_photos
+             WHERE property_id = p.property_id
+             ORDER BY created_at ASC
+             LIMIT 1) AS thumbnail_url,
+            f.target_amount,
+            f.current_amount
+        FROM properties p
+                 LEFT JOIN fundings f ON f.property_id = p.property_id
+        WHERE p.user_id = #{userId}
+        <choose>
+            <when test="status == 'PENDING'">
+                AND p.status = 'PENDING'
+            </when>
+            <when test="status == 'REJECTED'">
+                AND p.status = 'REJECTED'
+            </when>
+            <when test="status == 'APPROVED'">
+                AND p.status = 'APPROVED'
+                AND f.status = 'FUNDING'
+            </when>
+            <when test="status == 'SOLD'">
+                AND (p.status = 'SOLD' OR (p.status = 'APPROVED' AND f.status = 'ENDED'))
+            </when>
+        </choose>
+        ORDER BY p.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <resultMap id="PropertyUserMap" type="org.bobj.property.dto.PropertyUserResponseDTO">
+        <id property="propertyId" column="property_id"/>
+        <result property="title" column="title"/>
+        <result property="price" column="price"/>
+        <result property="status" column="status"/>
+        <result property="targetAmount" column="target_amount"/>
+        <result property="currentAmount" column="current_amount"/>
+        <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
+            <result property="photoUrl" column="thumbnail_url"/>
+        </association>
+    </resultMap>
+
+    <select id="findSold" resultMap="PropertySoldMap">
+        SELECT
+            p.property_id,
             (SELECT photo_url
              FROM property_photos
              WHERE property_id = p.property_id
              ORDER BY created_at ASC
              LIMIT 1) AS thumbnail_url
         FROM properties p
-        WHERE p.user_id = #{userId}
-          AND p.status != 'REJECTED';
+        WHERE p.status = 'SOLD'
+        ORDER BY p.sold_at DESC
     </select>
-    <resultMap id="PropertyUserMap" type="org.bobj.property.domain.PropertyVO">
+    <resultMap id="PropertySoldMap" type="org.bobj.property.dto.PropertySoldResponseDTO">
         <id property="propertyId" column="property_id"/>
-        <result property="title" column="title"/>
-        <result property="price" column="price"/>
-        <result property="status" column="status"/>
-        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
+            <result property="photoUrl" column="thumbnail_url"/>
+        </association>
     </resultMap>
 
     <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO">

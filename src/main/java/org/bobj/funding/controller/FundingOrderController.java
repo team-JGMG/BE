@@ -3,11 +3,14 @@ package org.bobj.funding.controller;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.dto.FundingOrderRequestDTO;
+import org.bobj.funding.dto.FundingOrderUserResponseDTO;
 import org.bobj.funding.service.FundingOrderService;
+import org.bobj.property.dto.PropertyUserResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,5 +55,28 @@ public class FundingOrderController {
             @RequestParam BigDecimal orderPrice) {
         fundingOrderService.refundFundingOrder(orderId, fundingId, orderPrice);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(null));
+    }
+
+    @GetMapping("/{userId}")
+    @ApiOperation(value = "사용자의 투자 주문 목록 조회", notes = "주문 ID, Status에 따른 투자 주문 목록을 조회합니다. (무한스크롤 구현)")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "path"),
+            @ApiImplicitParam(name = "status", value = "주문 상태(pending -> 대기중, refunded -> 기간 만료(펀딩 실패)", defaultValue = "pending" ,dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
+            @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "사용자의 투자 주문 목록 조회 성공", response = FundingOrderUserResponseDTO.class, responseContainer = "CustomSlice"),
+            @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+    })
+    public ResponseEntity<ApiCommonResponse<CustomSlice<FundingOrderUserResponseDTO>>> getFundingOrderUsers(
+            @PathVariable @ApiParam(value = "사용자 ID", required = true) Long userId,
+            @RequestParam String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        CustomSlice<FundingOrderUserResponseDTO> response = fundingOrderService.getFundingOrderUsers(userId, status, page, size);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }
 }

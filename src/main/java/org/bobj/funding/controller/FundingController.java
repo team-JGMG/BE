@@ -38,10 +38,10 @@ public class FundingController {
     }
 
     @GetMapping
-    @ApiOperation(value= "펀딩 목록 조회", notes = "카테고리 필터, 정렬 필터에 따른 펀딩 목록을 조회합니다.(무한스크롤 구현)")
+    @ApiOperation(value= "펀딩 목록 조회", notes = "[펀딩 모집 페이지]카테고리 필터, 정렬 필터에 따른 펀딩 목록을 조회합니다.(무한스크롤 구현)")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "category", value = "카테고리 필터명", defaultValue = "funding", dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "sort", value = "정렬 필터명", defaultValue = "date" ,dataType = "string", paramType = "query"),
+            @ApiImplicitParam(name = "category", value = "카테고리 필터명(funding -> 모집중 ,ended -> 펀딩 완료 ,sold -> 매각 완료)", defaultValue = "funding", dataType = "string", paramType = "query"),
+            @ApiImplicitParam(name = "sort", value = "정렬 필터명(timeLeft -> 남은 시간 ,rate -> 모집률, 디폴트는 등록일순)", defaultValue = "date" ,dataType = "string", paramType = "query"),
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
     })
@@ -60,7 +60,7 @@ public class FundingController {
     }
 
     @GetMapping("/ended")
-    @ApiOperation(value="성공된 펀딩 목록 조회" , notes = "성공한 펀딩 목록을 조회합니다. (무한 스크롤 구현)")
+    @ApiOperation(value="성공된 펀딩 목록 조회" , notes = "[매물 거래 페이지]성공한 펀딩 목록을 조회합니다. (무한 스크롤 구현)")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")

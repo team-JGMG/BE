@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bobj.funding.domain.FundingOrderVO;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,6 +28,7 @@ public class FundingOrderRequestDTO {
                 .userId(userId)
                 .fundingId(fundingId)
                 .shareCount(shareCount)
+                .orderPrice(BigDecimal.valueOf(shareCount * 5000L))
                 .build();
     }
 }
