@@ -3,6 +3,7 @@ package org.bobj.orderbook.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.bobj.funding.domain.FundingVO;
+import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.order.domain.OrderType;
 import org.bobj.order.domain.OrderVO;
@@ -43,7 +44,7 @@ public class OrderBookServiceImpl implements OrderBookService{
     public OrderBookResponseDTO getOrderBookByFundingId(Long fundingId) {
 
         //1. 펀딩 정보 조회
-        FundingVO funding = Optional.ofNullable(fundingMapper.findFundingById(fundingId)) // Mapper 사용
+        FundingDetailResponseDTO funding = Optional.ofNullable(fundingMapper.findFundingById(fundingId)) // Mapper 사용
                 .orElseThrow(() -> new IllegalArgumentException("funding id에 대한 펀딩이 존재하지 않습니다."));
 
         // 건물명 조회
