@@ -6,7 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.payment.dto.VerifyRequestDto;
-import org.bobj.payment.service.PaymentService;
+//import org.bobj.payment.service.PaymentService;
 import org.bobj.point.domain.PointChargeRequestVO;
 import org.bobj.point.service.PointChargeRequestService;
 import org.bobj.point.util.MerchantUidGenerator;
@@ -24,7 +24,7 @@ import java.security.Principal;
 public class PointChargeRequestController {
 
     private final PointChargeRequestService pointChargeRequestService;
-    private final PaymentService paymentService;
+//    private final PaymentService paymentService;
 
     @PostMapping("/charge")
     @ApiOperation(value = "포인트 충전 요청", notes = "사용자가 지정한 금액으로 포인트 충전 요청을 생성합니다.")
@@ -78,7 +78,7 @@ public class PointChargeRequestController {
         Long userId = Long.parseLong(principal.getName());
         log.info("결제 검증 요청: userId={}, impUid={}", userId, requestDto.getImpUid());
 
-        paymentService.verifyPayment(userId, requestDto);
+//        paymentService.verifyPayment(userId, requestDto);
 
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("포인트 충전 성공"));
     }
