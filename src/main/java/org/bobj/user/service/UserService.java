@@ -113,13 +113,14 @@ public class UserService {
         newUser.setPhone(dto.getPhone());
         newUser.setBankCode(dto.getBankCode());
         newUser.setAccountNumber(dto.getAccountNumber());
+        newUser.setAdmin(false); // 신규 회원은 기본적으로 일반 사용자
 
         userMapper.saveUser(newUser);
         log.info("USERS 테이블에 신규 사용자 저장 완료. userId: {}", newUser.getUserId());
 
         saveNewSocialLogin(newUser.getUserId(), provider, providerId, preAuthClaims);
 
-        String finalAccessToken = jwtTokenProvider.createAccessToken(newUser.getEmail(), newUser.getUserId(), newUser.getIsAdmin());
+        String finalAccessToken = jwtTokenProvider.createAccessToken(newUser.getEmail(), newUser.getUserId(), newUser.isAdmin());
         String finalRefreshToken = jwtTokenProvider.createRefreshToken(newUser.getEmail());
         // (선택) 발급된 Refresh Token을 DB에 바로 저장
         SocialLoginsVO savedSocialLogin = findSocialLoginByProviderAndProviderId(provider, providerId).get();
@@ -127,7 +128,7 @@ public class UserService {
         userMapper.updateRefreshToken(savedSocialLogin);
 
         log.info("최종 인증 토큰 발급 완료. email: {}", newUser.getEmail());
-        return new AuthResponseDTO(finalAccessToken, finalRefreshToken, newUser.getUserId(), newUser.getIsAdmin());    }
+        return new AuthResponseDTO(finalAccessToken, finalRefreshToken, newUser.getUserId(), newUser.isAdmin());    }
 
     private void saveNewSocialLogin(Long userId, String provider, String providerId, Claims attributes) {
         try {
@@ -214,10 +215,10 @@ public class UserService {
         }
         
         // 새로운 Access Token 발급
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getUserId(), user.getIsAdmin());
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getUserId(), user.isAdmin());
         
         log.info("토큰 갱신 성공: {}", email);
-        return new AuthResponseDTO(newAccessToken, socialLogin.getRefreshToken(), user.getUserId(), user.getIsAdmin());
+        return new AuthResponseDTO(newAccessToken, socialLogin.getRefreshToken(), user.getUserId(), user.isAdmin());
     }
 
     /**
