@@ -1,4 +1,4 @@
-package org.example.config;
+package org.bobj.config;
 
 import static org.junit.jupiter.api.Assertions.*;
 

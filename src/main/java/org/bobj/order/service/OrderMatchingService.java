@@ -5,6 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderType;
 import org.bobj.order.mapper.OrderMapper;
+import org.bobj.orderbook.service.OrderBookService;
+import org.bobj.orderbook.service.OrderBookWebSocketService;
 import org.bobj.point.domain.PointVO;
 import org.bobj.point.service.PointService;
 import org.bobj.share.domain.ShareVO;
@@ -26,6 +28,9 @@ public class OrderMatchingService {
     private final TradeMapper tradeMapper;
     private final ShareMapper shareMapper;
     private final PointService pointService;
+
+    private final OrderBookService orderBookService;
+    private final OrderBookWebSocketService orderBookWebSocketService;
 
     @Transactional
     public void processOrderMatching(OrderVO newOrder) {
@@ -116,6 +121,9 @@ public class OrderMatchingService {
             // 매도자 포인트 업데이트
             processSellTradeAssets(sellerUserId, newOrder.getFundingId(), tradeCount, actualTradePrice);
         }
+
+        // 모든 체결 처리 후 최종 호가창 업데이트를 웹소켓으로 푸시
+        orderBookWebSocketService.publishOrderBookUpdate(newOrder.getFundingId());
     }
 
     // 매수자 포인트 업데이트
