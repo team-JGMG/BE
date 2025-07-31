@@ -10,16 +10,23 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Grant permission for gradlew
         run: chmod +x ./gradlew
+
+      - name: Inject application.properties
+        run: |
+          mkdir -p src/main/resources
+          cat <<EOF > src/main/resources/application.properties
+          ${{ secrets.APP_PROPERTIES }}
+          EOF
 
       - name: Build WAR file (Skip tests)
         run: ./gradlew build -x test
@@ -51,24 +58,13 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy Docker container to EC2
+      - name: Deploy with docker-compose (from /home/ubuntu/app)
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-          docker pull yyssjjj/bobj:latest
-          docker stop bobj || true
-          docker rm bobj || true
-          docker run -d \
-            --name bobj \
-            -p 8080:8080 \
-            -e DB_URL="${{ secrets.DB_URL }}" \
-            -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
-            -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
-            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            -e CRYPTO_MASTER_KEY="${{ secrets.CRYPTO_MASTER_KEY }}\" \
-            -e KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}" \
-            -e KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}" \
-            -e OAUTH_REDIRECT_URI="${{ secrets.OAUTH_REDIRECT_URI }}" \
-            -e FRONTEND_REDIRECT_URI="${{ secrets.FRONTEND_REDIRECT_URI }}" \
-            -e SERVER_DOMAIN="${{ secrets.SERVER_DOMAIN }}" \
-            yyssjjj/bobj:latest
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} <<EOF
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          cd /home/ubuntu/app
+          docker compose down || true
+          docker compose pull
+          docker compose up -d
+          docker compose ps
           EOF
