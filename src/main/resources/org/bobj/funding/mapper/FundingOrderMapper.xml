@@ -3,6 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.funding.mapper.FundingOrderMapper">
+
   <!-- 내가 투자한 주문 리스트 -->
   <select id="findFundingOrdersByUserId" resultType="org.bobj.funding.dto.FundingOrderUserResponseDTO">
     SELECT
@@ -51,13 +52,11 @@
     </association>
   </resultMap>
 
-  <!-- 주문 삽입 -->
-  <insert id="insertFundingOrder" parameterType="FundingOrderVO">
+  <!-- 펀딩 주문 생성 -->
+  <insert id="insertFundingOrder">
     INSERT INTO funding_order (
       user_id, funding_id, share_count, order_price
-    ) VALUES (
-               #{userId}, #{fundingId}, #{shareCount}, #{shareCount} * 5000
-             )
+    ) VALUES (#{userId}, #{fundingId}, #{shareCount}, #{shareCount} * 5000)
   </insert>
 
   <!-- 주문 취소 -->
@@ -66,4 +65,52 @@
     SET status = 'REFUNDED'
     WHERE order_id = #{orderId}
   </update>
+
+    <!-- 주문 가능 정보 조회 -->
+    <select id="findFundingOrderLimit" resultType="org.bobj.funding.dto.FundingOrderLimitDTO">
+        SELECT
+            5000 AS share_price,
+
+            -- 펀딩 관련
+            f.target_amount - f.current_amount AS remaining_amount,
+            (f.target_amount - f.current_amount) / 5000 AS remaining_shares,
+
+            -- 유저 보유 주 수
+            IFNULL((
+                       SELECT SUM(fo.share_count)
+                       FROM funding_order fo
+                       WHERE fo.funding_id = f.funding_id
+                         AND fo.user_id = #{userId}
+                         AND fo.status = 'PENDING'
+                   ), 0) AS user_share_count,
+
+            -- 유저 포인트
+            u.amount AS user_points
+
+        FROM fundings f
+                 JOIN point u ON u.user_id = #{userId}
+        WHERE f.funding_id = #{fundingId}
+    </select>
+
+    <!-- 펀딩 ID에 해당하는 모든 주문 조회 -->
+    <select id="findAllOrdersByFundingId" resultType="org.bobj.funding.domain.FundingOrderVO">
+        SELECT order_id,
+               user_id,
+               funding_id,
+               share_count,
+               order_price,
+               status,
+               created_at
+        FROM funding_order
+        WHERE funding_id = #{fundingId}
+          AND status = 'PENDING'
+    </select>
+
+    <!-- 펀딩 ID에 해당하는 모든 주문 상태 변경 -->
+    <update id="markOrdersAsSuccessByFundingId">
+        UPDATE funding_order
+        SET status = 'SUCCESS'
+        WHERE funding_id = #{fundingId}
+          AND status = 'PENDING'
+    </update>
 </mapper>
