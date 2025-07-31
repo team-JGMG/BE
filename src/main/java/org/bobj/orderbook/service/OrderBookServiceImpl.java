@@ -2,6 +2,7 @@ package org.bobj.orderbook.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.common.ActiveSubscriptionsChecker;
 import org.bobj.funding.domain.FundingVO;
 import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
@@ -14,6 +15,7 @@ import org.bobj.property.domain.PropertyVO;
 import org.bobj.property.mapper.PropertyMapper;
 import org.bobj.trade.domain.TradeVO;
 import org.bobj.trade.mapper.TradeMapper;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class OrderBookServiceImpl implements OrderBookService{
 
     // 상한가/하한가 계산을 위한 비율
     private static final BigDecimal LIMIT_PERCENTAGE = new BigDecimal("0.30"); // 30%
+    private final ActiveSubscriptionsChecker subscriptionsChecker;
 
     @Transactional(readOnly = true)
     @Override
@@ -102,4 +105,5 @@ public class OrderBookServiceImpl implements OrderBookService{
                 .sorted(Comparator.comparing(OrderBookEntryDTO::getPrice, sortOrder))
                 .collect(Collectors.toList());
     }
+
 }

@@ -1,5 +1,6 @@
 package org.bobj.trade.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 public class DailyTradeHistoryDTO {
 
     @ApiModelProperty(value = "날짜 (YYYY-MM-DD)", example = "2025-07-24", required = true)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
 
     @ApiModelProperty(value = "해당 날짜의 종가", example = "5090.0", required = true)

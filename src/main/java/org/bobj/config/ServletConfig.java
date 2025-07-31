@@ -20,14 +20,15 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.share.controller",
         "org.bobj.funding.controller",
         "org.bobj.user.controller",
-        "org.bobj.orderbook.controller"})
+        "org.bobj.orderbook.controller",
+        "org.bobj.funding.controller",})
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry
-            .addResourceHandler("/resources/**") // url이 /resources/로 시작하는 모든 경로
-            .addResourceLocations("/resources/"); // webapp/resources/경로로 매핑
+                .addResourceHandler("/resources/**") // url이 /resources/로 시작하는 모든 경로
+                .addResourceLocations("/resources/"); // webapp/resources/경로로 매핑
     }
 
     // jsp view resolver 설정

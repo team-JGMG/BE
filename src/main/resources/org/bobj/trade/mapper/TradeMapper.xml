@@ -60,6 +60,26 @@
         LIMIT 1
     </select>
 
+    <select id="findDailyTradeSummary"  resultMap="dailyTradeSummaryResultMap">
+        SELECT
+            trade_date,
+            MAX(CASE WHEN rn = 1 THEN trade_price_per_share END) AS close_price,
+            SUM(total_volume) AS total_volume
+        FROM (
+                 SELECT
+                     DATE(t.created_at) AS trade_date,
+             t.trade_price_per_share,
+             t.trade_count AS total_volume,
+             ROW_NUMBER() OVER (PARTITION BY DATE(t.created_at) ORDER BY t.created_at DESC) AS rn
+        FROM TRADES t
+            JOIN ORDER_BOOKS ob ON t.buy_order_id = ob.order_id OR t.sell_order_id = ob.order_id
+        WHERE ob.funding_id = #{fundingId}
+          AND t.created_at BETWEEN #{startDate} AND DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+            ) AS daily_trades_with_rn
+        GROUP BY trade_date
+        ORDER BY trade_date ASC
+    </select>
+
     <resultMap id="tradeMap" type="org.bobj.trade.domain.TradeVO">
         <id property="tradeId" column="trade_id"/>
         <result property="buyOrderId" column="buy_order_id"/>
@@ -69,6 +89,12 @@
         <result property="tradeCount" column="trade_count"/>
         <result property="tradePricePerShare" column="trade_price_per_share"/>
         <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="dailyTradeSummaryResultMap" type="org.bobj.trade.dto.DailyTradeHistoryDTO">
+        <result property="date" column="trade_date"/>
+        <result property="closingPrice" column="close_price"/>
+        <result property="volume" column="total_volume"/>
     </resultMap>
 
 </mapper>

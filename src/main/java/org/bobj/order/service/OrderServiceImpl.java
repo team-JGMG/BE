@@ -8,6 +8,8 @@ import org.bobj.order.domain.OrderType;
 import org.bobj.order.dto.request.OrderRequestDTO;
 import org.bobj.order.dto.response.OrderResponseDTO;
 import org.bobj.order.mapper.OrderMapper;
+import org.bobj.orderbook.service.OrderBookService;
+import org.bobj.orderbook.service.OrderBookWebSocketService;
 import org.bobj.share.mapper.ShareMapper;
 import org.bobj.share.service.ShareService;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class OrderServiceImpl implements OrderService {
 
     //주문 체결 서비스
     private final OrderMatchingService orderMatchingService;
+    private final OrderBookWebSocketService orderBookWebSocketService;
 
     @Override
     public OrderResponseDTO getOrderById(Long orderId) {
@@ -121,6 +124,8 @@ public class OrderServiceImpl implements OrderService {
         }
 
         orderMapper.cancelOrder(orderId);
-    }
 
+        // 주문 취소 후 호가창 업데이트를 웹소켓으로 푸시
+        orderBookWebSocketService.publishOrderBookUpdate(orderBook.getFundingId());
+    }
 }

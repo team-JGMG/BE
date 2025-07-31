@@ -95,7 +95,10 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
 
-
+    //Stomp
+    implementation "org.springframework:spring-websocket:${springVersion}"
+    implementation "org.springframework:spring-messaging:${springVersion}"
+    implementation "org.springframework.integration:spring-integration-stomp:5.5.20"
 
 
 // xml내 한글 처리
@@ -112,8 +115,6 @@ dependencies {
     testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
     testAnnotationProcessor("org.projectlombok:lombok:${lombokVersion}")
     testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
-
-
 
 
 }
