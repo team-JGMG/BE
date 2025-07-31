@@ -6,18 +6,16 @@ import lombok.extern.log4j.Log4j2;
 import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
-import org.bobj.funding.domain.FundingOrderVO;
-import org.bobj.funding.dto.FundingOrderRequestDTO;
+import org.bobj.funding.dto.FundingOrderLimitDTO;
 import org.bobj.funding.dto.FundingOrderUserResponseDTO;
 import org.bobj.funding.service.FundingOrderService;
-import org.bobj.property.dto.PropertyUserResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/funding/order")
+@RequestMapping("/api/funding-order")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags="펀딩 주문 API")
@@ -26,14 +24,21 @@ public class FundingOrderController {
 
     @PostMapping
     @ApiOperation(value = "펀딩 주문 생성", notes = "펀딩 ID, 회원 ID, 구매 주식 수 정보를 통해 펀딩 주문을 생성합니다.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "query"),
+            @ApiImplicitParam(name = "fundingId", value = "펀딩 ID", required = true, dataType = "long", paramType = "query"),
+            @ApiImplicitParam(name = "shareCount", value = "구매 주식 수", required = true, dataType = "int", paramType = "query")
+    })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "펀딩 주문 생성 성공"),
             @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<Void>> createFundingOrder(
-            @RequestBody @ApiParam(value = "펀딩 주문 요청 DTO", required = true) FundingOrderRequestDTO requestDTO) {
-        fundingOrderService.createFundingOrder(requestDTO.toVO());
+            @RequestParam Long userId,
+            @RequestParam Long fundingId,
+            @RequestParam int shareCount) {
+        fundingOrderService.createFundingOrder(userId, fundingId, shareCount);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(null));
     }
 
@@ -77,6 +82,25 @@ public class FundingOrderController {
             @RequestParam(defaultValue = "10") int size
     ){
         CustomSlice<FundingOrderUserResponseDTO> response = fundingOrderService.getFundingOrderUsers(userId, status, page, size);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
+    }
+
+    @GetMapping("/limit")
+    @ApiOperation(value = "사용자의 펀딩 주문 가능 정보 조회", notes = "주문 ID, 펀딩 ID에 따른 가능한 펀딩 주문 정보를 조회합니다.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "userId", value = "사용자 ID",required = true, dataType = "long", paramType = "query"),
+            @ApiImplicitParam(name = "fundingId", value = "펀딩 ID",required = true, dataType = "long", paramType = "query")
+    })
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "사용자의 펀딩 주문 가능 정보 조회 성공", response = FundingOrderLimitDTO.class),
+            @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+    })
+    public ResponseEntity<ApiCommonResponse<FundingOrderLimitDTO>> getFundingOrderLimit(
+            @RequestParam(defaultValue = "1") Long userId,
+            @RequestParam(defaultValue = "1") Long fundingId
+    ){
+        FundingOrderLimitDTO response = fundingOrderService.getFundingOrderLimit(userId, fundingId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }
 }

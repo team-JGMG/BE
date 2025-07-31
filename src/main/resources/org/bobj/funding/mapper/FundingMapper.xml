@@ -92,21 +92,14 @@
     WHERE p.property_id = #{propertyId}
   </insert>
 
-  <!-- 펀딩 주문 후 모집 금액 수정 -->
-  <update id="increaseCurrentAmount">
-    UPDATE fundings
-        SET current_amount = current_amount + #{orderPrice}
-    WHERE funding_id = #{fundingId};
-  </update>
-
-  <!-- 펀딩 취소 후 모집 금액 수정 -->
+  <!-- 펀딩 모집 금액 감소 -->
   <update id="decreaseCurrentAmount">
     UPDATE fundings
         SET current_amount = current_amount - #{orderPrice}
     WHERE funding_id = #{fundingId};
   </update>
 
-  <!-- 펀딩 만료 후 일괄 환불 -->
+  <!-- 펀딩 완료 처리 -->
   <update id="expireFunding">
     UPDATE fundings f
         JOIN funding_order o ON f.funding_id = o.funding_id
@@ -172,6 +165,8 @@
     </choose>
     LIMIT #{limit} OFFSET #{offset}
   </select>
+
+  <!-- 펀딩 성공한 펀딩 리스트 조회 -->
   <select id="findEndedFundingProperties" resultType="org.bobj.funding.dto.FundingEndedResponseDTO">
     SELECT f.funding_id, p.title
     FROM fundings f
@@ -180,4 +175,34 @@
     ORDER BY f.funding_end_date DESC
     LIMIT #{limit} OFFSET #{offset}
   </select>
+
+  <!-- 비관적 락을 이용한 펀딩 정보 조회 -->
+  <select id="findByIdWithLock" resultType="org.bobj.funding.domain.FundingVO">
+    SELECT funding_id, property_id, target_amount, current_amount, total_shares, status
+    FROM fundings
+    WHERE funding_id = #{fundingId}
+      FOR UPDATE
+  </select>
+
+  <!-- 일반 펀딩 정보 조회 -->
+  <select id="findById" resultType="org.bobj.funding.domain.FundingVO">
+    SELECT funding_id, property_id, target_amount, current_amount, total_shares, status
+    FROM fundings
+    WHERE funding_id = #{fundingId}
+  </select>
+
+  <!-- 펀딩 주문 후 모집 금액 증가 -->
+  <update id="increaseCurrentAmount">
+    UPDATE fundings
+    SET current_amount = current_amount + #{orderPrice}
+    WHERE funding_id = #{fundingId};
+  </update>
+
+  <!-- 목표 금액 도달 시 상태 ENDED + 마감 날짜 현재로 바꾸는 처리 -->
+  <update id="markAsEnded">
+    UPDATE fundings
+    SET status = 'ENDED',
+        funding_end_date = NOW()
+    WHERE funding_id = #{fundingId}
+  </update>
 </mapper>

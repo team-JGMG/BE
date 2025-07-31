@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
 import org.bobj.funding.domain.FundingOrderVO;
+import org.bobj.funding.domain.FundingVO;
+import org.bobj.funding.dto.FundingOrderLimitDTO;
 import org.bobj.funding.dto.FundingOrderUserResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
@@ -22,10 +24,50 @@ public class FundingOrderService {
 
     // 주문 추가
     @Transactional
-    public void createFundingOrder(FundingOrderVO vo) {
-        fundingOrderMapper.insertFundingOrder(vo);
-        BigDecimal orderPrice = vo.getOrderPrice();
-        fundingMapper.increaseCurrentAmount(vo.getFundingId(),orderPrice);
+    public void createFundingOrder(Long userId, Long fundingId, int shareCount) {
+        FundingVO funding = fundingMapper.findByIdWithLock(fundingId);
+        if (funding == null) {
+            throw new IllegalArgumentException("존재하지 않는 펀딩입니다.");
+        }
+
+        int remainingShares = funding.getRemainingShares();
+        if (shareCount > remainingShares) {
+            throw new IllegalArgumentException("남은 주 수를 초과했습니다.");
+        }
+
+        BigDecimal sharePrice = BigDecimal.valueOf(5000);
+        BigDecimal orderPrice = sharePrice.multiply(BigDecimal.valueOf(shareCount));
+
+        /* 요기 구현해주시면 됩니다! (Point) */
+        // user의 point 가져오는 api 부탁드려요!! PointMapper.findUserPoints(userId)
+        BigDecimal userPoints = BigDecimal.valueOf(100000);
+        if (userPoints.compareTo(orderPrice) < 0) {
+            throw new IllegalArgumentException("포인트가 부족합니다.");
+        }
+
+        // 주문 생성
+        fundingOrderMapper.insertFundingOrder(userId, fundingId, shareCount, orderPrice);
+
+        /* 요기 구현해주시면 됩니다! (Point) */
+        // 포인트 차감 과정(추후 구현)
+
+        // 펀딩 현재 모인 금액 증가
+        fundingMapper.increaseCurrentAmount(fundingId, orderPrice);
+
+        // 펀딩 완료 상태 체크
+        BigDecimal updatedAmount = funding.getCurrentAmount().add(orderPrice);
+        if (updatedAmount.compareTo(funding.getTargetAmount()) >= 0) {
+            fundingMapper.markAsEnded(fundingId);
+            fundingOrderMapper.markOrdersAsSuccessByFundingId(fundingId);
+            generateSharesForFunding(fundingId);
+        }
+    }
+
+    /* 요기 구현해주시면 됩니당!! (share 테이블)*/
+    private void generateSharesForFunding(Long fundingId){
+        List<FundingOrderVO> orders = fundingOrderMapper.findAllOrdersByFundingId(fundingId);
+
+        // batch로 funding_order 데이터 shares 테이블에 insert!! (추후 구현)
     }
 
     // 주문 취소
@@ -47,5 +89,10 @@ public class FundingOrderService {
         }
 
         return new CustomSlice<>(content,hasNext);
+    }
+    // 주문 가능 정보 조회
+    @Transactional(readOnly = true)
+    public FundingOrderLimitDTO getFundingOrderLimit(Long userId, Long fundingId) {
+        return fundingOrderMapper.findFundingOrderLimit(userId, fundingId);
     }
 }
