@@ -30,4 +30,6 @@ public interface ShareMapper {
 
     int countSharesByUserId(@Param("userId") Long userId);
 
+    //주식 데이터 배치 삽입
+    int insertSharesBatch(List<ShareVO> shares);
 }

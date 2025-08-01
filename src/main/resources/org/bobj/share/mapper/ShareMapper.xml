@@ -118,6 +118,14 @@
             s.share_id ASC  LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <insert id="insertSharesBatch" parameterType="java.util.List">
+        INSERT INTO shares (user_id, funding_id, share_count, average_amount)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.fundingId}, #{item.shareCount}, #{item.averageAmount})
+        </foreach>
+    </insert>
+
     <resultMap id="shareResponseDTOMap" type="org.bobj.share.dto.response.ShareResponseDTO">
         <id property="shareId" column="s_share_id"/>
         <result property="userId" column="s_user_id"/>
