@@ -103,7 +103,6 @@
                created_at
         FROM funding_order
         WHERE funding_id = #{fundingId}
-          AND status = 'PENDING'
     </select>
 
     <!-- 펀딩 ID에 해당하는 모든 주문 상태 변경 -->

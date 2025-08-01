@@ -34,7 +34,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.funding.mapper"})
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
-@Import({SwaggerConfig.class,
+@Import({
         AppConfig.class,
         OAuth2ClientConfig.class
 })
