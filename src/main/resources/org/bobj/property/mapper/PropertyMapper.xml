@@ -10,6 +10,13 @@
                               updated_at = now()
         where property_id = #{propertyId}
     </update>
+
+    <update id="updateRentalIncome">
+        UPDATE properties 
+        SET rental_income = #{rentalIncome},
+            updated_at = now()
+        WHERE property_id = #{propertyId}
+    </update>
     <select id="findByPropertyId" parameterType="long" resultMap="PropertyResultMap">
         SELECT
             p.*,
@@ -61,6 +68,8 @@
         <result property="bathroomCount" column="bathroom_count"/>
         <result property="floor" column="floor"/>
         <result property="description" column="description"/>
+        <result property="rawdCd" column="rawd_cd"/>
+        <result property="rentalIncome" column="rental_income"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <result property="soldAt" column="sold_at"/>
@@ -193,19 +202,19 @@
         </association>
     </resultMap>
 
-    <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO">
+    <insert id="insert" parameterType="org.bobj.property.domain.PropertyVO" useGeneratedKeys="true" keyProperty="propertyId">
         INSERT INTO properties (
             user_id, title, address, area, price, posting_period,
             usage_district, land_area, building_area, total_floor_area_property,
             total_floor_area_building, basement_floors, ground_floors,
             approval_date, official_land_price, unit_price_per_pyeong,
-            property_type, room_count, bathroom_count, floor, description, rawd_cd
+            property_type, room_count, bathroom_count, floor, description, rawd_cd, rental_income
         ) VALUES (
                      #{userId}, #{title}, #{address}, #{area}, #{price}, #{postingPeriod},
                      #{usageDistrict}, #{landArea}, #{buildingArea}, #{totalFloorAreaProperty},
                      #{totalFloorAreaBuilding}, #{basementFloors}, #{groundFloors},
                      #{approvalDate}, #{officialLandPrice}, #{unitPricePerPyeong},
-                     #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}, #{rawdCd}
+                     #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}, #{rawdCd}, #{rentalIncome}
                  )
     </insert>
 </mapper>

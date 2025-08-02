@@ -25,7 +25,7 @@ public class PropertyController {
     private final PropertyService propertyService;
 
     @PostMapping
-    @ApiOperation(value = "매물 등록", notes = "새로운 매물을 등록합니다.")
+    @ApiOperation(value = "매물 등록", notes = "새로운 매물을 등록합니다. 법정동코드가 있으면 자동으로 전월세 데이터를 조회하여 월세 정보를 설정합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "매물 등록 성공"),
             @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
@@ -128,4 +128,35 @@ public class PropertyController {
         List<PropertySoldResponseDTO> response = propertyService.getSoldProperties();
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }
+
+    // =========================== 테스트용 전월세 API ===========================
+//
+//    @GetMapping("/test/rental-calculation")
+//    @ApiOperation(value = "[테스트용] 전월세 자동 계산 테스트", notes = "법정동코드와 주소를 입력하여 자동 월세 계산 로직을 테스트합니다.")
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "lawd_cd", value = "법정동코드 (5자리)", required = true, dataType = "string", paramType = "query", example = "11110"),
+//            @ApiImplicitParam(name = "address", value = "매물 주소", required = true, dataType = "string", paramType = "query", example = "서울 종로구 청운동 123 현대아파트")
+//    })
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "자동 월세 계산 테스트 성공"),
+//            @ApiResponse(code = 400, message = "잘못된 요청", response = ErrorResponse.class),
+//            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+//    })
+//    public ResponseEntity<ApiCommonResponse<String>> testRentalCalculation(
+//            @RequestParam @ApiParam(value = "법정동코드 (5자리)", required = true, example = "11110") String lawd_cd,
+//            @RequestParam @ApiParam(value = "매물 주소", required = true, example = "서울 종로구 청운동 123 현대아파트") String address) {
+//
+//        log.info("전월세 자동 계산 테스트 시작 - 법정동코드: {}, 주소: {}", lawd_cd, address);
+//
+//        java.math.BigDecimal result = propertyService.testRentalCalculation(lawd_cd, address);
+//
+//        String message;
+//        if (result != null) {
+//            message = String.format("자동 계산된 월세: %s원 (매칭 성공)", result.toString());
+//        } else {
+//            message = "매칭되는 월세 데이터를 찾을 수 없습니다.";
+//        }
+//
+//        return ResponseEntity.ok(ApiCommonResponse.createSuccess(message));
+//    }
 }

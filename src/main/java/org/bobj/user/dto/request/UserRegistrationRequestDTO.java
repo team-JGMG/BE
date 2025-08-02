@@ -56,7 +56,7 @@ public class UserRegistrationRequestDTO {
         // 은행 코드 검증
         if (bankCode == null || bankCode.trim().isEmpty()) {
             result.addError("bankCode", "은행 코드는 필수입니다");
-        } else if (bankCode.trim().length() < 3 || bankCode.trim().length() > 10) {
+        } else if (bankCode.trim().length() < 2 || bankCode.trim().length() > 10) {
             result.addError("bankCode", "은행 코드는 3-10자 사이여야 합니다");
         }
         

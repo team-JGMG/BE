@@ -68,8 +68,11 @@ public class PropertyCreateDTO {
     @ApiModelProperty(value = "설명", example = "역세권이며 투자 가치가 높습니다.")
     private String description;
 
-    @ApiModelProperty(value ="법정동코드", example = "5174310000")
+    @ApiModelProperty(value ="법정동코드", example = "51743")
     private String rawdCd; //법정동코드, 사용자 입력 아닌 주소찾기 api 통해 사용.
+
+    @ApiModelProperty(value ="임대수익", example = "5000000")
+    private BigDecimal rentalIncome; //임대수익, 실거래가 api 통해 이용.
 
     public static PropertyCreateDTO of(PropertyVO vo){
         return PropertyCreateDTO.builder()
@@ -95,6 +98,7 @@ public class PropertyCreateDTO {
                 .floor(vo.getFloor())
                 .description(vo.getDescription())
                 .rawdCd(vo.getRawdCd())
+                .rentalIncome(vo.getRentalIncome())
                 .build();
     }
 
@@ -122,6 +126,7 @@ public class PropertyCreateDTO {
                 .floor(floor)
                 .description(description)
                 .rawdCd(rawdCd)
+                .rentalIncome(rentalIncome)
                 .build();
     }
 }

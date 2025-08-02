@@ -31,4 +31,6 @@ public interface PropertyMapper {
     void update(@Param("propertyId") Long propertyId, @Param("status") String status);
 
     void insert(PropertyVO propertyVO);
+    
+    void updateRentalIncome(@Param("propertyId") Long propertyId, @Param("rentalIncome") java.math.BigDecimal rentalIncome);
 }

@@ -53,6 +53,8 @@ public class PropertyVO {
 
     private String rawdCd; //법정동코드
 
+    private  BigDecimal rentalIncome;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime soldAt;
