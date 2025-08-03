@@ -4,11 +4,25 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.point.mapper.PointChargeRequestMapper">
 
-  <insert id="insert" parameterType="PointChargeRequestVO" 
+  <insert id="insert" parameterType="org.bobj.point.domain.PointChargeRequestVO"
     useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO point_charge_request (
+      user_id,
+      amount,
+      merchant_uid,
+      status,
+      created_at
+    ) VALUES (
+               #{userId},
+               #{amount},
+               #{merchantUid},
+               #{status},
+               NOW()
+             )
   </insert>
-  
-  <select id="findByMerchantUid" parameterType="String" resultType="PointChargeRequestVO">>
+
+
+  <select id="findByMerchantUid" parameterType="String" resultType="PointChargeRequestVO">
     SELECT *
     FROM point_charge_request
     where merchant_uid = #{merchantUid}
