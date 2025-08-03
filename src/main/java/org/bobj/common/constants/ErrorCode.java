@@ -31,7 +31,17 @@ public enum ErrorCode {
 
     // 500 ERROR
     GPT_API_ERROR(HttpStatus.BAD_GATEWAY, "S001", "요약 생성 중 오류가 발생했습니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S999", "서버 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S999", "서버 오류가 발생했습니다."),
+
+    // 📦 결제 오류 (Payment)
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "P001", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P002", "결제 정보가 존재하지 않습니다."),
+    PAYMENT_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "P003", "결제가 완료되지 않았습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "P004", "이미 처리된 결제입니다."),
+    PAYMENT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "P005", "결제 요청 내역이 존재하지 않습니다.");
+
+
+
 
     private final HttpStatus status;
     private final String code;
