@@ -12,7 +12,7 @@
     </update>
 
     <update id="updateRentalIncome">
-        UPDATE properties 
+        UPDATE properties
         SET rental_income = #{rentalIncome},
             updated_at = now()
         WHERE property_id = #{propertyId}
@@ -217,4 +217,15 @@
                      #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}, #{rawdCd}, #{rentalIncome}
                  )
     </insert>
+
+    <update id="updatePropertiesAsSold">
+        UPDATE properties
+        SET status = 'SOLD',
+        sold_at = NOW(),
+        updated_at = NOW()
+        WHERE property_id IN
+        <foreach collection="propertyIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper>

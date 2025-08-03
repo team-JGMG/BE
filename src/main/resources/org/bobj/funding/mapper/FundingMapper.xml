@@ -205,4 +205,33 @@
         funding_end_date = NOW()
     WHERE funding_id = #{fundingId}
   </update>
+  <!-- 펀딩 실패인 펀딩 ID 조회 -->
+  <select id="findFailedFundingIds" resultType="java.lang.Long">
+    <![CDATA[
+    SELECT funding_id
+    FROM fundings
+    WHERE DATE(funding_end_date) < DATE(NOW())
+      AND status = 'FUNDING'
+      AND current_amount < target_amount
+    ]]>
+  </select>
+
+  <!-- 펀딩 stauts FAILD로 변경 -->
+  <update id="updateFundingStatusToFailed">
+    UPDATE fundings
+    SET status = 'FAILED'
+    WHERE funding_id IN
+    <foreach item="id" collection="fundingIds" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </update>
+  <!-- 펀딩 완료 후 2년된 매물 찾기 -->
+  <select id="findSoldFundingIds" resultType="org.bobj.funding.dto.FundingSoldResponseDTO">
+    SELECT
+      f.funding_id,
+      f.property_id
+    FROM fundings f
+    WHERE DATE(f.funding_end_date) = DATE(DATE_SUB(NOW(), INTERVAL 2 YEAR))
+      AND f.status = 'ENDED';
+  </select>
 </mapper>
