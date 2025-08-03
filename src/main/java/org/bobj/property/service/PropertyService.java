@@ -3,8 +3,8 @@ package org.bobj.property.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
+import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
-import org.bobj.property.domain.PropertyStatus;
 import org.bobj.property.domain.PropertyVO;
 import org.bobj.property.dto.*;
 import org.bobj.property.mapper.PropertyMapper;
@@ -14,7 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -156,5 +160,34 @@ public class PropertyService {
     // 매각 완료 매물 리스트
     public List<PropertySoldResponseDTO> getSoldProperties() {
         return propertyMapper.findSold();
+    }
+
+    // 매각 처리
+    public void soldProperties(){
+        List<FundingSoldResponseDTO> fundings = fundingMapper.findSoldFundingIds();
+        if (fundings.isEmpty()) {
+            log.info("매각 대상 없음");
+            return;
+        }
+
+        List<Long> propertyIds = fundings.stream()
+                .map(FundingSoldResponseDTO::getPropertyId)
+                .collect(Collectors.toList());
+
+        // 1. 매물 상태를 SOLD, updated_at, sold_at 수정
+        propertyMapper.updatePropertiesAsSold(propertyIds);
+
+        // 멀티 스레드 설정
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        List<Callable<Void>> tasks = new ArrayList<>();
+
+        for(FundingSoldResponseDTO dto : fundings) {
+            Long fundingId = dto.getFundingId();
+            executor.submit(()->{
+                /* fundingId에 해당하는 share 가져오기(share 테이블)*/
+                /* 해당하는 지분에 point 환불(point 테이블) */
+            });
+        }
+        executor.shutdown();
     }
 }
