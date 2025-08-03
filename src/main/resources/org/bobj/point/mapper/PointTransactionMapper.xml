@@ -3,4 +3,31 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.point.mapper.PointTransactionMapper">
+
+  <insert id="insert" parameterType="org.bobj.point.domain.PointTransactionVO">
+        INSERT INTO point_transaction(
+                                    point_id,
+                                    type,
+                                    amount,
+                                    created_at
+        )
+        VALUES (
+                 #{pointId},
+                 #{type},
+                 #{amount},
+                 NOW()
+        )
+  </insert>
+
+
+
+  <select id="findByUserId" resultType="org.bobj.point.domain.PointTransactionVO">
+        SELECT pt.*
+        FROM point_transaction pt
+        JOIN points p ON pt.point_id = p.point_id
+        WHERE p.user_id = #{userId}
+        ORDER BY pt.created_at DESC
+  </select>
+
+
 </mapper>
