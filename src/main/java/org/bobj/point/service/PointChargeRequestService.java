@@ -29,6 +29,7 @@ public class PointChargeRequestService {
 
     /**
      * 결제 성공 후 상태 업데이트 (PAID 상태로)
+     * PointChargeRequestVO의 상태를 PAID로 바꾸고 impUid도 함께 저장
      */
     @Transactional
     public void updateStatusToPaid(PointChargeRequestVO request) {
