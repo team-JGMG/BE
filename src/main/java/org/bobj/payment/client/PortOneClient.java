@@ -64,3 +64,82 @@
 //
 //
 //}
+package org.bobj.payment.client;
+
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bobj.payment.dto.PortOnePaymentResponse;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class PortOneClient {
+    private final RestTemplate restTemplate = new RestTemplate();
+
+
+    @Value("${portOne.api.url}")
+    private String portOneApiUrl;
+
+    @Value("${portOne.api.key}")
+    private String apiKey;
+
+    @Value("${portOne.api.secret}")
+    private String apiSecret;
+
+
+    private String getAccessToken() {
+        String url = portOneApiUrl + "/users/getToken";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String body = String.format("{\"imp_key\":\"%s\", \"imp_secret\":\"%s\"}", apiKey, apiSecret);
+
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+        // ✅ 응답 본문에서 access_token 파싱
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode root = objectMapper.readTree(response.getBody());
+            return root.path("response").path("access_token").asText();
+        } catch (Exception e) {
+            log.error("포트원 access_token 파싱 실패", e);
+            throw new RuntimeException("포트원 access_token 파싱 실패");
+        }
+    }
+
+
+    public PortOnePaymentResponse getPaymentInfo(String impUid) {
+        String accessToken = getAccessToken();
+
+        String url = portOneApiUrl + "/payments/" + impUid;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
+            url, HttpMethod.GET, entity, PortOnePaymentResponse.class
+        );
+
+        return response.getBody();
+    }
+
+
+
+}
