@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>PortOne 테스트 결제</title>
+  <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<h2>포트원 결제 테스트</h2>
+<button onclick="requestPay()">결제하기</button>
+
+<script>
+  var IMP = window.IMP;
+  IMP.init("imp18670123"); // ✅ 고객사 식별코드 제대로 사용 중!
+
+  function requestPay() {
+
+    const merchant_uid = "point_20250804001510_1_fba1d505"; // DB와 일치
+
+    IMP.request_pay({
+      pg: "kakaopay.TC0ONETIME",
+      pay_method: "card",
+      merchant_uid: merchant_uid,
+      name: "반의 반 집 포인트 충전",
+      amount: 5000,
+      buyer_email: "test@example.com",
+      buyer_name: "홍길동",
+      buyer_tel: "010-1234-5678",
+      buyer_addr: "서울특별시",
+      buyer_postcode: "12345"
+    }, function (rsp) {
+      if (rsp.success) {
+        alert("결제 성공! 서버에 결제 정보 전송 중...");
+        axios.post("http://localhost:8080/api/point/verify", {
+          impUid: rsp.imp_uid,
+          amount: 5000
+        }, {
+          headers: {
+            "Content-Type": "application/json"
+            // "Authorization": "Bearer your-access-token" // 필요 시 추가
+          }
+        }).then(res => {
+          alert("서버 검증 완료: " + JSON.stringify(res.data));
+        }).catch(err => {
+          alert("서버 검증 실패: " + err.response?.data?.message || "에러 발생");
+        });
+      } else {
+        alert("결제 실패: " + rsp.error_msg);
+      }
+    });
+  }
+</script>
+</body>
+</html>
