@@ -6,20 +6,25 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.bobj.common.s3.S3Service;
 import org.bobj.property.domain.PropertyStatus;
 import org.bobj.property.domain.PropertyVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Log4j2
 public class PropertyDetailDTO {
     @ApiModelProperty(value = "매물 ID", example = "1")
     private Long propertyId;
@@ -84,22 +89,31 @@ public class PropertyDetailDTO {
     @ApiModelProperty(value = "판매완료일시", example = "2025-08-01T17:00:00")
     private LocalDateTime soldAt;
 
-    // 첫 번째 사진을 썸네일으로
-    @ApiModelProperty(value = "썸네일 이미지 정보")
-    private PhotoDTO thumbnail;
-
     @ApiModelProperty(value = "서류 파일 목록")
     private List<DocumentDTO> documents;
     @ApiModelProperty(value = "사진 목록")
     private List<PhotoDTO> photos;
 
-    public static PropertyDetailDTO of(PropertyVO vo) {
-        PhotoDTO thumbnail = null;
-        if (vo.getThumbnailUrl() != null) {
-            thumbnail = PhotoDTO.builder()
-                    .photoUrl(vo.getThumbnailUrl())
-                    .build();
-        }
+    // 해시태그 리스트
+    @ApiModelProperty(value = "해시태그 리스트")
+    private List<String> tags;
+
+    public static PropertyDetailDTO of(PropertyVO vo, S3Service s3Service) {
+        List<DocumentDTO> distinctDocuments = vo.getDocuments() != null
+                ? vo.getDocuments().stream()
+                .filter(doc -> Objects.nonNull(doc) && Objects.nonNull(doc.getDocumentId()))
+                .map(doc -> DocumentDTO.of(doc, s3Service))
+                .distinct()
+                .toList()
+                : List.of();
+
+        List<PhotoDTO> distinctPhotos = vo.getPhotos() != null
+                ? vo.getPhotos().stream()
+                .filter(photo -> Objects.nonNull(photo) && Objects.nonNull(photo.getPhotoId()))
+                .map(photo -> PhotoDTO.of(photo, s3Service))
+                .distinct()
+                .toList()
+                : List.of();
 
         return PropertyDetailDTO.builder()
                 .propertyId(vo.getPropertyId())
@@ -129,53 +143,9 @@ public class PropertyDetailDTO {
                 .createdAt(vo.getCreatedAt())
                 .updatedAt(vo.getUpdatedAt())
                 .soldAt(vo.getSoldAt())
-                .thumbnail(thumbnail)
-                .documents(vo.getDocuments() != null
-                        ? vo.getDocuments().stream().map(DocumentDTO::of).collect(Collectors.toList())
-                        : List.of())
-                .photos(vo.getPhotos() != null
-                        ? vo.getPhotos().stream().map(PhotoDTO::of).collect(Collectors.toList())
-                        : List.of())
+                .documents(distinctDocuments)
+                .photos(distinctPhotos)
+                .tags(vo.getTags())
                 .build();
-    }
-
-    public PropertyVO toVO() {
-        PropertyVO.PropertyVOBuilder builder = PropertyVO.builder()
-                .propertyId(this.propertyId)
-                .userId(this.userId)
-                .seller(this.seller.toVO())
-                .title(this.title)
-                .address(this.address)
-                .area(this.area)
-                .price(this.price)
-                .postingPeriod(postingPeriod)
-                .status(this.status)
-                .usageDistrict(this.usageDistrict)
-                .landArea(this.landArea)
-                .buildingArea(this.buildingArea)
-                .totalFloorAreaProperty(this.totalFloorAreaProperty)
-                .totalFloorAreaBuilding(this.totalFloorAreaBuilding)
-                .basementFloors(this.basementFloors)
-                .groundFloors(this.groundFloors)
-                .approvalDate(this.approvalDate)
-                .officialLandPrice(this.officialLandPrice)
-                .unitPricePerPyeong(this.unitPricePerPyeong)
-                .propertyType(this.propertyType)
-                .roomCount(this.roomCount)
-                .bathroomCount(this.bathroomCount)
-                .floor(this.floor)
-                .description(this.description)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
-                .soldAt(this.soldAt)
-                .documents(this.documents.stream().map(DocumentDTO::toVO).collect(Collectors.toList()))
-                .photos(this.photos.stream().map(PhotoDTO::toVO).collect(Collectors.toList()));
-        if (this.thumbnail != null) {
-            builder.photos(Collections.singletonList(this.thumbnail.toVO()));
-        } else {
-            builder.photos(Collections.emptyList());
-        }
-
-        return builder.build();
     }
 }

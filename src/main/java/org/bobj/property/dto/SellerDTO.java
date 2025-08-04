@@ -29,13 +29,4 @@ public class SellerDTO {
                 .email(vo.getEmail())
                 .build();
     }
-
-    public SellerVO toVO(){
-        return SellerVO.builder()
-                .userId(userId)
-                .name(name)
-                .phone(phone)
-                .email(email)
-                .build();
-    }
 }

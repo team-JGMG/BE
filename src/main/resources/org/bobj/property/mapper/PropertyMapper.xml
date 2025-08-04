@@ -32,12 +32,7 @@
             ph.photo_id,
             ph.property_id AS photo_property_id,
             ph.photo_url,
-            ph.created_at AS photo_created_at,
-            (SELECT photo_url
-             FROM property_photos
-             WHERE property_id = p.property_id
-             ORDER BY created_at ASC
-             LIMIT 1) AS thumbnail_url
+            ph.created_at AS photo_created_at
         FROM properties p
                  LEFT JOIN users u ON p.user_id = u.user_id
                  LEFT JOIN property_document d ON p.property_id = d.property_id
@@ -73,8 +68,6 @@
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <result property="soldAt" column="sold_at"/>
-        <result property="thumbnailUrl" column="thumbnail_url"/>
-
         <association property="seller" javaType="org.bobj.property.domain.SellerVO">
             <id property="userId" column="user_id"/>
             <result property="name" column="user_name"/>
@@ -94,7 +87,16 @@
             <result property="photoUrl" column="photo_url"/>
             <result property="createdAt" column="photo_created_at"/>
         </collection>
+        <collection property="tags" ofType="java.lang.String" column="property_id"
+                    select="findHashtagNamesByPropertyId"/>
     </resultMap>
+
+    <select id="findHashtagNamesByPropertyId" resultType="java.lang.String">
+        SELECT h.name
+        FROM property_hashtags ph
+                 JOIN hashtags h ON ph.hashtag_id = h.id
+        WHERE ph.property_id = #{property_id}
+    </select>
 
     <select id="findTotal" resultMap="PropertySummaryMap">
         SELECT p.*,
@@ -195,6 +197,7 @@
         WHERE p.status = 'SOLD'
         ORDER BY p.sold_at DESC
     </select>
+
     <resultMap id="PropertySoldMap" type="org.bobj.property.dto.PropertySoldResponseDTO">
         <id property="propertyId" column="property_id"/>
         <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
@@ -216,6 +219,18 @@
                      #{approvalDate}, #{officialLandPrice}, #{unitPricePerPyeong},
                      #{propertyType}, #{roomCount}, #{bathroomCount}, #{floor}, #{description}, #{rawdCd}, #{rentalIncome}
                  )
+    </insert>
+
+    <!-- 사진 업로드 -->
+    <insert id="insertPropertyPhoto">
+        INSERT INTO property_photos (property_id, photo_url, created_at)
+        VALUES (#{propertyId}, #{photoUrl}, NOW())
+    </insert>
+
+    <!-- 문서 업로드 -->
+    <insert id="insertPropertyDocument">
+        INSERT INTO property_document (property_id, document_type, file_url, created_at)
+        VALUES (#{propertyId}, #{documentType}, #{fileUrl}, NOW());
     </insert>
 
     <update id="updatePropertiesAsSold">

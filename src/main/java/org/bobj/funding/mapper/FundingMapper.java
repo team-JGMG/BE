@@ -13,11 +13,14 @@ import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.dto.FundingEndedResponseDTO;
 import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.dto.FundingTotalResponseDTO;
+import org.bobj.property.domain.HashtagVO;
 
 @Mapper
 public interface FundingMapper {
     // 펀딩 상세 조회
     FundingDetailResponseDTO findFundingById(@Param("fundingId") Long fundingId);
+
+    List<HashtagVO> findHashtagsByPropertyId(@Param("propertyId") Long propertyId);
 
     // 펀딩 모집 페이지에서 펀딩 리스트 조회
     List<FundingTotalResponseDTO> findTotal(
@@ -29,6 +32,8 @@ public interface FundingMapper {
 
     // 펀딩 성공한 펀딩 리스트 조회
     List<FundingEndedResponseDTO> findEndedFundingProperties(@Param("offset") int offset, @Param("limit") int limit);
+
+    List<String> selectHashtagNamesByFundingId(Long fundingId);
 
     // 펀딩 생성
     void insertFunding(@Param("propertyId") Long propertyId);
