@@ -3,17 +3,19 @@ package org.bobj.funding.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
-import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.domain.FundingVO;
 import org.bobj.funding.dto.FundingOrderLimitDTO;
 import org.bobj.funding.dto.FundingOrderUserResponseDTO;
+import org.bobj.funding.event.ShareDistributionEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+
 
 @Slf4j
 @Service
@@ -21,6 +23,9 @@ import java.util.List;
 public class FundingOrderService {
     private final FundingOrderMapper fundingOrderMapper;
     private final FundingMapper fundingMapper;
+
+    private final ShareDistributionService shareDistributionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 주문 추가
     @Transactional
@@ -59,15 +64,11 @@ public class FundingOrderService {
         if (updatedAmount.compareTo(funding.getTargetAmount()) >= 0) {
             fundingMapper.markAsEnded(fundingId);
             fundingOrderMapper.markOrdersAsSuccessByFundingId(fundingId);
-            generateSharesForFunding(fundingId);
+
+
+            eventPublisher.publishEvent(new ShareDistributionEvent(fundingId));
+//            shareDistributionService.distributeSharersAsync(fundingId); // 참여자들에게 지분 삽입
         }
-    }
-
-    /* 요기 구현해주시면 됩니당!! (share 테이블)*/
-    private void generateSharesForFunding(Long fundingId){
-        List<FundingOrderVO> orders = fundingOrderMapper.findAllOrdersByFundingId(fundingId);
-
-        // batch로 funding_order 데이터 shares 테이블에 insert!! (추후 구현)
     }
 
     // 주문 취소

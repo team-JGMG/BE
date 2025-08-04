@@ -37,4 +37,12 @@ public interface FundingOrderMapper {
 
     // 펀딩 ID에 해당하는 모든 주문 조회
     List<FundingOrderVO> findAllOrdersByFundingId(Long fundingId);
+
+
+    // 펀딩 ID에 해당하는 펀딩 주문 ID 리스트 조회
+    List<Long> findFundingOrderIdsByFundingId(@Param("fundingId") Long fundingId);
+
+    // 펀딩 주문 ID 리스트에 해당하는 펀딩 주문 데이터 status 수정
+    void updateFundingOrderStatusToRefundedByOrderIds(@Param("orderIds") List<Long> orderIds);
+
 }

@@ -19,4 +19,9 @@ public interface PointMapper {
     void delete(@Param("pointId") Long pointId);
 
     PointVO findByUserIdForUpdate(@Param("userId") Long userId);
+
+
+    Long findTotalPointByUserId(Long userId);
+
+
 }

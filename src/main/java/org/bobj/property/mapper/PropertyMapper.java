@@ -2,7 +2,6 @@ package org.bobj.property.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.bobj.property.domain.PropertyStatus;
 import org.bobj.property.domain.PropertyVO;
 import org.bobj.property.dto.PropertySoldResponseDTO;
 import org.bobj.property.dto.PropertyUserResponseDTO;
@@ -31,4 +30,8 @@ public interface PropertyMapper {
     void update(@Param("propertyId") Long propertyId, @Param("status") String status);
 
     void insert(PropertyVO propertyVO);
+
+    void updatePropertiesAsSold(@Param("propertyIds") List<Long> propertyIds);
+
+    void updateRentalIncome(@Param("propertyId") Long propertyId, @Param("rentalIncome") java.math.BigDecimal rentalIncome);
 }

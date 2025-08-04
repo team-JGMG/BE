@@ -18,6 +18,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
@@ -31,13 +32,15 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.trade.mapper",
         "org.bobj.point.mapper",
         "org.bobj.user.mapper",
-        "org.bobj.funding.mapper"})
+        "org.bobj.funding.mapper",
+        "org.bobj.payment.mapper"})
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
-@Import({SwaggerConfig.class,
+@Import({
         AppConfig.class,
         OAuth2ClientConfig.class
 })
+@EnableScheduling
 
 public class RootConfig {
 

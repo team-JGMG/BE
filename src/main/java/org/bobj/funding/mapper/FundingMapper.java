@@ -3,12 +3,15 @@ package org.bobj.funding.mapper;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.domain.FundingVO;
 import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.dto.FundingEndedResponseDTO;
+import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.dto.FundingTotalResponseDTO;
 
 @Mapper
@@ -45,4 +48,15 @@ public interface FundingMapper {
 
     // 펀딩 완료 처리
     void expireFunding(@Param("fundingId") Long fundingId);
+
+    // 펀딩 실패인 펀딩 ID 조회
+    List<Long> findFailedFundingIds();
+
+    // 펀딩 stauts FAILD로 변경
+    void updateFundingStatusToFailed(@Param("fundingIds") List<Long> fundingIds);
+
+    // 펀딩 완료 후 2년된 매물 찾기
+    List<FundingSoldResponseDTO> findSoldFundingIds();
+
+    List<Long> findAllFundingIds();
 }

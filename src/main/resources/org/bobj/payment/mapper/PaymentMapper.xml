@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.payment.mapper.PaymentMapper">
+
+
+  <resultMap id="PaymentResultMap" type="org.bobj.payment.domain.PaymentVO">
+    <result property="impUid" column="imp_uid"/>
+    <result property="merchantUid" column="merchant_uid"/>
+    <result property="userId" column="user_id"/>
+    <result property="amount" column="amount"/>
+    <result property="status" column="status" javaType="org.bobj.payment.domain.PaymentStatus"/>
+    <result property="paidAt" column="paid_at"/>
+  </resultMap>
+
+  <!-- imp_uid 존재 여부 확인 -->
+  <select id="existsByImpUid" resultType="boolean">
+    SELECT EXISTS(
+    SELECT 1
+    FROM payment
+    WHERE imp_uid = #{impUid}
+    )
+  </select>
+
+  <insert id="save">
+    INSERT INTO payment (imp_uid, merchant_uid, user_id, amount, status, paid_at)
+    VALUES (#{impUid}, #{merchantUid}, #{userId}, #{amount}, #{status}, #{paidAt})
+  </insert>
+
+  <!-- ✅ resultMap 적용 -->
+  <select id="findByImpUid" resultMap="PaymentResultMap">
+    SELECT *
+    FROM payment
+    WHERE imp_uid = #{impUid}
+  </select>
+
+</mapper>

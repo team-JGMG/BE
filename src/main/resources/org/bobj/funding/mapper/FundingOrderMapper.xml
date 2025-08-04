@@ -103,7 +103,6 @@
                created_at
         FROM funding_order
         WHERE funding_id = #{fundingId}
-          AND status = 'PENDING'
     </select>
 
     <!-- 펀딩 ID에 해당하는 모든 주문 상태 변경 -->
@@ -112,5 +111,22 @@
         SET status = 'SUCCESS'
         WHERE funding_id = #{fundingId}
           AND status = 'PENDING'
+    </update>
+
+    <!-- 펀딩 ID에 해당하는 펀딩 주문 ID 리스트 조회 -->
+    <select id="findFundingOrderIdsByFundingId" resultType="java.lang.Long">
+        SELECT order_id
+        FROM funding_order
+        WHERE funding_id = #{fundingId}
+    </select>
+
+    <!-- 펀딩 주문 ID 리스트에 해당하는 펀딩 주문 데이터 status 수정 -->
+    <update id="updateFundingOrderStatusToRefundedByOrderIds">
+        UPDATE funding_order
+        SET status = 'REFUNDED'
+        WHERE order_id IN
+        <foreach item="id" collection="orderIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </update>
 </mapper>
