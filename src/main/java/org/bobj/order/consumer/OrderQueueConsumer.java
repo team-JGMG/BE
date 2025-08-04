@@ -22,8 +22,8 @@ public class OrderQueueConsumer {
     private final OrderMatchingService orderMatchingService;
     private final FundingMapper fundingMapper;
 
-    // 매 1초마다 Redis 큐에서 주문 ID 꺼내서 처리
-    @Scheduled(fixedDelay = 1000)
+    // 매 10초마다 Redis 큐에서 주문 ID 꺼내서 처리
+    @Scheduled(fixedDelay = 10000)
     public void consumeOrders() {
         for (Long fundingId : getTrackedFundingIds()) {
             String queueKey = "order:queue:" + fundingId;
