@@ -35,6 +35,7 @@ public class SwaggerConfig {
             .apis(RequestHandlerSelectors.basePackage("org.bobj"))
             .paths(PathSelectors.any())
             .build()
+            .ignoredParameterTypes(java.security.Principal.class)
             .securitySchemes(Collections.singletonList(apiKey()))
 //            .securityContexts(Collections.singletonList(securityContext()));
             .securityContexts(Collections.emptyList()); // 🔥 아무 경로에도 인증 적용 안함
