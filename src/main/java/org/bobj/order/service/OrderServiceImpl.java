@@ -8,10 +8,12 @@ import org.bobj.order.domain.OrderType;
 import org.bobj.order.dto.request.OrderRequestDTO;
 import org.bobj.order.dto.response.OrderResponseDTO;
 import org.bobj.order.mapper.OrderMapper;
+import org.bobj.order.producer.OrderQueueProducer;
 import org.bobj.orderbook.service.OrderBookService;
 import org.bobj.orderbook.service.OrderBookWebSocketService;
 import org.bobj.share.mapper.ShareMapper;
 import org.bobj.share.service.ShareService;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,9 @@ public class OrderServiceImpl implements OrderService {
     //주문 체결 서비스
     private final OrderMatchingService orderMatchingService;
     private final OrderBookWebSocketService orderBookWebSocketService;
+
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final OrderQueueProducer orderQueueProducer;
 
     @Override
     public OrderResponseDTO getOrderById(Long orderId) {
@@ -89,7 +94,10 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.create(orderVO);
 
         // 체결 시도
-        orderMatchingService.processOrderMatching(orderVO);
+      //  orderMatchingService.processOrderMatching(orderVO);
+
+        //레디스 큐를 이용하여 주문 체결 로직을 비동기적으로 처리
+        orderQueueProducer.pushOrder(orderVO.getFundingId(), orderVO.getOrderId());
 
         return getOrderById(orderVO.getOrderId());
     }
