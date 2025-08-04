@@ -86,4 +86,9 @@ public class PointService {
 
         pointTransactionRepository.insert(tx);
     }
+
+    public Long getTotalPoint(Long userId) {
+        // 포인트 테이블에서 현재 보유 포인트 계산
+        return pointRepository.findTotalPointByUserId(userId);
+    }
 }

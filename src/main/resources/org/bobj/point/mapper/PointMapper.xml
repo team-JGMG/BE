@@ -37,4 +37,21 @@
     DELETE FROM point WHERE point_id = #{pointId}
   </delete>
 
+  <select id="findTotalPointByUserId" resultType="long" parameterType="long">
+    SELECT COALESCE(SUM(
+                      CASE
+                        WHEN type IN ('DEPOSIT', 'TRADE_SALE', 'PAYOUT', 'REFUND', 'CANCEL') AND status = 'COMPLETED' THEN amount
+                        WHEN type IN ('INVEST', 'WITHDRAW') AND status = 'COMPLETED' THEN -amount
+                        ELSE 0
+                        END
+                    ), 0)
+    FROM point_transactions
+    WHERE user_id = #{userId}
+  </select>
+
+
+
+
+
+
 </mapper>
