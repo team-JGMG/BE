@@ -27,4 +27,14 @@ public class PointController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(transactions));
     }
 
+
+    @GetMapping("/balance")
+    @ApiOperation(value = "현재 포인트 보유량 조회", notes = "로그인한 사용자의 현재 포인트 보유량을 반환합니다.")
+    public ResponseEntity<ApiCommonResponse<Long>> getPointBalance(Principal principal) {
+        Long userId = Long.parseLong(principal.getName());
+        Long balance = pointService.getTotalPoint(userId);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(balance));
+    }
+
+
 }

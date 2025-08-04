@@ -36,4 +36,9 @@ public class PointRepository {
     public PointVO findByUserIdForUpdate(Long userId){
         return pointMapper.findByUserIdForUpdate(userId);
     }
+
+    public Long findTotalPointByUserId(Long userId) {
+        return pointMapper.findTotalPointByUserId(userId);
+    }
+
 }
