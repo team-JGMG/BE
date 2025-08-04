@@ -6,14 +6,15 @@ import lombok.extern.log4j.Log4j2;
 import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
-import org.bobj.funding.dto.FundingDetailResponseDTO;
-import org.bobj.funding.dto.FundingTotalResponseDTO;
-import org.bobj.property.domain.PropertyStatus;
+import org.bobj.property.domain.PropertyDocumentType;
 import org.bobj.property.dto.*;
 import org.bobj.property.service.PropertyService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -24,7 +25,7 @@ import java.util.List;
 public class PropertyController {
     private final PropertyService propertyService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiOperation(value = "매물 등록", notes = "새로운 매물을 등록합니다. 법정동코드가 있으면 자동으로 전월세 데이터를 조회하여 월세 정보를 설정합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "매물 등록 성공"),
@@ -32,8 +33,22 @@ public class PropertyController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<Void>> createProperty(
-            @RequestBody @ApiParam(value = "등록할 매물 정보", required = true) PropertyCreateDTO requestDTO) {
-        propertyService.registerProperty(requestDTO);
+            @RequestPart("request") PropertyCreateDTO requestDTO,
+            @RequestPart(value = "photoFiles", required = false) List<MultipartFile> photoFiles,
+            @RequestPart(value = "documentFiles", required = false) List<MultipartFile> documentFiles,
+            @RequestPart(value = "documentTypes", required = false) List<String> documentTypes) {
+        // documentFiles + documentTypes 수동 매핑
+        List<PropertyDocumentRequestDTO> documentRequests = new ArrayList<>();
+        if (documentFiles != null && documentTypes != null) {
+            for (int i = 0; i < documentFiles.size(); i++) {
+                documentRequests.add(new PropertyDocumentRequestDTO(
+                        documentFiles.get(i),
+                        PropertyDocumentType.valueOf(documentTypes.get(i)) // 예외처리 필수
+                ));
+            }
+        }
+
+        propertyService.registerProperty(requestDTO, photoFiles, documentRequests);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(null));
     }
 

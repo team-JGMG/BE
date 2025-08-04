@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.bobj.property.domain.HashtagVO;
 import org.bobj.property.dto.PhotoDTO;
 import org.bobj.property.dto.SellerDTO;
 
@@ -80,4 +81,7 @@ public class FundingDetailResponseDTO {
 
     @ApiModelProperty(value = "판매자 정보")
     private SellerDTO seller;
+
+    @ApiModelProperty(value="해시 태그 정보")
+    private List<HashtagVO> tags;
 }

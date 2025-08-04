@@ -10,7 +10,6 @@ import org.bobj.property.domain.PropertyVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
 
 @Data
 @NoArgsConstructor
@@ -55,24 +54,5 @@ public class PropertyTotalDTO {
 
                 .thumbnail(thumbnail)
                 .build();
-    }
-
-    public PropertyVO toVO() {
-        PropertyVO.PropertyVOBuilder builder = PropertyVO.builder()
-                .propertyId(this.propertyId)
-                .title(this.title)
-                .address(this.address)
-                .price(this.price)
-                .postingPeriod(this.postingPeriod)
-                .status(this.status)
-                .createdAt(this.createdAt);
-
-        if (this.thumbnail != null) {
-            builder.photos(Collections.singletonList(this.thumbnail.toVO()));
-        } else {
-            builder.photos(Collections.emptyList());
-        }
-
-        return builder.build();
     }
 }

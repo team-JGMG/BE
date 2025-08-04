@@ -291,9 +291,9 @@ public class DecryptionResponseAdvice implements ResponseBodyAdvice<Object> {
                     .createdAt(dto.getCreatedAt())
                     .updatedAt(dto.getUpdatedAt())
                     .soldAt(dto.getSoldAt())
-                    .thumbnail(dto.getThumbnail())
                     .documents(dto.getDocuments())
                     .photos(dto.getPhotos())
+                    .tags(dto.getTags())
                     .build();
 
                 log.info("🔓 PropertyDetailDTO 복호화 완료 - propertyId: {}", dto.getPropertyId());

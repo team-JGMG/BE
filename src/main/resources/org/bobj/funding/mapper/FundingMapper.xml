@@ -38,6 +38,8 @@
       <result property="photoUrl" column="photo_url"/>
       <result property="createdAt" column="photo_created_at"/>
     </collection>
+    <collection property="tags" ofType="org.bobj.property.domain.HashtagVO" column="property_id"
+                select="findHashtagsByPropertyId"/>
   </resultMap>
   <!--  펀딩 상세 조회  -->
   <select id="findFundingById" resultMap="FundingDetailResultMap">
@@ -76,6 +78,13 @@
            LEFT JOIN users u ON p.user_id = u.user_id
            LEFT JOIN property_photos ph ON p.property_id = ph.property_id
     WHERE f.funding_id = #{fundingId}
+  </select>
+
+  <select id="findHashtagsByPropertyId" resultType="org.bobj.property.domain.HashtagVO">
+    SELECT h.id, h.name, h.description
+    FROM property_hashtags ph
+           JOIN hashtags h ON ph.hashtag_id = h.id
+    WHERE ph.property_id = #{property_id}
   </select>
 
   <!-- 펀딩 생성 -->
@@ -121,6 +130,8 @@
     <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
       <result property="photoUrl" column="thumbnail_url"/>
     </association>
+    <collection property="tags" ofType="string" column="property_id"
+                select="selectHashtagNamesByFundingId"/>
   </resultMap>
 
   <!-- 펀딩 모집 페이지에서 펀딩 리스트 조회 -->
@@ -167,13 +178,29 @@
   </select>
 
   <!-- 펀딩 성공한 펀딩 리스트 조회 -->
-  <select id="findEndedFundingProperties" resultType="org.bobj.funding.dto.FundingEndedResponseDTO">
+  <select id="findEndedFundingProperties" resultMap="FundingEndedResultMap">
     SELECT f.funding_id, p.title
     FROM fundings f
            JOIN properties p ON f.property_id = p.property_id
     WHERE f.status = 'ENDED'
     ORDER BY f.funding_end_date DESC
     LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <resultMap id="FundingEndedResultMap" type="org.bobj.funding.dto.FundingEndedResponseDTO">
+    <id property="fundingId" column="funding_id"/>
+    <result property="title" column="title"/>
+    <collection property="tags" ofType="java.lang.String" column="funding_id"
+                select="selectHashtagNamesByFundingId"/>
+  </resultMap>
+
+  <select id="selectHashtagNamesByFundingId" resultType="string">
+    SELECT h.name
+    FROM fundings f
+           JOIN properties p ON f.property_id = p.property_id
+           JOIN property_hashtags ph ON p.property_id = ph.property_id
+           JOIN hashtags h ON ph.hashtag_id = h.id
+    WHERE f.funding_id = #{fundingId}
   </select>
 
   <!-- 비관적 락을 이용한 펀딩 정보 조회 -->

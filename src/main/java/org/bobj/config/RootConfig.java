@@ -38,7 +38,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @Import({
         AppConfig.class,
-        OAuth2ClientConfig.class
+        OAuth2ClientConfig.class,
+        S3Config.class
 })
 @EnableScheduling
 

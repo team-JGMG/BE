@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.bobj.property.dto.PhotoDTO;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -36,4 +37,7 @@ public class FundingTotalResponseDTO {
 
     @ApiModelProperty(value = "썸네일 이미지 정보")
     private PhotoDTO thumbnail;
+
+    @ApiModelProperty("해시태그 리스트")
+    private List<String> tags;
 }
