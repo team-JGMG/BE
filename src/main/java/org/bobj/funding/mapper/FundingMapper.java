@@ -57,4 +57,6 @@ public interface FundingMapper {
 
     // 펀딩 완료 후 2년된 매물 찾기
     List<FundingSoldResponseDTO> findSoldFundingIds();
+
+    List<Long> findAllFundingIds();
 }

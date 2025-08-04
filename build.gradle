@@ -102,6 +102,11 @@ dependencies {
     implementation "org.springframework:spring-messaging:${springVersion}"
     implementation "org.springframework.integration:spring-integration-stomp:5.5.20"
 
+    // Redis
+   // implementation "org.springframework.data:spring-data-redis:2.7.20" // Spring Data Redis
+    //implementation "io.lettuce:lettuce-core:6.3.1"// Redis 클라이언트 (Lettuce)
+    implementation "org.springframework.data:spring-data-redis:2.6.6"
+    implementation "io.lettuce:lettuce-core:6.2.4.RELEASE"
 
 // xml내 한글 처리
     implementation 'xerces:xercesImpl:2.12.2'
