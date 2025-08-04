@@ -1,3 +1,4 @@
+
 package org.bobj.point.controller;
 
 import io.swagger.annotations.*;
@@ -53,6 +54,7 @@ public class PointChargeRequestController {
 //        return ResponseEntity.ok(ApiCommonResponse.createSuccess(merchantUid));
 //    }
 
+
     @PostMapping("/charge")
     @ApiOperation(value = "포인트 충전 요청", notes = "사용자가 지정한 금액으로 포인트 충전 요청을 생성합니다.")
     @ApiResponses(value = {
@@ -81,10 +83,6 @@ public class PointChargeRequestController {
 
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(merchantUid));
     }
-
-
-
-
 
 
 
@@ -123,6 +121,7 @@ public class PointChargeRequestController {
 //        return ResponseEntity.ok(ApiCommonResponse.createSuccess("포인트 충전 성공"));
 //    }
 //}
+
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyPayment(@RequestBody VerifyRequestDto dto) {

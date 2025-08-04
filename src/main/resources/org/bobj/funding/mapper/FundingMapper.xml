@@ -205,6 +205,7 @@
         funding_end_date = NOW()
     WHERE funding_id = #{fundingId}
   </update>
+
   <!-- 펀딩 실패인 펀딩 ID 조회 -->
   <select id="findFailedFundingIds" resultType="java.lang.Long">
     <![CDATA[
@@ -234,4 +235,5 @@
     WHERE DATE(f.funding_end_date) = DATE(DATE_SUB(NOW(), INTERVAL 2 YEAR))
       AND f.status = 'ENDED';
   </select>
+
 </mapper>
