@@ -65,6 +65,7 @@ public class FundingOrderService {
             fundingMapper.markAsEnded(fundingId);
             fundingOrderMapper.markOrdersAsSuccessByFundingId(fundingId);
 
+
             eventPublisher.publishEvent(new ShareDistributionEvent(fundingId));
 //            shareDistributionService.distributeSharersAsync(fundingId); // 참여자들에게 지분 삽입
         }
