@@ -33,7 +33,7 @@ public class OrderMatchingService {
     private final OrderBookWebSocketService orderBookWebSocketService;
 
     @Transactional
-    public void processOrderMatching(OrderVO newOrder) {
+    public int processOrderMatching(OrderVO newOrder) {
 
         // 1. 매칭될 반대편 주문 조회
         // 신규 주문이 BUY 이면 SELL 주문을, SELL 이면 BUY 주문을 찾는다.
@@ -49,6 +49,8 @@ public class OrderMatchingService {
                 oppositeOrderType,
                 String.valueOf(newOrder.getOrderType())
         );
+
+        log.debug("🔍 매칭 대상 주문 수: {}", matchingOrders.size());
 
         // 3. 매칭 조건이 되는 주문과 체결 시도
         int remainingNewOrderCount = newOrder.getOrderShareCount(); // 신규 주문의 남은 수량
@@ -124,6 +126,8 @@ public class OrderMatchingService {
 
         // 모든 체결 처리 후 최종 호가창 업데이트를 웹소켓으로 푸시
         orderBookWebSocketService.publishOrderBookUpdate(newOrder.getFundingId());
+
+        return remainingNewOrderCount;
     }
 
     // 매수자 포인트 업데이트
