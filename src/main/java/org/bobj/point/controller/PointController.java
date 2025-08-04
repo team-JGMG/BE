@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PointController {
     private final PointService pointService;
-
     @GetMapping("/transactions")
     @ApiOperation(value = "포인트 입출금 내역 조회", notes = "로그인한 사용자의 포인트 입출금 트랜잭션 내역을 조회합니다.")
     public ResponseEntity<ApiCommonResponse<List<PointTransactionVO>>> getTransactions(Principal principal){
