@@ -91,4 +91,35 @@ public class PointService {
         // 포인트 테이블에서 현재 보유 포인트 계산
         return pointRepository.findTotalPointByUserId(userId);
     }
+
+    @Transactional
+    public void requestRefund(Long userId, BigDecimal amount) {
+        // 1. 유저 포인트 조회 (락 걸기 위해 for update)
+        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+        if (point == null) {
+            throw new IllegalStateException("포인트 정보가 존재하지 않습니다.");
+        }
+
+        // 2. 잔액 확인
+        if (point.getAmount().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+
+        // 3. 포인트 차감
+        point.setAmount(point.getAmount().subtract(amount));
+        pointRepository.update(point);
+
+        // 4. 트랜잭션 기록 (WITHDRAW)
+        PointTransactionVO tx = PointTransactionVO.builder()
+            .pointId(point.getPointId())
+            .type(PointTransactionType.WITHDRAW)
+            .amount(amount)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        pointTransactionRepository.insert(tx);
+    }
+
+
+
 }
