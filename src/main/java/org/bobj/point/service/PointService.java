@@ -167,5 +167,34 @@ public class PointService {
         pointTransactionRepository.insert(tx);
     }
 
+    /**
+     * 펀딩 실패 시 포인트 환급
+     */
+    @Transactional
+    public void refundForFundingFailure(Long userId, BigDecimal amount) {
+        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+
+        if (point == null) {
+            point = PointVO.builder()
+                .userId(userId)
+                .amount(amount)
+                .build();
+            pointRepository.insert(point);
+        } else {
+            point.setAmount(point.getAmount().add(amount));
+            pointRepository.update(point);
+        }
+
+        PointTransactionVO tx = PointTransactionVO.builder()
+            .pointId(point.getPointId())
+            .type(PointTransactionType.REFUND)
+            .amount(amount)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        pointTransactionRepository.insert(tx);
+    }
+
+
 
 }
