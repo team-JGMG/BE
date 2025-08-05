@@ -32,4 +32,7 @@ public interface ShareMapper {
 
     //주식 데이터 배치 삽입
     int insertSharesBatch(List<ShareVO> shares);
+
+    List<ShareVO> findByFundingId(Long fundingId);
+
 }
