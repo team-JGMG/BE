@@ -195,6 +195,34 @@ public class PointService {
         pointTransactionRepository.insert(tx);
     }
 
+    /**
+     * 사용자가 펀딩 주문을 직접 취소했을 때 포인트 환급
+     */
+    @Transactional
+    public void refundForFundingCancel(Long userId, BigDecimal amount) {
+        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+
+        if (point == null) {
+            point = PointVO.builder()
+                .userId(userId)
+                .amount(amount)
+                .build();
+            pointRepository.insert(point);
+        } else {
+            point.setAmount(point.getAmount().add(amount));
+            pointRepository.update(point);
+        }
+
+        PointTransactionVO tx = PointTransactionVO.builder()
+            .pointId(point.getPointId())
+            .type(PointTransactionType.REFUND)
+            .amount(amount)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        pointTransactionRepository.insert(tx);
+    }
+
 
 
 }
