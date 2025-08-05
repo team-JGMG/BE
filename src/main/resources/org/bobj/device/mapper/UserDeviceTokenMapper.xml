@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.device.mapper.UserDeviceTokenMapper">
+    <resultMap id="UserDeviceTokenResultMap" type="org.bobj.device.domain.UserDeviceTokenVO">
+        <id column="user_device_token_id" property="userDeviceTokenId"/>
+        <result column="user_id" property="userId"/>
+        <result column="device_token" property="deviceToken"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 새로운 디바이스 토큰 저장 -->
+    <insert id="insert" parameterType="org.bobj.device.domain.UserDeviceTokenVO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_device_tokens (
+        user_id,
+        device_token
+        )
+        VALUES (
+        #{userId},
+        #{deviceToken}
+        )
+        <selectKey resultType="Long" keyProperty="userDeviceTokenId" keyColumn="user_device_token_id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <!-- 기존 토큰의 사용자 ID 업데이트 -->
+    <update id="updateUserId">
+        UPDATE user_device_tokens
+        SET
+            user_id = #{userId}
+        WHERE
+            user_device_token_id = #{userDeviceTokenId}
+    </update>
+
+    <!-- 사용자 ID와 토큰으로 레코드 삭제 -->
+    <delete id="deleteByUserIdAndDeviceToken">
+        DELETE FROM user_device_tokens
+        WHERE user_id = #{userId} AND device_token = #{deviceToken}
+    </delete>
+
+
+    <!-- 디바이스 토큰으로 단건 조회  -->
+    <select id="findByDeviceToken" parameterType="string" resultMap="UserDeviceTokenResultMap">
+        SELECT
+            user_device_token_id,
+            user_id,
+            device_token,
+            created_at
+        FROM
+            user_device_tokens
+        WHERE
+            device_token = #{deviceToken}
+    </select>
+
+    <!-- 사용자 ID로 모든 토큰 조회 (findByUserId) -->
+    <select id="findByUserId" parameterType="long" resultMap="UserDeviceTokenResultMap">
+        SELECT
+            user_device_token_id,
+            user_id,
+            device_token,
+            created_at
+        FROM
+            user_device_tokens
+        WHERE
+            user_id = #{userId}
+    </select>
+
+</mapper>

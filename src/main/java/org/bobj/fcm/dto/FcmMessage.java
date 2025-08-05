@@ -1,4 +1,4 @@
-package org.bobj.notification.dto;
+package org.bobj.fcm.dto;
 
 
 import lombok.AllArgsConstructor;

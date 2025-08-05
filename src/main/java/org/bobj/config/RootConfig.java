@@ -33,7 +33,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.point.mapper",
         "org.bobj.user.mapper",
         "org.bobj.funding.mapper",
-        "org.bobj.payment.mapper"})
+        "org.bobj.payment.mapper",
+        "org.bobj.notification.mapper",
+        "org.bobj.device.mapper"})
 @ComponentScan(basePackages = "org.bobj")
 @EnableTransactionManagement
 @Import({

@@ -1,4 +1,4 @@
-package org.bobj.notification.dto.request;
+package org.bobj.fcm.dto.request;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

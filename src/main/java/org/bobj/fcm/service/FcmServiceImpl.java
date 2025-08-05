@@ -1,4 +1,4 @@
-package org.bobj.notification.service;
+package org.bobj.fcm.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +10,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.bobj.notification.dto.FcmMessage;
+import org.bobj.fcm.dto.FcmMessage;
+import org.bobj.fcm.dto.request.FcmRequestDto;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,8 @@ public class FcmServiceImpl implements FcmService{
     private final ObjectMapper objectMapper;
 
     // 메시지를 구성하고 토큰을 받아서 FCM으로 메시지를 처리한다.
-    public void sendMessageTo(String targetToken, String title, String body) throws IOException {
-        String message = makeMessage(targetToken, title, body);
+    public void sendMessageTo(FcmRequestDto fcmRequestDto) throws IOException {
+        String message = makeMessage(fcmRequestDto.getDeviceToken(), fcmRequestDto.getTitle(), fcmRequestDto.getBody());
 
         OkHttpClient client = new OkHttpClient();
         RequestBody requestBody = RequestBody.create(message, // 만든 message body에 넣기
