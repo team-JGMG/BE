@@ -188,6 +188,8 @@
     <select id="findSold" resultMap="PropertySoldMap">
         SELECT
             p.property_id,
+            p.title,
+            p.cumulative_return,
             (SELECT photo_url
              FROM property_photos
              WHERE property_id = p.property_id
@@ -200,6 +202,8 @@
 
     <resultMap id="PropertySoldMap" type="org.bobj.property.dto.PropertySoldResponseDTO">
         <id property="propertyId" column="property_id"/>
+        <result property="title" column="title"/>
+        <result property="cumulativeReturn" column="cumulative_return"/>
         <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
             <result property="photoUrl" column="thumbnail_url"/>
         </association>
@@ -237,7 +241,8 @@
         UPDATE properties
         SET status = 'SOLD',
         sold_at = NOW(),
-        updated_at = NOW()
+        updated_at = NOW(),
+        cumulative_return = ROUND(24 * rental_income / price * 100, 2)
         WHERE property_id IN
         <foreach collection="propertyIds" item="id" open="(" separator="," close=")">
             #{id}

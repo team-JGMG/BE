@@ -76,6 +76,9 @@ public class FundingDetailResponseDTO {
     @ApiModelProperty(value = "상세 설명", example = "역세권이며 투자 가치가 높습니다.")
     private String description;
 
+    @ApiModelProperty(value="예상 주 당 배당금", example = "20")
+    private BigDecimal expectedDividendPerShare;
+
     @ApiModelProperty(value = "사진 목록")
     private List<PhotoDTO> photos;
 
