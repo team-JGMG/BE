@@ -27,14 +27,16 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
+    private final CookieUtil cookieUtil;
 
     @Value("${custom.oauth2.redirect-uri}")
     private String frontendRedirectUri;
 
     // 수동 생성자 추가
-    public OAuth2LoginSuccessHandler(JwtTokenProvider jwtTokenProvider, UserService userService) {
+    public OAuth2LoginSuccessHandler(JwtTokenProvider jwtTokenProvider, UserService userService, CookieUtil cookieUtil) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userService = userService;
+        this.cookieUtil = cookieUtil;
     }
 
     @Override
@@ -90,7 +92,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 AuthResponseDTO authResponse = userService.loginExistingSocialUser(provider, providerId);
                 
                 // 액세스 토큰을 쿠키로 설정
-                CookieUtil.setAccessTokenCookie(response, authResponse.getAccessToken());
+                cookieUtil.setAccessTokenCookie(response, request, authResponse.getAccessToken());
                 
                 // 메인페이지로 리다이렉트 (성공 상태)
                 String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
@@ -106,9 +108,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 
                 // pre-auth 토큰 생성
                 String preAuthToken = jwtTokenProvider.createPreAuthToken(email, nickname, provider, providerId);
+                log.info("🔑 Pre-Auth Token 생성 완료: {}...", preAuthToken.substring(0, Math.min(20, preAuthToken.length())));
                 
                 // 쿠키로 pre-auth 토큰 설정
-                CookieUtil.setPreAuthTokenCookie(response, preAuthToken);
+                cookieUtil.setPreAuthTokenCookie(response, request, preAuthToken);
+                log.info("🍪 Pre-Auth Token 쿠키 설정 완료 (도메인은 CookieUtil에서 자동 설정)");
                 
                 // 회원가입 페이지로 리다이렉트 (회원가입 필요 상태)
                 String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
