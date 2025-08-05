@@ -129,4 +129,11 @@
             #{id}
         </foreach>
     </update>
+
+  <select id="findById" resultType="org.bobj.funding.domain.FundingOrderVO">
+    SELECT order_id, user_id, order_price
+    FROM funding_orders
+    WHERE order_id = #{orderId}
+  </select>
+
 </mapper>

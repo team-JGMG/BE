@@ -3,6 +3,7 @@ package org.bobj.funding.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
+import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.domain.FundingVO;
 import org.bobj.funding.dto.FundingOrderLimitDTO;
 import org.bobj.funding.dto.FundingOrderUserResponseDTO;
@@ -80,8 +81,18 @@ public class FundingOrderService {
     // 주문 취소
     @Transactional
     public void refundFundingOrder(Long orderId, Long fundingId, BigDecimal orderPrice) {
+        // 1. 주문 상태 REFUNDED 처리
         fundingOrderMapper.refundFundingOrder(orderId);
-        fundingMapper.decreaseCurrentAmount(fundingId,orderPrice);
+
+        // 2. 펀딩 누적 금액 차감
+        fundingMapper.decreaseCurrentAmount(fundingId, orderPrice);
+
+        // 3. 사용자 정보 조회
+        FundingOrderVO order = fundingOrderMapper.findById(orderId); // userId 포함되어 있어야 함
+        Long userId = order.getUserId();
+
+        // 4. 포인트 환불 처리
+        pointService.refundForFundingCancel(userId, orderPrice);
     }
 
     // 내가 투자한 주문 리스트
