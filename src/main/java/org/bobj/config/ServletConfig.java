@@ -23,7 +23,8 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.user.controller",
         "org.bobj.orderbook.controller",
         "org.bobj.point.controller",
-        "org.bobj.payment.controller"})
+        "org.bobj.payment.controller",
+        "org.bobj.notification.controller"})
 
 public class ServletConfig implements WebMvcConfigurer {
 

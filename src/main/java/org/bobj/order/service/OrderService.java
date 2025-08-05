@@ -14,7 +14,7 @@ public interface OrderService {
 
     List<OrderResponseDTO> getOrderHistoryByUserId(Long userId, String orderType);
 
-    void cancelOrder(Long orderId);
+    Long cancelOrder(Long orderId);
 
 }
 
