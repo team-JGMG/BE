@@ -64,4 +64,7 @@ public interface FundingMapper {
     List<FundingSoldResponseDTO> findSoldFundingIds();
 
     List<Long> findAllFundingIds();
+
+    //펀딩 아이디로 매물 title 가져오기
+    String getPropertyTitleByFundingId(@Param("fundingId") Long fundingId);
 }

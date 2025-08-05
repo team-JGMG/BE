@@ -25,7 +25,6 @@
     <result property="officialLandPrice" column="official_land_price"/>
     <result property="unitPricePerPyeong" column="unit_price_per_pyeong"/>
     <result property="description" column="description"/>
-    <result property="expectedDividendPerShare" column="expected_dividend_per_share"/>
 
     <association property="seller" javaType="org.bobj.property.dto.SellerDTO">
       <result property="userId" column="user_id"/>
@@ -69,8 +68,8 @@
       CEIL(p.rental_income/f.total_shares) AS expected_dividend_per_share,
       u.user_id,
       u.name,
---       u.email,
---       u.phone,
+      u.email,
+      u.phone,
       ph.photo_id,
       ph.property_id AS photo_property_id,
       ph.photo_url,
@@ -269,6 +268,14 @@
     FROM fundings f
     WHERE DATE(f.funding_end_date) = DATE(DATE_SUB(NOW(), INTERVAL 2 YEAR))
       AND f.status = 'ENDED';
+  </select>
+
+  <select id="getPropertyTitleByFundingId" resultType="java.lang.String">
+    SELECT
+      p.title
+      FROM fundings f
+           LEFT JOIN properties p ON f.property_id = p.property_id
+      WHERE f.funding_id = #{fundingId}
   </select>
 
 </mapper>

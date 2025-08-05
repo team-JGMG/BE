@@ -99,4 +99,8 @@ public class FundingService {
 
         return new CustomSlice<>(content,hasNext);
     }
+
+    public String getPropertyTitleByFundingId(Long fundingId){
+        return fundingMapper.getPropertyTitleByFundingId(fundingId);
+    }
 }
