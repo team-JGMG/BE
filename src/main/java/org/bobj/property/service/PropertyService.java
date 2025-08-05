@@ -6,10 +6,13 @@ import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.s3.S3Service;
 import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
+import org.bobj.point.service.PointService;
 import org.bobj.property.domain.PropertyDocumentType;
 import org.bobj.property.domain.PropertyVO;
 import org.bobj.property.dto.*;
 import org.bobj.property.mapper.PropertyMapper;
+import org.bobj.share.domain.ShareVO;
+import org.bobj.share.mapper.ShareMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,8 @@ public class PropertyService {
     private final FundingMapper fundingMapper;
     private final RentalIncomeService rentalIncomeService;
     private final S3Service s3Service;
+    private final ShareMapper shareMapper;
+    private final PointService pointService;
 
     // 매물 승인 + 펀딩 등록 or 거절
     @Transactional
@@ -210,7 +215,12 @@ public class PropertyService {
             Long fundingId = dto.getFundingId();
             executor.submit(()->{
                 /* fundingId에 해당하는 share 가져오기(share 테이블)*/
+                List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
                 /* 해당하는 지분에 point 환불(point 테이블) */
+                for (ShareVO share : shares) {
+                    pointService.refundForShareSell(share.getUserId(),
+                        BigDecimal.valueOf(5000* share.getShareCount()));
+                }
             });
         }
         executor.shutdown();

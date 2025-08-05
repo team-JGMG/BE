@@ -137,4 +137,11 @@
         <result property="thumbnailUrl" column="thumbnail_url"/>
     </resultMap>
 
+    <!-- 특정 펀딩 ID에 대한 모든 지분 조회 -->
+    <select id="findByFundingId" resultType="org.bobj.share.domain.ShareVO">
+        SELECT *
+        FROM SHARES
+        WHERE funding_id = #{fundingId}
+    </select>
+
 </mapper>
