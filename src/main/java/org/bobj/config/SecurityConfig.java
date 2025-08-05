@@ -59,7 +59,7 @@ public class SecurityConfig {
                 );
 
         // JWT 필터는 유지 (토큰이 있으면 인증 처리, 없어도 통과)
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService, cookieUtil), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -123,11 +123,16 @@ public class SecurityConfig {
                 );
 
         // JWT 인증 필터 추가
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
         */
 
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider, userService, cookieUtil);
+    }
 
     @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {

@@ -133,7 +133,7 @@ public class PropertyMapController {
 
             log.info("매물 ID: {}의 법정동 코드: {}", propertyId, rawdCd);
 
-            // 실거래가 위치 정보 조회
+            // 실거래가 위치 정보 조회 (서비스에서 이미 50개로 제한됨)
             List<RealEstateLocationDTO> locations = propertyMapService.getRealEstateLocations(rawdCd);
 
             log.info("최근 3개월 실거래가 위치 정보 응답 - 매물ID: {}, 법정동코드: {}, 총 {}건",
@@ -143,6 +143,122 @@ public class PropertyMapController {
 
         } catch (Exception e) {
             log.error("최근 3개월 실거래가 위치 정보 조회 중 오류 발생 - 매물ID: {}, 오류: {}", propertyId, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 매물 ID를 이용하여 해당 매물의 좌표를 반환하는 API
+     *
+     * @param propertyId 매물 ID
+     * @return 좌표 정보
+     */
+    @GetMapping("/coordinate/{propertyId}")
+    @ApiOperation(value = "매물 ID 기반 좌표 조회",
+            notes = "매물 ID를 경로 변수로 받아서 해당 매물의 주소를 조회한 후, 위도, 경도 좌표로 변환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "변환 성공", response = CoordinateDTO.class),
+            @ApiResponse(code = 400, message = "잘못된 매물 ID"),
+            @ApiResponse(code = 404, message = "매물을 찾을 수 없거나 좌표 변환 실패"),
+            @ApiResponse(code = 500, message = "서버 내부 오류")
+    })
+    public ResponseEntity<CoordinateDTO> getPropertyCoordinate(
+            @ApiParam(value = "매물 ID", required = true, example = "1")
+            @PathVariable("propertyId") Long propertyId) {
+
+        try {
+            log.info("매물 ID 기반 좌표 조회 요청 - 매물ID: {}", propertyId);
+
+            // 입력값 검증
+            if (propertyId == null || propertyId <= 0) {
+                log.warn("잘못된 매물 ID: {}", propertyId);
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 매물 정보 조회
+            org.bobj.property.dto.PropertyDetailDTO property = propertyService.getPropertyById(propertyId);
+            if (property == null) {
+                log.warn("매물 ID: {}에 해당하는 매물을 찾을 수 없습니다", propertyId);
+                return ResponseEntity.notFound().build();
+            }
+
+            // 매물 주소 추출
+            String address = property.getAddress();
+            if (address == null || address.trim().isEmpty()) {
+                log.warn("매물 ID: {}의 주소 정보가 없습니다", propertyId);
+                return ResponseEntity.notFound().build();
+            }
+
+            log.info("매물 주소 추출 완료 - 매물ID: {}, 주소: {}", propertyId, address);
+
+            // 좌표 조회
+            CoordinateDTO coordinate = propertyMapService.getCoordinateFromAddress(address);
+
+            if (coordinate != null) {
+                log.info("매물 좌표 조회 성공 - 매물ID: {}, 위도: {}, 경도: {}", 
+                        propertyId, coordinate.getLatitude(), coordinate.getLongitude());
+                return ResponseEntity.ok(coordinate);
+            } else {
+                log.warn("매물 주소의 좌표를 찾을 수 없음 - 매물ID: {}, 주소: {}", propertyId, address);
+                return ResponseEntity.notFound().build();
+            }
+
+        } catch (Exception e) {
+            log.error("매물 좌표 조회 중 오류 발생 - 매물ID: {}, 오류: {}", propertyId, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 주소를 직접 받아서 좌표를 반환하는 API
+     *
+     * @param address 주소
+     * @return 좌표 정보
+     */
+    @PostMapping("/coordinate")
+    @ApiOperation(value = "주소 기반 좌표 변환",
+            notes = "주소를 직접 받아서 위도, 경도 좌표로 변환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "변환 성공", response = CoordinateDTO.class),
+            @ApiResponse(code = 400, message = "잘못된 주소 형식"),
+            @ApiResponse(code = 404, message = "주소에 해당하는 좌표를 찾을 수 없음"),
+            @ApiResponse(code = 500, message = "서버 내부 오류")
+    })
+    public ResponseEntity<CoordinateDTO> getCoordinateFromAddress(
+            @ApiParam(value = "변환할 주소", required = true, example = "서울특별시 강남구 테헤란로 427")
+            @RequestBody String address) {
+
+        try {
+            log.info("주소 기반 좌표 변환 요청: {}", address);
+
+            // 입력값 검증 및 전처리
+            if (address == null || address.trim().isEmpty()) {
+                log.warn("잘못된 주소: {}", address);
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 주소 문자열 정리 (앞뒤 따옴표 제거, 공백 정리)
+            String cleanAddress = address.trim();
+            if (cleanAddress.startsWith("\"") && cleanAddress.endsWith("\"")) {
+                cleanAddress = cleanAddress.substring(1, cleanAddress.length() - 1);
+            }
+            cleanAddress = cleanAddress.trim();
+
+            log.info("정리된 주소: {}", cleanAddress);
+
+            // 좌표 조회
+            CoordinateDTO coordinate = propertyMapService.getCoordinateFromAddress(cleanAddress);
+
+            if (coordinate != null) {
+                log.info("주소 기반 좌표 변환 성공: {}", cleanAddress);
+                return ResponseEntity.ok(coordinate);
+            } else {
+                log.warn("좌표를 찾을 수 없음: {}", cleanAddress);
+                return ResponseEntity.notFound().build();
+            }
+
+        } catch (Exception e) {
+            log.error("주소 기반 좌표 변환 중 오류 발생: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

@@ -61,8 +61,8 @@ public class UserRegistrationRequestDTO {
         }
         
         // 계좌번호 검증
-        if (accountNumber == null || !accountNumber.matches("^\\d{10,20}$")) {
-            result.addError("accountNumber", "계좌번호는 10-20자리 숫자여야 합니다");
+        if (accountNumber == null || !accountNumber.matches("^\\d{10,14}$")) {
+            result.addError("accountNumber", "계좌번호는 10-14자리 숫자여야 합니다");
         }
         
         return result;
