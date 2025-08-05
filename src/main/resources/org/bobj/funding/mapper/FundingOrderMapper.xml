@@ -5,7 +5,7 @@
 <mapper namespace="org.bobj.funding.mapper.FundingOrderMapper">
 
   <!-- 내가 투자한 주문 리스트 -->
-  <select id="findFundingOrdersByUserId" resultType="org.bobj.funding.dto.FundingOrderUserResponseDTO">
+  <select id="findFundingOrdersByUserId" resultMap="FundingOrderUserMap">
     SELECT
         p.property_id AS property_id,
         p.title,
@@ -69,7 +69,7 @@
     <!-- 주문 가능 정보 조회 -->
     <select id="findFundingOrderLimit" resultType="org.bobj.funding.dto.FundingOrderLimitDTO">
         SELECT
-            5000 AS share_price,
+            5000 AS share_amount,
 
             -- 펀딩 관련
             f.target_amount - f.current_amount AS remaining_amount,
@@ -88,7 +88,7 @@
             u.amount AS user_points
 
         FROM fundings f
-                 JOIN point u ON u.user_id = #{userId}
+                 JOIN points u ON u.user_id = #{userId}
         WHERE f.funding_id = #{fundingId}
     </select>
 
