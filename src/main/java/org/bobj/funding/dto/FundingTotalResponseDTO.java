@@ -1,5 +1,6 @@
 package org.bobj.funding.dto;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +30,9 @@ public class FundingTotalResponseDTO {
 
     @ApiModelProperty("목표 금액")
     private BigDecimal targetAmount;
+
+    @ApiModelProperty("누적 수익률")
+    private BigDecimal cumulativeReturn;
 
     @ApiModelProperty("모집률 (%)")
     private Integer fundingRate;

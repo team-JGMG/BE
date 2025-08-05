@@ -25,6 +25,7 @@
     <result property="officialLandPrice" column="official_land_price"/>
     <result property="unitPricePerPyeong" column="unit_price_per_pyeong"/>
     <result property="description" column="description"/>
+    <result property="expectedDividendPerShare" column="expected_dividend_per_share"/>
 
     <association property="seller" javaType="org.bobj.property.dto.SellerDTO">
       <result property="userId" column="user_id"/>
@@ -65,6 +66,7 @@
       p.official_land_price,
       p.unit_price_per_pyeong,
       p.description,
+      CEIL(p.rental_income/f.total_shares) AS expected_dividend_per_share,
       u.user_id,
       u.name,
 --       u.email,
@@ -123,6 +125,7 @@
     <result property="propertyId" column="property_id"/>
     <result property="title" column="title"/>
     <result property="address" column="address"/>
+    <result property="cumulativeReturn" column="cumulative_return"/>
     <result property="targetAmount" column="target_amount"/>
     <result property="fundingRate" column="fundingRate"/>
     <result property="daysLeft" column="daysLeft"/>
@@ -141,6 +144,7 @@
       f.property_id,
       p.title,
       p.address,
+      p.cumulative_return,
       f.target_amount,
       FLOOR((f.current_amount / f.target_amount) * 100) AS fundingRate,
       DATEDIFF(DATE(f.funding_end_date),DATE(NOW())) AS daysLeft,

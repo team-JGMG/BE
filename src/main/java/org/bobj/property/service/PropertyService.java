@@ -199,7 +199,7 @@ public class PropertyService {
                 .map(FundingSoldResponseDTO::getPropertyId)
                 .collect(Collectors.toList());
 
-        // 1. 매물 상태를 SOLD, updated_at, sold_at 수정
+        // 1. 매물 상태를 SOLD, updated_at, sold_at 수정 + 누적 수익률 계산
         propertyMapper.updatePropertiesAsSold(propertyIds);
 
         // 멀티 스레드 설정
