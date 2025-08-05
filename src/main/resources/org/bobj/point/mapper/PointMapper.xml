@@ -37,7 +37,7 @@
     DELETE FROM point WHERE point_id = #{pointId}
   </delete>
 
-  <select id="findTotalPointByUserId" resultType="long" parameterType="long">
+  <select id="findTotalPointByUserId" resultType="java.math.BigDecimal" parameterType="long">
     SELECT COALESCE(SUM(
                       CASE
                         WHEN type IN ('DEPOSIT', 'TRADE_SALE', 'PAYOUT', 'REFUND', 'CANCEL') AND status = 'COMPLETED' THEN amount
@@ -48,6 +48,7 @@
     FROM point_transactions
     WHERE user_id = #{userId}
   </select>
+
 
 
 

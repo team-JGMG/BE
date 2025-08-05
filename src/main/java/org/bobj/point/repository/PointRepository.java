@@ -1,6 +1,7 @@
 package org.bobj.point.repository;
 
 
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.bobj.point.domain.PointVO;
@@ -37,7 +38,7 @@ public class PointRepository {
         return pointMapper.findByUserIdForUpdate(userId);
     }
 
-    public Long findTotalPointByUserId(Long userId) {
+    public BigDecimal findTotalPointByUserId(Long userId) {
         return pointMapper.findTotalPointByUserId(userId);
     }
 

@@ -9,6 +9,7 @@ import org.bobj.funding.dto.FundingOrderUserResponseDTO;
 import org.bobj.funding.event.ShareDistributionEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
+import org.bobj.point.service.PointService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class FundingOrderService {
 
     private final ShareDistributionService shareDistributionService;
     private final ApplicationEventPublisher eventPublisher;
+    private final PointService pointService;
 
     // 주문 추가
     @Transactional
@@ -44,8 +46,11 @@ public class FundingOrderService {
         BigDecimal orderPrice = sharePrice.multiply(BigDecimal.valueOf(shareCount));
 
         /* 요기 구현해주시면 됩니다! (Point) */
+
         // user의 point 가져오는 api 부탁드려요!! PointMapper.findUserPoints(userId)
-        BigDecimal userPoints = BigDecimal.valueOf(100000);
+        BigDecimal userPoints = pointService.getTotalPoint(userId);
+
+//        BigDecimal userPoints = BigDecimal.valueOf(100000);
         if (userPoints.compareTo(orderPrice) < 0) {
             throw new IllegalArgumentException("포인트가 부족합니다.");
         }
@@ -55,6 +60,7 @@ public class FundingOrderService {
 
         /* 요기 구현해주시면 됩니다! (Point) */
         // 포인트 차감 과정(추후 구현)
+        pointService.investPoint(userId, orderPrice);
 
         // 펀딩 현재 모인 금액 증가
         fundingMapper.increaseCurrentAmount(fundingId, orderPrice);
