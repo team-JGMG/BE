@@ -66,7 +66,7 @@ public class PropertyMapService {
 
             List<RealEstateLocationDTO> locations = new ArrayList<>();
             List<String> recentMonths = getRecentMonths();
-            final int MAX_LOCATIONS = 50; // 최대 수집 개수 제한
+            final int MAX_LOCATIONS = 10; // 최대 수집 개수 제한
 
             // 최신 월부터 순차적으로 처리
             for (String yearMonth : recentMonths) {
