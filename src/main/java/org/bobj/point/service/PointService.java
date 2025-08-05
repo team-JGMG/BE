@@ -87,7 +87,7 @@ public class PointService {
         pointTransactionRepository.insert(tx);
     }
 
-    public Long getTotalPoint(Long userId) {
+    public BigDecimal getTotalPoint(Long userId) {
         // 포인트 테이블에서 현재 보유 포인트 계산
         return pointRepository.findTotalPointByUserId(userId);
     }
@@ -144,6 +144,28 @@ public class PointService {
     }
 
 
+
+    @Transactional
+    public void investPoint(Long userId, BigDecimal amount) {
+        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+        if (point == null || point.getAmount().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("포인트가 부족합니다.");
+        }
+
+        // 포인트 차감
+        point.setAmount(point.getAmount().subtract(amount));
+        pointRepository.update(point);
+
+        // 트랜잭션 기록
+        PointTransactionVO tx = PointTransactionVO.builder()
+            .pointId(point.getPointId())
+            .type(PointTransactionType.INVEST) // enum에 정의돼 있어야 함
+            .amount(amount)
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        pointTransactionRepository.insert(tx);
+    }
 
 
 }

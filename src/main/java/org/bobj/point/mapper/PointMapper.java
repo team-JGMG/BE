@@ -1,5 +1,6 @@
 package org.bobj.point.mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -21,7 +22,8 @@ public interface PointMapper {
     PointVO findByUserIdForUpdate(@Param("userId") Long userId);
 
 
-    Long findTotalPointByUserId(Long userId);
+    BigDecimal findTotalPointByUserId(Long userId);
+
 
 
 }

@@ -3,6 +3,7 @@ package org.bobj.point.controller;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 import java.util.function.LongPredicate;
@@ -37,9 +38,9 @@ public class PointController {
 
     @GetMapping("/balance")
     @ApiOperation(value = "현재 포인트 보유량 조회", notes = "로그인한 사용자의 현재 포인트 보유량을 반환합니다.")
-    public ResponseEntity<ApiCommonResponse<Long>> getPointBalance(Principal principal) {
+    public ResponseEntity<ApiCommonResponse<BigDecimal>> getPointBalance(Principal principal) {
         Long userId = Long.parseLong(principal.getName());
-        Long balance = pointService.getTotalPoint(userId);
+        BigDecimal balance = pointService.getTotalPoint(userId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(balance));
     }
 
