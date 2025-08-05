@@ -94,12 +94,22 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 // 액세스 토큰을 쿠키로 설정
                 cookieUtil.setAccessTokenCookie(response, request, authResponse.getAccessToken());
                 
-                // 메인페이지로 리다이렉트 (성공 상태)
-                String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                        .queryParam("status", "SUCCESS")
-                        .build().toUriString();
+                // 관리자 여부에 따라 status 파라미터 설정
+                String targetUrl;
+                if (authResponse.getIsAdmin() != null && authResponse.getIsAdmin()) {
+                    // 관리자인 경우 status=admin
+                    targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                            .queryParam("status", "ADMIN")
+                            .build().toUriString();
+                    log.info("관리자 로그인 완료. status=admin으로 리다이렉트: {}", targetUrl);
+                } else {
+                    // 일반 사용자인 경우 status=success
+                    targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                            .queryParam("status", "SUCCESS")
+                            .build().toUriString();
+                    log.info("일반 사용자 로그인 완료. status=success로 리다이렉트: {}", targetUrl);
+                }
                 
-                log.info("기존 회원 로그인 완료. 메인페이지로 리다이렉트: {}", targetUrl);
                 getRedirectStrategy().sendRedirect(request, response, targetUrl);
                 
             } else {
