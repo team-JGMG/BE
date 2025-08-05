@@ -218,7 +218,8 @@ public class PropertyService {
                 List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
                 /* 해당하는 지분에 point 환불(point 테이블) */
                 for (ShareVO share : shares) {
-//                    pointService.refundForShareSell(share.getUserId(),  (매각 차익 / 5000)* share.getShareCount());
+                    pointService.refundForShareSell(share.getUserId(),
+                        BigDecimal.valueOf(5000* share.getShareCount()));
                 }
             });
         }
