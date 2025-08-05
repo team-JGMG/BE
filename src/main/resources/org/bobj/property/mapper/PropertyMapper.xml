@@ -248,4 +248,11 @@
             #{id}
         </foreach>
     </update>
+
+    <!-- 매물 ID로 법정동 코드 조회 -->
+    <select id="findRawdCdByPropertyId" parameterType="long" resultType="string">
+        SELECT rawd_cd
+        FROM properties
+        WHERE property_id = #{propertyId}
+    </select>
 </mapper>
