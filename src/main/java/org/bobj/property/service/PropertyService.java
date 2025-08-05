@@ -54,7 +54,7 @@ public class PropertyService {
         // 매물 등록 (DB 트랜잭션 내에서 처리)
         propertyMapper.insert(vo);
         Long propertyId = vo.getPropertyId();
-        
+
         // insert 후 생성된 ID 확인
         log.info("매물 등록 완료 - ID: {}, 제목: {}", vo.getPropertyId(), vo.getTitle());
         
@@ -214,5 +214,22 @@ public class PropertyService {
             });
         }
         executor.shutdown();
+    }
+
+    /**
+     * 매물 ID로 법정동 코드 조회
+     */
+    public String getRawdCdByPropertyId(Long propertyId) {
+        log.info("매물 ID로 법정동 코드 조회 - 매물ID: {}", propertyId);
+
+        String rawdCd = propertyMapper.findRawdCdByPropertyId(propertyId);
+
+        if (rawdCd == null || rawdCd.trim().isEmpty()) {
+            log.warn("매물 ID: {}에 해당하는 법정동 코드를 찾을 수 없습니다", propertyId);
+            return null;
+        }
+
+        log.info("법정동 코드 조회 성공 - 매물ID: {}, 법정동코드: {}", propertyId, rawdCd);
+        return rawdCd;
     }
 }

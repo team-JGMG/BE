@@ -45,4 +45,9 @@ public interface PropertyMapper {
     void updatePropertiesAsSold(@Param("propertyIds") List<Long> propertyIds);
 
     void updateRentalIncome(@Param("propertyId") Long propertyId, @Param("rentalIncome") java.math.BigDecimal rentalIncome);
+    
+    /**
+     * 매물 ID로 법정동 코드 조회
+     */
+    String findRawdCdByPropertyId(@Param("propertyId") Long propertyId);
 }
