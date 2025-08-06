@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
@@ -16,44 +15,45 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * OAuth2 클라이언트(카카오 등)의 등록 정보를 설정하는 클래스.
+ * OAuth2 클라이언트(카카오)의 순수 수동 설정 클래스
+ * Spring Boot Auto Configuration과의 충돌을 방지하기 위해 커스텀 프로퍼티 사용
  */
 @Slf4j
 @Configuration
-@PropertySource("classpath:application.properties")
 public class OAuth2ClientConfig {
 
-    // Spring의 @Value를 사용해서 application.properties 또는 환경변수에서 값 읽기
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:ec2974cb702f5750b661d29add7454a7}")
+    // 커스텀 OAuth2 프로퍼티 사용 (Spring Boot Auto Configuration 트리거 방지)
+    @Value("${oauth2.kakao.client-id}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:4AWJ19fh35ZIXf4X50Y6y7arHOGzor8O}")
+    @Value("${oauth2.kakao.client-secret}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:https://half-to-half.site/login/oauth2/code/kakao}")
+    @Value("${oauth2.kakao.redirect-uri}")
     private String redirectUri;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
+    @Value("${oauth2.kakao.scope}")
     private String scopeString;
 
     /**
-     * OAuth2 클라이언트들의 정보를 담고 있는 저장소(Repository) Bean을 생성합니다
+     * OAuth2 클라이언트 등록 정보를 담고 있는 저장소 Bean 생성
+     * 순수 수동 설정으로 Spring Boot Auto Configuration 비활성화
      */
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         
-        log.info("OAuth2 클라이언트 설정 초기화 시작");
-        log.info("카카오 클라이언트 ID: {}...",
+        log.info("🔧 순수 수동 OAuth2 클라이언트 설정 초기화 시작");
+        log.info("🔑 카카오 클라이언트 ID: {}...",
                 clientId != null && clientId.length() > 8 ? 
                 clientId.substring(0, 8) + "****" : "설정되지 않음");
-        log.info("리다이렉트 URI: {}", redirectUri);
-        log.info("요청 스코프: {}", scopeString);
+        log.info("🔄 카카오 리다이렉트 URI: {}", redirectUri);
+        log.info("📋 요청 스코프: {}", scopeString);
 
         // 스코프 파싱
         Set<String> scopes = parseScopes(scopeString);
-        log.info(" 파싱된 스코프: {}", scopes);
+        log.info("✅ 파싱된 스코프: {}", scopes);
 
-        // 카카오 클라이언트 등록 정보 생성
+        // 카카오 클라이언트 등록 정보 생성 (순수 수동 설정)
         ClientRegistration kakaoClientRegistration = ClientRegistration.withRegistrationId("kakao")
                 .clientId(clientId)
                 .clientSecret(clientSecret)
@@ -89,7 +89,7 @@ public class OAuth2ClientConfig {
         if (scopes.isEmpty()) {
             scopes.add("profile_nickname");
             scopes.add("account_email");
-            log.warn("스코프가 비어있어 기본 스코프를 사용합니다: {}", scopes);
+            log.warn("⚠️ 스코프가 비어있어 기본 스코프를 사용합니다: {}", scopes);
         }
         
         return scopes;
