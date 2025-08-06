@@ -92,6 +92,41 @@ public class PointService {
         return pointRepository.findTotalPointByUserId(userId);
     }
 
+    /**
+     * 배당금 지급 및 트랜잭션 기록
+     * @param userId 사용자 ID
+     * @param amount 배당금 금액
+     * @param allocationId 배당금 ID (추적용)
+     */
+    @Transactional
+    public void allocateDividend(Long userId, BigDecimal amount, Long allocationId) {
+        // 1. 유저의 포인트 정보 조회 (FOR UPDATE)
+        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+
+        // 2. 없으면 새로 생성 (일반적으로는 회원가입 시 생성되어 있음)
+        if (point == null) {
+            point = PointVO.builder()
+                    .userId(userId)
+                    .amount(amount)
+                    .build();
+            pointRepository.insert(point);
+        } else {
+            // 3. 있으면 잔액에 배당금 추가
+            point.setAmount(point.getAmount().add(amount));
+            pointRepository.update(point);
+        }
+
+        // 4. 트랜잭션 기록 (ALLOCATION)
+        PointTransactionVO tx = PointTransactionVO.builder()
+                .pointId(point.getPointId())
+                .type(PointTransactionType.ALLOCATION)
+                .amount(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        pointTransactionRepository.insert(tx);
+    }
+
     @Transactional
     public void requestRefund(Long userId, BigDecimal amount) {
         // 1. 유저 포인트 조회 (락 걸기 위해 for update)
