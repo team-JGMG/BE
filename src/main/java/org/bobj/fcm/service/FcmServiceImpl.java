@@ -51,7 +51,7 @@ public class FcmServiceImpl implements FcmService{
         FcmMessage fcmMessage = FcmMessage.builder()
                 .message(FcmMessage.Message.builder()
                         .token(targetToken)
-                        .notification(FcmMessage.Notification.builder()
+                        .data(FcmMessage.Data.builder()
                                 .title(title)
                                 .body(body)
                                 .build()
