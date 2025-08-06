@@ -6,7 +6,7 @@
 
     <!-- 펀딩 보유 주 삽입-->
     <insert id="insert" parameterType="org.bobj.share.domain.ShareVO">
-        INSERT INTO SHARES (
+        INSERT INTO shares (
             user_id,
             funding_id,
             share_count,
@@ -24,7 +24,7 @@
 
     <!-- 펀딩 보유 주 수 업데이트-->
     <update id="update">
-        UPDATE SHARES
+        UPDATE shares
         SET
             share_count = #{shareCount},
             average_amount = #{averageAmount},
@@ -36,20 +36,20 @@
     <!-- 사용자 펀딩 보유 주 수 가져오기-->
     <select id="findUserShareCount" resultType="java.lang.Integer">
         SELECT SUM(share_count)
-        FROM SHARES
+        FROM shares
         WHERE user_id = #{userId}
           AND funding_id = #{fundingId} FOR UPDATE
     </select>
 
     <select id="findUserShareByFundingIdForUpdate" resultType="org.bobj.share.domain.ShareVO">
         SELECT *
-        FROM SHARES
+        FROM shares
         WHERE user_id = #{userId}
           AND funding_id = #{fundingId} FOR UPDATE
     </select>
 
     <delete id="delete">
-        DELETE FROM SHARES
+        DELETE FROM shares
         WHERE share_id = #{shareId}
     </delete>
 
@@ -140,7 +140,7 @@
     <!-- 특정 펀딩 ID에 대한 모든 지분 조회 -->
     <select id="findByFundingId" resultType="org.bobj.share.domain.ShareVO">
         SELECT *
-        FROM SHARES
+        FROM shares
         WHERE funding_id = #{fundingId}
     </select>
 

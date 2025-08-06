@@ -6,7 +6,7 @@
 
     <!--채결 내역 삽입-->
     <insert id="insert" parameterType="org.bobj.trade.domain.TradeVO">
-        INSERT INTO TRADES (
+        INSERT INTO trades (
         buy_order_id,
         sell_order_id,
         buyer_user_id,
@@ -38,7 +38,7 @@
             t.trade_price_per_share,
             t.created_at
         FROM
-            TRADES t
+            trades t
         JOIN
             ORDER_BOOKS ob_buy ON t.buy_order_id = ob_buy.order_id
         WHERE
@@ -50,7 +50,7 @@
 
     <select id="findLatestTradePriceByFundingId" resultType="java.math.BigDecimal">
         SELECT t.trade_price_per_share
-        FROM TRADES t
+        FROM trades t
          JOIN
              ORDER_BOOKS ob_buy ON t.buy_order_id = ob_buy.order_id
         WHERE
@@ -71,7 +71,7 @@
              t.trade_price_per_share,
              t.trade_count AS total_volume,
              ROW_NUMBER() OVER (PARTITION BY DATE(t.created_at) ORDER BY t.created_at DESC) AS rn
-        FROM TRADES t
+        FROM trades t
             JOIN ORDER_BOOKS ob ON t.buy_order_id = ob.order_id OR t.sell_order_id = ob.order_id
         WHERE ob.funding_id = #{fundingId}
           AND t.created_at BETWEEN #{startDate} AND DATE_ADD(#{endDate}, INTERVAL 1 DAY)
