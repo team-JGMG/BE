@@ -73,7 +73,7 @@
 
     <!-- 주문이 체결되거나 부분 체결될 때, 해당 주문의 남은 수량과 상태를 업데이트   -->
     <update id="updateOrderBookStatusAndRemainingCount">
-        UPDATE ORDER_BOOKS
+        UPDATE order_books
         SET
             status = #{status}, -- 'FULLY_FILLED', 'PARTIALLY_FILLED'
             remaining_share_count = #{remainingShareCount},
@@ -86,7 +86,7 @@
     <select id="findMatchingOrders" resultType="org.bobj.order.domain.OrderVO">
         SELECT *
         FROM
-        ORDER_BOOKS
+        order_books
         WHERE
         funding_id = #{fundingId}
         AND order_type = #{oppositeOrderType} -- 반대편 주문 타입 조회
@@ -113,7 +113,7 @@
             remaining_share_count,   -- 잔여 수량
             order_type               -- 주문 타입 (BUY/SELL)
         FROM
-            ORDER_BOOKS
+            order_books
         WHERE
             funding_id = #{fundingId}
             AND status IN ('PENDING', 'PARTIALLY_FILLED')
