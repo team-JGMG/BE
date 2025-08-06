@@ -88,6 +88,10 @@ public class PointService {
     }
 
     public BigDecimal getTotalPoint(Long userId) {
+        // 포인트 테이블에서 현재 보유 포인트 계산
+        return pointRepository.findTotalPointByUserId(userId);
+    }
+
     /**
      * 배당금 지급 및 트랜잭션 기록
      * @param userId 사용자 ID
@@ -102,9 +106,9 @@ public class PointService {
         // 2. 없으면 새로 생성 (일반적으로는 회원가입 시 생성되어 있음)
         if (point == null) {
             point = PointVO.builder()
-                .userId(userId)
-                .amount(amount)
-                .build();
+                    .userId(userId)
+                    .amount(amount)
+                    .build();
             pointRepository.insert(point);
         } else {
             // 3. 있으면 잔액에 배당금 추가
@@ -114,18 +118,13 @@ public class PointService {
 
         // 4. 트랜잭션 기록 (ALLOCATION)
         PointTransactionVO tx = PointTransactionVO.builder()
-            .pointId(point.getPointId())
-            .type(PointTransactionType.ALLOCATION)
-            .amount(amount)
-            .createdAt(LocalDateTime.now())
-            .build();
+                .pointId(point.getPointId())
+                .type(PointTransactionType.ALLOCATION)
+                .amount(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         pointTransactionRepository.insert(tx);
-    }
-
-    public Long getTotalPoint(Long userId) {
-        // 포인트 테이블에서 현재 보유 포인트 계산
-        return pointRepository.findTotalPointByUserId(userId);
     }
 
     @Transactional
@@ -170,11 +169,11 @@ public class PointService {
 
         //트랜잭션 로그로 남기기 위해 PointTransactionVO 객체를 생성
         PointTransactionVO tx = PointTransactionVO.builder()
-            .pointId(point.getPointId())
-            .type(PointTransactionType.REFUND)
-            .amount(amount)
-            .createdAt(LocalDateTime.now())
-            .build();
+                .pointId(point.getPointId())
+                .type(PointTransactionType.REFUND)
+                .amount(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
         //위에서 만든 트랜잭션 기록을 POINT_TRANSACTION 테이블에 insert
         pointTransactionRepository.insert(tx);
     }
@@ -194,11 +193,11 @@ public class PointService {
 
         // 트랜잭션 기록
         PointTransactionVO tx = PointTransactionVO.builder()
-            .pointId(point.getPointId())
-            .type(PointTransactionType.INVEST) // enum에 정의돼 있어야 함
-            .amount(amount)
-            .createdAt(LocalDateTime.now())
-            .build();
+                .pointId(point.getPointId())
+                .type(PointTransactionType.INVEST) // enum에 정의돼 있어야 함
+                .amount(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         pointTransactionRepository.insert(tx);
     }
@@ -212,9 +211,9 @@ public class PointService {
 
         if (point == null) {
             point = PointVO.builder()
-                .userId(userId)
-                .amount(amount)
-                .build();
+                    .userId(userId)
+                    .amount(amount)
+                    .build();
             pointRepository.insert(point);
         } else {
             point.setAmount(point.getAmount().add(amount));
@@ -222,11 +221,11 @@ public class PointService {
         }
 
         PointTransactionVO tx = PointTransactionVO.builder()
-            .pointId(point.getPointId())
-            .type(PointTransactionType.REFUND)
-            .amount(amount)
-            .createdAt(LocalDateTime.now())
-            .build();
+                .pointId(point.getPointId())
+                .type(PointTransactionType.REFUND)
+                .amount(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         pointTransactionRepository.insert(tx);
     }
@@ -240,9 +239,9 @@ public class PointService {
 
         if (point == null) {
             point = PointVO.builder()
-                .userId(userId)
-                .amount(amount)
-                .build();
+                    .userId(userId)
+                    .amount(amount)
+                    .build();
             pointRepository.insert(point);
         } else {
             point.setAmount(point.getAmount().add(amount));
@@ -250,15 +249,12 @@ public class PointService {
         }
 
         PointTransactionVO tx = PointTransactionVO.builder()
-            .pointId(point.getPointId())
-            .type(PointTransactionType.REFUND)
-            .amount(amount)
-            .createdAt(LocalDateTime.now())
-            .build();
+                .pointId(point.getPointId())
+                .type(PointTransactionType.REFUND)
+                .amount(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         pointTransactionRepository.insert(tx);
     }
-
-
-
 }
