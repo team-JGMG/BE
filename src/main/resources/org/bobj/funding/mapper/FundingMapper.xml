@@ -38,6 +38,8 @@
       <result property="photoUrl" column="photo_url"/>
       <result property="createdAt" column="photo_created_at"/>
     </collection>
+    <collection property="tags" ofType="org.bobj.property.domain.HashtagVO" column="property_id"
+                select="findHashtagsByPropertyId"/>
   </resultMap>
   <!--  펀딩 상세 조회  -->
   <select id="findFundingById" resultMap="FundingDetailResultMap">
@@ -63,10 +65,11 @@
       p.official_land_price,
       p.unit_price_per_pyeong,
       p.description,
+      CEIL(p.rental_income/f.total_shares) AS expected_dividend_per_share,
       u.user_id,
       u.name,
---       u.email,
---       u.phone,
+      u.email,
+      u.phone,
       ph.photo_id,
       ph.property_id AS photo_property_id,
       ph.photo_url,
@@ -76,6 +79,13 @@
            LEFT JOIN users u ON p.user_id = u.user_id
            LEFT JOIN property_photos ph ON p.property_id = ph.property_id
     WHERE f.funding_id = #{fundingId}
+  </select>
+
+  <select id="findHashtagsByPropertyId" resultType="org.bobj.property.domain.HashtagVO">
+    SELECT h.id, h.name, h.description
+    FROM property_hashtags ph
+           JOIN hashtags h ON ph.hashtag_id = h.id
+    WHERE ph.property_id = #{property_id}
   </select>
 
   <!-- 펀딩 생성 -->
@@ -114,6 +124,7 @@
     <result property="propertyId" column="property_id"/>
     <result property="title" column="title"/>
     <result property="address" column="address"/>
+    <result property="cumulativeReturn" column="cumulative_return"/>
     <result property="targetAmount" column="target_amount"/>
     <result property="fundingRate" column="fundingRate"/>
     <result property="daysLeft" column="daysLeft"/>
@@ -121,6 +132,8 @@
     <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
       <result property="photoUrl" column="thumbnail_url"/>
     </association>
+    <collection property="tags" ofType="string" column="property_id"
+                select="selectHashtagNamesByFundingId"/>
   </resultMap>
 
   <!-- 펀딩 모집 페이지에서 펀딩 리스트 조회 -->
@@ -130,6 +143,7 @@
       f.property_id,
       p.title,
       p.address,
+      p.cumulative_return,
       f.target_amount,
       FLOOR((f.current_amount / f.target_amount) * 100) AS fundingRate,
       DATEDIFF(DATE(f.funding_end_date),DATE(NOW())) AS daysLeft,
@@ -167,13 +181,29 @@
   </select>
 
   <!-- 펀딩 성공한 펀딩 리스트 조회 -->
-  <select id="findEndedFundingProperties" resultType="org.bobj.funding.dto.FundingEndedResponseDTO">
+  <select id="findEndedFundingProperties" resultMap="FundingEndedResultMap">
     SELECT f.funding_id, p.title
     FROM fundings f
            JOIN properties p ON f.property_id = p.property_id
     WHERE f.status = 'ENDED'
     ORDER BY f.funding_end_date DESC
     LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <resultMap id="FundingEndedResultMap" type="org.bobj.funding.dto.FundingEndedResponseDTO">
+    <id property="fundingId" column="funding_id"/>
+    <result property="title" column="title"/>
+    <collection property="tags" ofType="java.lang.String" column="funding_id"
+                select="selectHashtagNamesByFundingId"/>
+  </resultMap>
+
+  <select id="selectHashtagNamesByFundingId" resultType="string">
+    SELECT h.name
+    FROM fundings f
+           JOIN properties p ON f.property_id = p.property_id
+           JOIN property_hashtags ph ON p.property_id = ph.property_id
+           JOIN hashtags h ON ph.hashtag_id = h.id
+    WHERE f.funding_id = #{fundingId}
   </select>
 
   <!-- 비관적 락을 이용한 펀딩 정보 조회 -->
@@ -230,6 +260,13 @@
       #{id}
     </foreach>
   </update>
+
+  <!-- 펀딩 현재 금액을 0로 변경-->
+  <update id="updateCurrentAmountToZero">
+    UPDATE fundings
+    SET current_amount = 0
+    WHERE funding_id = #{fundingId}
+  </update>
   <!-- 펀딩 완료 후 2년된 매물 찾기 -->
   <select id="findSoldFundingIds" resultType="org.bobj.funding.dto.FundingSoldResponseDTO">
     SELECT
@@ -238,6 +275,14 @@
     FROM fundings f
     WHERE DATE(f.funding_end_date) = DATE(DATE_SUB(NOW(), INTERVAL 2 YEAR))
       AND f.status = 'ENDED';
+  </select>
+
+  <select id="getPropertyTitleByFundingId" resultType="java.lang.String">
+    SELECT
+      p.title
+      FROM fundings f
+           LEFT JOIN properties p ON f.property_id = p.property_id
+      WHERE f.funding_id = #{fundingId}
   </select>
 
 </mapper>

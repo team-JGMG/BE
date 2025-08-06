@@ -120,7 +120,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public void cancelOrder(Long orderId) {
+    public Long cancelOrder(Long orderId) {
         OrderVO orderBook = orderMapper.getForUpdate(orderId);
 
         if (orderBook.getStatus() == OrderStatus.FULLY_FILLED) {
@@ -134,6 +134,7 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.cancelOrder(orderId);
 
         // 주문 취소 후 호가창 업데이트를 웹소켓으로 푸시
-        orderBookWebSocketService.publishOrderBookUpdate(orderBook.getFundingId());
+//        orderBookWebSocketService.publishOrderBookUpdate(orderBook.getFundingId());
+        return orderBook.getFundingId();
     }
 }

@@ -25,6 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
+    private final CookieUtil cookieUtil;
 
     private boolean handleValidToken(String token, String path, HttpServletResponse response) throws IOException {
         try {
@@ -267,7 +268,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.warn("Refresh Token이 만료됨: {}", email);
                 // Refresh Token도 만료된 경우 → 로그아웃 처리
                 userService.removeRefreshToken(email);
-                CookieUtil.deleteAccessTokenCookie(response);
+                cookieUtil.deleteAccessTokenCookie(response, request);
                 return null;
             }
 
@@ -275,7 +276,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.isAdmin());
 
             // 6. 쿠키에 새 Access Token 설정
-            CookieUtil.setAccessTokenCookie(response, newAccessToken);
+            cookieUtil.setAccessTokenCookie(response, request, newAccessToken);
 
             log.info("Access Token 자동 갱신 성공 (만료 후): {}", email);
             return newAccessToken;
@@ -331,7 +332,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String newAccessToken = jwtTokenProvider.createAccessToken(email, user.getUserId(), user.isAdmin());
 
             // 6. 쿠키에 새 Access Token 설정
-            CookieUtil.setAccessTokenCookie(response, newAccessToken);
+            cookieUtil.setAccessTokenCookie(response, request, newAccessToken);
 
             // 7. 사전 갱신 표시 헤더 추가 (선택사항)
             response.setHeader("X-Token-Preemptively-Refreshed", "true");

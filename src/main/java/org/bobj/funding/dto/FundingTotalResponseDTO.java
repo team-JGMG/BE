@@ -1,5 +1,6 @@
 package org.bobj.funding.dto;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.bobj.property.dto.PhotoDTO;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -29,6 +31,9 @@ public class FundingTotalResponseDTO {
     @ApiModelProperty("목표 금액")
     private BigDecimal targetAmount;
 
+    @ApiModelProperty("누적 수익률")
+    private BigDecimal cumulativeReturn;
+
     @ApiModelProperty("모집률 (%)")
     private Integer fundingRate;
     @ApiModelProperty("펀딩 종료까지 남은 일 수")
@@ -36,4 +41,7 @@ public class FundingTotalResponseDTO {
 
     @ApiModelProperty(value = "썸네일 이미지 정보")
     private PhotoDTO thumbnail;
+
+    @ApiModelProperty("해시태그 리스트")
+    private List<String> tags;
 }

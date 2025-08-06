@@ -32,4 +32,12 @@ public interface ShareMapper {
 
     //주식 데이터 배치 삽입
     int insertSharesBatch(List<ShareVO> shares);
+
+    List<ShareVO> findByFundingId(Long fundingId);
+
+
+    /**
+     * 특정 펀딩의 모든 주식 보유자 조회 (배당 지급용)
+     */
+    List<org.bobj.allocation.dto.DividendPaymentDTO> findShareHoldersByFundingId(@Param("fundingId") Long fundingId);
 }

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bobj.point.domain.PointVO;
+import org.bobj.point.mapper.PointMapper;
 import org.bobj.user.domain.SocialLoginsVO;
 import org.bobj.user.domain.UserVO;
 import org.bobj.user.dto.request.UserRegistrationRequestDTO;
@@ -16,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Slf4j
@@ -24,6 +27,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserMapper userMapper;
+    private final PointMapper pointMapper;
     private final JwtTokenProvider jwtTokenProvider;
     private final ObjectMapper objectMapper;
 
@@ -32,10 +36,10 @@ public class UserService {
      */
     public Optional<SocialLoginsVO> findSocialLoginByProviderAndProviderId(String provider, String providerId) {
         log.debug("소셜 로그인 정보 조회: provider={}, providerId={}", provider, providerId);
-        
+
         // UserMapper에서 null을 반환할 수 있으므로 Optional로 감싸기
         SocialLoginsVO result = userMapper.findSocialLoginByProviderAndProviderId(provider, providerId);
-        
+
         if (result != null) {
             log.debug("소셜 로그인 정보 조회 성공: userId={}", result.getUserId());
             return Optional.of(result);
@@ -118,6 +122,9 @@ public class UserService {
         userMapper.saveUser(newUser);
         log.info("USERS 테이블에 신규 사용자 저장 완료. userId: {}", newUser.getUserId());
 
+        // 신규 회원에게 0원 포인트 기본 생성
+        createInitialUserPoint(newUser.getUserId());
+
         saveNewSocialLogin(newUser.getUserId(), provider, providerId, preAuthClaims);
 
         String finalAccessToken = jwtTokenProvider.createAccessToken(newUser.getEmail(), newUser.getUserId(), newUser.isAdmin());
@@ -128,7 +135,30 @@ public class UserService {
         userMapper.updateRefreshToken(savedSocialLogin);
 
         log.info("최종 인증 토큰 발급 완료. email: {}", newUser.getEmail());
-        return new AuthResponseDTO(finalAccessToken, finalRefreshToken, newUser.getUserId(), newUser.isAdmin());    }
+        return new AuthResponseDTO(finalAccessToken, finalRefreshToken, newUser.getUserId(), newUser.isAdmin());
+    }
+
+    /**
+     * 신규 회원에게 0원 포인트 기본 생성
+     */
+    private void createInitialUserPoint(Long userId) {
+        log.info("신규 회원 포인트 초기화 시작 - userId: {}", userId);
+
+        try {
+            PointVO initialPoint = PointVO.builder()
+                    .userId(userId)
+                    .amount(java.math.BigDecimal.ZERO) // 0원으로 초기화
+                    .build();
+
+            pointMapper.insert(initialPoint);
+            log.info("신규 회원 포인트 초기화 완료 - userId: {}, 초기 포인트: 0원", userId);
+
+        } catch (Exception e) {
+            log.error("신규 회원 포인트 초기화 실패 - userId: {}", userId, e);
+            // 포인트 생성 실패가 회원가입 전체를 실패시키지 않도록 예외 전파하지 않음
+            // 하지만 로그로 문제 상황을 추적 가능
+        }
+    }
 
     private void saveNewSocialLogin(Long userId, String provider, String providerId, Claims attributes) {
         try {
@@ -193,19 +223,19 @@ public class UserService {
     @Transactional
     public AuthResponseDTO refreshAccessTokenByEmail(String email) {
         log.info("이메일로 토큰 갱신 시도: {}", email);
-        
+
         // 사용자 정보 조회
         UserVO user = userMapper.findUserByEmail(email);
         if (user == null) {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다: " + email);
         }
-        
+
         // 소셜 로그인 정보에서 Refresh Token 조회
         SocialLoginsVO socialLogin = userMapper.findSocialLoginByUserId(user.getUserId());
         if (socialLogin == null || socialLogin.getRefreshToken() == null) {
             throw new IllegalArgumentException("Refresh Token을 찾을 수 없습니다: " + email);
         }
-        
+
         // Refresh Token 유효성 검증
         if (!jwtTokenProvider.validateToken(socialLogin.getRefreshToken())) {
             log.warn("Refresh Token이 만료됨: {}", email);
@@ -213,10 +243,10 @@ public class UserService {
             removeRefreshToken(email);
             throw new IllegalArgumentException("Refresh Token이 만료되었습니다. 다시 로그인해주세요.");
         }
-        
+
         // 새로운 Access Token 발급
         String newAccessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getUserId(), user.isAdmin());
-        
+
         log.info("토큰 갱신 성공: {}", email);
         return new AuthResponseDTO(newAccessToken, socialLogin.getRefreshToken(), user.getUserId(), user.isAdmin());
     }

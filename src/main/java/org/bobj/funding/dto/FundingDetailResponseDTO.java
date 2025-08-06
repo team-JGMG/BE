@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.bobj.property.domain.HashtagVO;
 import org.bobj.property.dto.PhotoDTO;
 import org.bobj.property.dto.SellerDTO;
 
@@ -75,9 +76,15 @@ public class FundingDetailResponseDTO {
     @ApiModelProperty(value = "상세 설명", example = "역세권이며 투자 가치가 높습니다.")
     private String description;
 
+    @ApiModelProperty(value="예상 주 당 배당금", example = "20")
+    private BigDecimal expectedDividendPerShare;
+
     @ApiModelProperty(value = "사진 목록")
     private List<PhotoDTO> photos;
 
     @ApiModelProperty(value = "판매자 정보")
     private SellerDTO seller;
+
+    @ApiModelProperty(value="해시 태그 정보")
+    private List<HashtagVO> tags;
 }

@@ -13,6 +13,8 @@ public interface PropertyMapper {
 
     PropertyVO findByPropertyId(@Param("propertyId") Long propertyId);
 
+    List<String> findHashtagNamesByPropertyId(Long propertyId);
+
     List<PropertyUserResponseDTO> findByUserId(
             @Param("userId") Long userId,
             @Param("status") String status,
@@ -30,8 +32,24 @@ public interface PropertyMapper {
     void update(@Param("propertyId") Long propertyId, @Param("status") String status);
 
     void insert(PropertyVO propertyVO);
+    // 해시 태그 추가
+    void insertHashtag(@Param("propertyId") Long propertyId, @Param("hashtagIds") List<Long> hashtagIds);
+
+    // 사진 업로드
+    void insertPropertyPhoto(@Param("propertyId") Long propertyId,
+                             @Param("photoUrl") String photoUrl);
+
+    // 문서 업로드
+    void insertPropertyDocument(@Param("propertyId") Long propertyId,
+                                @Param("documentType") String documentType,
+                                @Param("fileUrl") String fileUrl);
 
     void updatePropertiesAsSold(@Param("propertyIds") List<Long> propertyIds);
 
     void updateRentalIncome(@Param("propertyId") Long propertyId, @Param("rentalIncome") java.math.BigDecimal rentalIncome);
+    
+    /**
+     * 매물 ID로 법정동 코드 조회
+     */
+    String findRawdCdByPropertyId(@Param("propertyId") Long propertyId);
 }

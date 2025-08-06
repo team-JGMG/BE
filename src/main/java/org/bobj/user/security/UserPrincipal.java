@@ -1,5 +1,6 @@
 package org.bobj.user.security;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import org.bobj.user.domain.UserVO;
 import org.springframework.security.core.GrantedAuthority;
@@ -8,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 
 /**
  * Spring Security에서 사용할 커스텀 UserPrincipal
@@ -16,12 +18,19 @@ import java.util.Collections;
 @Getter
 public class UserPrincipal implements UserDetails {
 
+
     private final Long userId;
     private final String email;
     private final String name;
     private final String nickname;
     private final boolean isAdmin;
     private final String role;
+    private final String phone;
+    private final String ssn;
+    private final String bankCode;      // bank_code VARCHAR(50)
+    private final String accountNumber; // account_number VARCHAR(50)
+
+
 
     // UserVO에서 UserPrincipal 생성
     public UserPrincipal(UserVO user) {
@@ -31,6 +40,10 @@ public class UserPrincipal implements UserDetails {
         this.nickname = user.getNickname();
         this.isAdmin = user.getIsAdmin();
         this.role = user.getIsAdmin() ? "ADMIN" : "USER";
+        this.phone = user.getPhone();
+        this.ssn = user.getSsn();
+        this.bankCode = user.getBankCode();
+        this.accountNumber = user.getAccountNumber();
     }
 
     /**
@@ -39,10 +52,14 @@ public class UserPrincipal implements UserDetails {
     public UserPrincipal(Long userId, String email, String role) {
         this.userId = userId;
         this.email = email;
-        this.name = null;  // JWT에는 name 정보 없음
-        this.nickname = null;  // JWT에는 nickname 정보 없음 (필요시 추가)
+        this.name = getName();  // JWT에는 name 정보 없음
+        this.nickname = getNickname();  // JWT에는 nickname 정보 없음 (필요시 추가)
         this.isAdmin = "ADMIN".equals(role);
         this.role = role;
+        this.phone = getPhone();
+        this.ssn = getSsn();
+        this.bankCode = getBankCode();
+        this.accountNumber = getAccountNumber();
     }
 
     /**
@@ -115,6 +132,11 @@ public class UserPrincipal implements UserDetails {
                 ", email='" + email + '\'' +
                 ", nickname='" + nickname + '\'' +
                 ", role='" + role + '\'' +
+                ", isAdmin=" + isAdmin + '\'' +
+                ", phone='" + phone + '\'' +
+                ", ssn='" + ssn + '\'' +
+                ", bankCode='" + bankCode + '\'' +
+                ", accountNumber='" + accountNumber + '\'' +
                 '}';
     }
 }

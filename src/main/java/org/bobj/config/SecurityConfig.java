@@ -4,6 +4,7 @@ import org.bobj.user.service.CustomOAuth2UserService;
 import org.bobj.user.security.JwtAuthenticationFilter;
 import org.bobj.user.security.JwtTokenProvider;
 import org.bobj.user.security.OAuth2LoginSuccessHandler;
+import org.bobj.user.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,9 @@ public class SecurityConfig {
     
     @Autowired
     private org.bobj.user.service.UserService userService;
+    
+    @Autowired
+    private CookieUtil cookieUtil;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -55,7 +59,7 @@ public class SecurityConfig {
                 );
 
         // JWT 필터는 유지 (토큰이 있으면 인증 처리, 없어도 통과)
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -119,15 +123,20 @@ public class SecurityConfig {
                 );
 
         // JWT 인증 필터 추가
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
         */
 
 
     @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider, userService, cookieUtil);
+    }
+
+    @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
-        return new OAuth2LoginSuccessHandler(jwtTokenProvider, userService);
+        return new OAuth2LoginSuccessHandler(jwtTokenProvider, userService, cookieUtil);
     }
 
     @Bean

@@ -4,6 +4,7 @@ import org.bobj.property.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
@@ -15,39 +16,40 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 @Service
 public class PropertyMapService {
-    
+
     private final RealEstateApiService realEstateApiService;
     private final VWorldLocalApiService vworldLocalApiService;
-    
+
     // 주소별 좌표 캐시 (같은 주소 중복 호출 방지)
     private final Map<String, CoordinateDTO> addressCache = new HashMap<>();
-    
+
     @Autowired
-    public PropertyMapService(RealEstateApiService realEstateApiService, 
-                             VWorldLocalApiService vworldLocalApiService) {
+    public PropertyMapService(RealEstateApiService realEstateApiService,
+                              VWorldLocalApiService vworldLocalApiService) {
         this.realEstateApiService = realEstateApiService;
         this.vworldLocalApiService = vworldLocalApiService;
     }
-    
+
     /**
      * 주소를 받아서 좌표를 반환
+     *
      * @param address 주소
      * @return 좌표 정보
      */
     public CoordinateDTO getCoordinateFromAddress(String address) {
         try {
             log.info("주소 좌표 변환 요청: {}", address);
-            
+
             CoordinateDTO coordinate = vworldLocalApiService.getCoordinateFromAddress(address);
-            
+
             if (coordinate != null) {
                 log.info("좌표 변환 성공 - 주소: {}, 위도: {}, 경도: {}", address, coordinate.getLatitude(), coordinate.getLongitude());
             } else {
                 log.warn("좌표 변환 실패 - 주소: {}", address);
             }
-            
+
             return coordinate;
-            
+
         } catch (Exception e) {
             log.error("주소 좌표 변환 중 오류 발생: {}", e.getMessage(), e);
             return null;
@@ -56,7 +58,7 @@ public class PropertyMapService {
 
     public List<RealEstateLocationDTO> getRealEstateLocations(String rawdCd) {
         try {
-            log.info("실거래가 위치 정보 조회 시작 - 법정동코드: {}", rawdCd);
+            log.info("실거래가 위치 정보 조회 시작 - 법정동코드: {} (최대 50개 수집)", rawdCd);
 
             // 캐시 초기화 (정확한 주소 형식 적용을 위해)
             addressCache.clear();
@@ -64,17 +66,32 @@ public class PropertyMapService {
 
             List<RealEstateLocationDTO> locations = new ArrayList<>();
             List<String> recentMonths = getRecentMonths();
+            final int MAX_LOCATIONS = 10; // 최대 수집 개수 제한
 
+            // 최신 월부터 순차적으로 처리
             for (String yearMonth : recentMonths) {
+                // 이미 50개 수집했으면 중단
+                if (locations.size() >= MAX_LOCATIONS) {
+                    log.info("최대 수집 개수({})에 도달하여 데이터 수집 중단", MAX_LOCATIONS);
+                    break;
+                }
+
                 List<RealEstateTransactionDTO> monthlyTransactions = realEstateApiService.getRealEstateTransactions(rawdCd, yearMonth);
-                log.info("{} 처리할 실거래가 건수: {}", yearMonth, monthlyTransactions.size());
+                log.info("{} 조회된 실거래가 건수: {} (현재 수집: {}/{})",
+                        yearMonth, monthlyTransactions.size(), locations.size(), MAX_LOCATIONS);
 
                 for (RealEstateTransactionDTO transaction : monthlyTransactions) {
+                    // 50개 수집 완료시 즉시 중단
+                    if (locations.size() >= MAX_LOCATIONS) {
+                        log.info("최대 수집 개수({})에 도달 - {}월 처리 중단", MAX_LOCATIONS, yearMonth);
+                        break;
+                    }
+
                     try {
-                        // 쿼터 보호 로직 제거: sleep 없음
                         RealEstateLocationDTO location = createLocationFromTransaction(transaction, yearMonth);
                         if (location != null) {
                             locations.add(location);
+                            log.debug("실거래가 위치 정보 추가 - 현재 수집: {}/{}", locations.size(), MAX_LOCATIONS);
                         }
 
                     } catch (Exception e) {
@@ -82,9 +99,12 @@ public class PropertyMapService {
                         // 개별 오류는 무시하고 계속 진행
                     }
                 }
+
+                // 해당 월 처리 완료 로그
+                log.info("{} 처리 완료 - 현재 총 수집: {}/{}", yearMonth, locations.size(), MAX_LOCATIONS);
             }
 
-            log.info("실거래가 위치 정보 조회 완료 - 총 {}건", locations.size());
+            log.info("실거래가 위치 정보 수집 완료 - 총 {}건 (최대 {}건)", locations.size(), MAX_LOCATIONS);
             return locations;
 
         } catch (Exception e) {
@@ -92,9 +112,9 @@ public class PropertyMapService {
             return Collections.emptyList();
         }
     }
-    
+
     /**
-     * 최근 3개월 년월 목록 생성 (YYYYMM 형식)
+     * 최근 6개월 년월 목록 생성 (YYYYMM 형식)
      */
     private List<String> getRecentMonths() {
         List<String> months = new ArrayList<>();
@@ -105,10 +125,10 @@ public class PropertyMapService {
             String yearMonth = targetDate.format(DateTimeFormatter.ofPattern("yyyyMM"));
             months.add(yearMonth);
         }
-        
+
         return months;
     }
-    
+
     /**
      * 실거래가 정보로부터 위치 정보 생성 (최소 정보만)
      * @param transaction 실거래가 정보
@@ -144,7 +164,7 @@ public class PropertyMapService {
             // 좌표를 찾지 못한 경우 폴백 처리
             if (coordinate == null) {
                 log.warn("좌표를 찾을 수 없음 - 주소: {}", address);
-                
+
                 // 법정동코드별 대표 좌표 사용
                 coordinate = getFallbackCoordinate(address);
                 if (coordinate != null) {
@@ -170,21 +190,21 @@ public class PropertyMapService {
             return null;
         }
     }
-    
+
     /**
      * 주소별 폴백 좌표 제공
      */
     private CoordinateDTO getFallbackCoordinate(String address) {
         // 서울 중구 지역별 대표 좌표
         Map<String, CoordinateDTO> fallbackCoordinates = Map.of(
-            "창신동", CoordinateDTO.builder().latitude(37.5751).longitude(127.0106).build(), // 종로구 창신동
-            "사직동", CoordinateDTO.builder().latitude(37.5759).longitude(126.9730).build(), // 종로구 사직동  
-            "내수동", CoordinateDTO.builder().latitude(37.5658).longitude(126.9784).build(), // 중구 내수동
-            "홍파동", CoordinateDTO.builder().latitude(37.5650).longitude(126.9850).build(), // 중구 추정
-            "명동", CoordinateDTO.builder().latitude(37.5636).longitude(126.9856).build(),   // 중구 명동
-            "중구", CoordinateDTO.builder().latitude(37.5636).longitude(126.9756).build()     // 서울 중구청
+                "창신동", CoordinateDTO.builder().latitude(37.5751).longitude(127.0106).build(), // 종로구 창신동
+                "사직동", CoordinateDTO.builder().latitude(37.5759).longitude(126.9730).build(), // 종로구 사직동
+                "내수동", CoordinateDTO.builder().latitude(37.5658).longitude(126.9784).build(), // 중구 내수동
+                "홍파동", CoordinateDTO.builder().latitude(37.5650).longitude(126.9850).build(), // 중구 추정
+                "명동", CoordinateDTO.builder().latitude(37.5636).longitude(126.9856).build(),   // 중구 명동
+                "중구", CoordinateDTO.builder().latitude(37.5636).longitude(126.9756).build()     // 서울 중구청
         );
-        
+
         // 주소에서 동명 찾기
         for (String dong : fallbackCoordinates.keySet()) {
             if (address.contains(dong)) {
@@ -192,28 +212,29 @@ public class PropertyMapService {
                 return fallbackCoordinates.get(dong);
             }
         }
-        
+
         // 기본 폴백: 서울 중구청
         log.info("기본 폴백 좌표 사용: 서울 중구청");
         return fallbackCoordinates.get("중구");
     }
-    
+
     /**
      * 전체 주소 생성 (실제 행정구역 사용)
+     *
      * @param transaction 거래 정보
      * @return 전체 주소
      */
     private String generateFullAddress(RealEstateTransactionDTO transaction) {
         StringBuilder addressBuilder = new StringBuilder();
-        
-        log.debug("주소 생성 시작 - estateAgentSggNm: {}, umdNm: {}, jibun: {}, aptNm: {}", 
+
+        log.debug("주소 생성 시작 - estateAgentSggNm: {}, umdNm: {}, jibun: {}, aptNm: {}",
                 transaction.getEstateAgentSggNm(), transaction.getUmdNm(), transaction.getJibun(), transaction.getAptNm());
-        
+
         //실제 행정구역 사용 (estateAgentSggNm 우선)
         if (transaction.getEstateAgentSggNm() != null && !transaction.getEstateAgentSggNm().trim().isEmpty()) {
             String realDistrict = transaction.getEstateAgentSggNm().trim();
             addressBuilder.append(realDistrict);
-            
+
             // "서울 종로구" 형태를 "서울특별시 종로구"로 정규화
             if (realDistrict.startsWith("서울 ") && !realDistrict.contains("특별시")) {
                 addressBuilder = new StringBuilder();
@@ -223,26 +244,26 @@ public class PropertyMapService {
             // 폴백: 기본 중구 사용
             addressBuilder.append("서울특별시 중구");
         }
-        
+
         // 읍면동명 추가
         if (transaction.getUmdNm() != null && !transaction.getUmdNm().trim().isEmpty()) {
             addressBuilder.append(" ").append(transaction.getUmdNm().trim());
         }
-        
+
         // 지번 추가
         if (transaction.getJibun() != null && !transaction.getJibun().trim().isEmpty()) {
             addressBuilder.append(" ").append(transaction.getJibun().trim());
         }
-        
+
         String fullAddress = addressBuilder.toString();
         log.info("생성된 정확한 주소: {}", fullAddress);
-        
+
         // 빈 주소 방지
         if (fullAddress.trim().isEmpty()) {
             fullAddress = "서울특별시 중구";
             log.warn("빈 주소 감지, 기본 주소 사용: {}", fullAddress);
         }
-        
+
         return fullAddress;
     }
 }

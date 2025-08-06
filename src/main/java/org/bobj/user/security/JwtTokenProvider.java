@@ -165,27 +165,42 @@ public class JwtTokenProvider {
      * 3순위: Cookie에서 preAuthToken 추출 (사전 인증용)
      */
     public String resolveToken(HttpServletRequest request) {
+        log.debug("🔍 [토큰 추출 시작] 요청 URI: {}", request.getRequestURI());
+        
         // 1. Authorization Header에서 토큰 추출
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            log.debug("✅ [토큰 발견] Authorization Header에서 토큰 추출");
             return bearerToken.substring(7);
         }
+        log.debug("❌ [토큰 없음] Authorization Header에 토큰 없음");
 
         // 2. Cookie에서 토큰 추출
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
+            log.debug("🍪 [쿠키 확인] 총 {}개 쿠키 발견", cookies.length);
+            
             for (Cookie cookie : cookies) {
+                log.debug("🍪 [쿠키 검사] 이름: {}, 값: {}...", 
+                    cookie.getName(), 
+                    cookie.getValue() != null ? cookie.getValue().substring(0, Math.min(20, cookie.getValue().length())) : "null");
+                
                 // Access Token (일반 인증용)
                 if ("accessToken".equals(cookie.getName())) {
+                    log.debug("✅ [토큰 발견] accessToken 쿠키에서 토큰 추출");
                     return cookie.getValue();
                 }
                 // Pre-Auth Token (사전 인증용)
                 if ("preAuthToken".equals(cookie.getName())) {
+                    log.debug("✅ [토큰 발견] preAuthToken 쿠키에서 토큰 추출");
                     return cookie.getValue();
                 }
             }
+        } else {
+            log.debug("❌ [쿠키 없음] 요청에 쿠키가 전혀 없음");
         }
 
+        log.debug("❌ [토큰 추출 실패] Authorization Header와 쿠키 모두에서 토큰을 찾을 수 없음");
         return null;
     }
 

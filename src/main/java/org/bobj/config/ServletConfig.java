@@ -1,14 +1,14 @@
 package org.bobj.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.mvc.Controller;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
@@ -23,7 +23,11 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.user.controller",
         "org.bobj.orderbook.controller",
         "org.bobj.point.controller",
-        "org.bobj.payment.controller"})
+        "org.bobj.payment.controller",
+        "org.bobj.notification.controller",
+        "org.bobj.device.controller",
+        "org.bobj.allocation.controller"
+        })
 
 public class ServletConfig implements WebMvcConfigurer {
 
@@ -52,4 +56,9 @@ public class ServletConfig implements WebMvcConfigurer {
     }
 
 
+    @Bean
+    public MultipartResolver multipartResolver() {
+        StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
+        return resolver;
+    }
 }

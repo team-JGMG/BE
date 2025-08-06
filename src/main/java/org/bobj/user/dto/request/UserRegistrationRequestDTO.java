@@ -17,13 +17,13 @@ public class UserRegistrationRequestDTO {
     @ApiModelProperty(value = "실명", example = "홍길동", required = true)
     private String name;
 
-    @ApiModelProperty(value = "주민등록번호", example = "901010-1******", required = true)
+    @ApiModelProperty(value = "주민등록번호", example = "9010101234567", required = true)
     private String ssn;
 
     @ApiModelProperty(value = "휴대폰 번호", example = "01012345678", required = true)
     private String phone;
 
-    @ApiModelProperty(value = "은행 코드", example = "004", required = true)
+    @ApiModelProperty(value = "은행 코드", example = "국민", required = true)
     private String bankCode;
 
     @ApiModelProperty(value = "계좌번호", example = "123456789012", required = true)
@@ -57,12 +57,12 @@ public class UserRegistrationRequestDTO {
         if (bankCode == null || bankCode.trim().isEmpty()) {
             result.addError("bankCode", "은행 코드는 필수입니다");
         } else if (bankCode.trim().length() < 2 || bankCode.trim().length() > 10) {
-            result.addError("bankCode", "은행 코드는 3-10자 사이여야 합니다");
+            result.addError("bankCode", "은행 코드는 2-10자 사이여야 합니다");
         }
         
         // 계좌번호 검증
-        if (accountNumber == null || !accountNumber.matches("^\\d{10,20}$")) {
-            result.addError("accountNumber", "계좌번호는 10-20자리 숫자여야 합니다");
+        if (accountNumber == null || !accountNumber.matches("^\\d{10,14}$")) {
+            result.addError("accountNumber", "계좌번호는 10-14자리 숫자여야 합니다");
         }
         
         return result;

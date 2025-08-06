@@ -8,7 +8,10 @@ import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.order.dto.request.OrderRequestDTO;
 import org.bobj.order.dto.response.OrderResponseDTO;
 import org.bobj.order.service.OrderService;
+import org.bobj.orderbook.dto.response.OrderBookResponseDTO;
+import org.bobj.orderbook.service.OrderBookService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,10 +20,13 @@ import java.util.List;
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Log4j2
-@Api(tags="거래 주문 API")
+@Api(tags = "거래 주문 API")
 public class OrderController {
 
+    private final SimpMessagingTemplate messagingTemplate;
+
     private final OrderService service;
+    private final OrderBookService orderBookService;
 
     @PostMapping("")
     @ApiOperation(value = "거래 주문 등록", notes = "새로운 거래 주문 정보를 등록합니다.")
@@ -82,12 +88,24 @@ public class OrderController {
                     response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public  ResponseEntity<ApiCommonResponse<OrderResponseDTO>> placeOrder(
+    public ResponseEntity<ApiCommonResponse<OrderResponseDTO>> placeOrder(
             @RequestBody @ApiParam(value = "거래 주문 DTO", required = true) OrderRequestDTO dto) {
 
         OrderResponseDTO created = service.placeOrder(dto);
 
         ApiCommonResponse<OrderResponseDTO> response = ApiCommonResponse.createSuccess(created);
+
+        //소켓 메세지 pub
+        publishOrderBookUpdate(created.getFundingId());
+//        try {
+//            OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(created.getFundingId());
+//            String destination = "/topic/order-book/" + created.getFundingId();
+//
+//            messagingTemplate.convertAndSend(destination, orderBook);
+//            log.info("Order book update published to topic {}: {}", destination, orderBook);
+//        } catch (Exception e) {
+//            log.error("Failed to publish order book update for fundingId {}: {}", created.getFundingId(), e.getMessage(), e);
+//        }
 
         return ResponseEntity.ok(response);
     }
@@ -126,7 +144,32 @@ public class OrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<String>> cancelOrder(@PathVariable Long orderId) {
-        service.cancelOrder(orderId);
+        Long fundingId = service.cancelOrder(orderId);
+
+//        try {
+//            OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(fundingId);
+//            String destination = "/topic/order-book/" + fundingId;
+//
+//            messagingTemplate.convertAndSend(destination, orderBook);
+//            log.info("Order book update published to topic {}: {}", destination, orderBook);
+//        } catch (Exception e) {
+//            log.error("Failed to publish order book update for fundingId {}: {}", fundingId, e.getMessage(), e);
+//        }
+        //소켓 메세지 pub
+        publishOrderBookUpdate(fundingId);
+
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("주문이 성공적으로 취소되었습니다."));
+    }
+
+    private void publishOrderBookUpdate(Long fundingId) {
+        try {
+            OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(fundingId);
+            String destination = "/topic/order-book/" + fundingId;
+
+            messagingTemplate.convertAndSend(destination, orderBook);
+            log.info("Order book update published to topic {}: {}", destination, orderBook);
+        } catch (Exception e) {
+            log.error("Failed to publish order book update for fundingId {}: {}", fundingId, e.getMessage(), e);
+        }
     }
 }

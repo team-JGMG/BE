@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,4 +17,8 @@ public class PropertySoldResponseDTO {
     private Long propertyId;
     @ApiModelProperty(value = "썸네일 이미지 정보")
     private PhotoDTO thumbnail;
+    @ApiModelProperty("매물 제목")
+    private String title;
+    @ApiModelProperty("누적 수익률")
+    private BigDecimal cumulativeReturn;
 }

@@ -3,14 +3,20 @@ package org.bobj.property.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
+import org.bobj.common.s3.S3Service;
 import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
+import org.bobj.point.service.PointService;
+import org.bobj.property.domain.PropertyDocumentType;
 import org.bobj.property.domain.PropertyVO;
 import org.bobj.property.dto.*;
 import org.bobj.property.mapper.PropertyMapper;
+import org.bobj.share.domain.ShareVO;
+import org.bobj.share.mapper.ShareMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,6 +34,9 @@ public class PropertyService {
     private final PropertyMapper propertyMapper;
     private final FundingMapper fundingMapper;
     private final RentalIncomeService rentalIncomeService;
+    private final S3Service s3Service;
+    private final ShareMapper shareMapper;
+    private final PointService pointService;
 
     // 매물 승인 + 펀딩 등록 or 거절
     @Transactional
@@ -42,12 +51,20 @@ public class PropertyService {
 
     // 매물 등록
     @Transactional
-    public void registerProperty(PropertyCreateDTO dto) {
+    public void registerProperty(PropertyCreateDTO dto,
+                                 List<MultipartFile> photoFiles,
+                                 List<PropertyDocumentRequestDTO> documentRequests) {
         PropertyVO vo = dto.toVO();
         
         // 매물 등록 (DB 트랜잭션 내에서 처리)
         propertyMapper.insert(vo);
-        
+        Long propertyId = vo.getPropertyId();
+
+        if (dto.getHashTagIds() != null && !dto.getHashTagIds().isEmpty()) {
+            propertyMapper.insertHashtag(propertyId, dto.getHashTagIds());
+            log.info("해시태그 매핑 완료 - 매물ID: {}, 해시태그ID: {}", propertyId, dto.getHashTagIds());
+        }
+
         // insert 후 생성된 ID 확인
         log.info("매물 등록 완료 - ID: {}, 제목: {}", vo.getPropertyId(), vo.getTitle());
         
@@ -62,6 +79,24 @@ public class PropertyService {
                 }
             } else {
                 log.error("매물 등록 후 ID 생성 실패 - 월세 자동 계산 불가");
+            }
+        }
+
+        // 이미지 업로드 및 DB 저장
+        if (photoFiles != null) {
+            for (MultipartFile photo : photoFiles) {
+                String photoUrl = s3Service.upload(photo, true); // public-read로 업로드
+                propertyMapper.insertPropertyPhoto(propertyId, photoUrl); // DB 저장
+            }
+        }
+
+        // 문서 업로드 및 DB 저장
+        if (documentRequests != null) {
+            for (PropertyDocumentRequestDTO request : documentRequests) {
+                MultipartFile file = request.getFile();
+                PropertyDocumentType type = request.getType();
+                String url = s3Service.upload(file, false); // 비공개로 업로드
+                propertyMapper.insertPropertyDocument(propertyId, type.name(), url);
             }
         }
     }
@@ -154,7 +189,7 @@ public class PropertyService {
     // 매물 상세 조회(관리자, 마이페이지(내가 올린 매물)
     public PropertyDetailDTO getPropertyById(Long propertyId) {
         PropertyVO vo = propertyMapper.findByPropertyId(propertyId);
-        return PropertyDetailDTO.of(vo);
+        return PropertyDetailDTO.of(vo, s3Service);
     }
 
     // 매각 완료 매물 리스트
@@ -174,7 +209,7 @@ public class PropertyService {
                 .map(FundingSoldResponseDTO::getPropertyId)
                 .collect(Collectors.toList());
 
-        // 1. 매물 상태를 SOLD, updated_at, sold_at 수정
+        // 1. 매물 상태를 SOLD, updated_at, sold_at 수정 + 누적 수익률 계산
         propertyMapper.updatePropertiesAsSold(propertyIds);
 
         // 멀티 스레드 설정
@@ -185,9 +220,31 @@ public class PropertyService {
             Long fundingId = dto.getFundingId();
             executor.submit(()->{
                 /* fundingId에 해당하는 share 가져오기(share 테이블)*/
+                List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
                 /* 해당하는 지분에 point 환불(point 테이블) */
+                for (ShareVO share : shares) {
+                    pointService.refundForShareSell(share.getUserId(),
+                        BigDecimal.valueOf(5000* share.getShareCount()));
+                }
             });
         }
         executor.shutdown();
+    }
+
+    /**
+     * 매물 ID로 법정동 코드 조회
+     */
+    public String getRawdCdByPropertyId(Long propertyId) {
+        log.info("매물 ID로 법정동 코드 조회 - 매물ID: {}", propertyId);
+
+        String rawdCd = propertyMapper.findRawdCdByPropertyId(propertyId);
+
+        if (rawdCd == null || rawdCd.trim().isEmpty()) {
+            log.warn("매물 ID: {}에 해당하는 법정동 코드를 찾을 수 없습니다", propertyId);
+            return null;
+        }
+
+        log.info("법정동 코드 조회 성공 - 매물ID: {}, 법정동코드: {}", propertyId, rawdCd);
+        return rawdCd;
     }
 }

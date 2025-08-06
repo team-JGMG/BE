@@ -66,4 +66,5 @@ public class PropertyVO {
     // 썸네일 -> DB에는 없음!
     private String thumbnailUrl;
 
+    private List<String> tags;
 }

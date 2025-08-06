@@ -30,6 +30,7 @@ import java.util.Map;
 public class AuthController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CookieUtil cookieUtil;
 
     @Value("${server.domain}")
     private String serverDomain;
@@ -42,21 +43,29 @@ public class AuthController {
     @GetMapping("/login/kakao")
     @ApiOperation(value = "카카오 로그인 시작", notes = "카카오 로그인 URL과 로그인 플로우 안내를 제공합니다. 로그인 완료 시 토큰이 HttpOnly 쿠키로 설정됩니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "카카오 로그인 URL 제공 성공", response = SimpleResponseDTO.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
+            @ApiResponse(code = 200, message = "카카오 로그인 URL 제공 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH001\",\n" +
-                    "  \"message\": \"카카오 로그인 설정 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/login/kakao\"\n" +
+                    "  \"message\": \"카카오 로그인 URL을 제공합니다.\",\n" +
+                    "  \"success\": true,\n" +
+                    "  \"data\": {\n" +
+                    "    \"loginUrl\": \"http://localhost:8080/oauth2/authorization/kakao\",\n" +
+                    "    \"flow\": {\n" +
+                    "      \"step1\": \"카카오 로그인 완료 후 pre-auth 토큰이 HttpOnly 쿠키로 설정됩니다.\",\n" +
+                    "      \"step2a\": \"기존 사용자면 바로 최종 토큰을 받습니다.\",\n" +
+                    "      \"step2b\": \"신규 사용자면 추가 정보 입력 후 /api/auth/signup API로 최종 회원가입\"\n" +
+                    "    },\n" +
+                    "    \"callbackInfo\": \"로그인 완료 시 리다이렉트\"\n" +
+                    "  },\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
-                    "```", response = ErrorResponse.class)
+                    "```", response = SimpleResponseDTO.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<SimpleResponseDTO> startKakaoLogin() {
         String kakaoLoginUrl = serverDomain + "/oauth2/authorization/kakao";
-        
+
         Map<String, Object> loginData = Map.of(
                 "loginUrl", kakaoLoginUrl,
                 "flow", Map.of(
@@ -67,7 +76,7 @@ public class AuthController {
                 "callbackInfo", "로그인 완료 시 " + System.getProperty("custom.oauth2.redirect-uri", "http://localhost:5173/auth/callback") +
                                "?status=PRE_AUTH 형태로 리다이렉트 (토큰은 쿠키에 있음)"
         );
-        
+
         return ResponseEntity.ok(SimpleResponseDTO.success("카카오 로그인 URL을 제공합니다.", loginData));
     }
 
@@ -76,108 +85,116 @@ public class AuthController {
     @PostMapping("/signup")
     @ApiOperation(value = "OAuth 회원가입 완료", notes = "HttpOnly 쿠키의 pre-auth 토큰과 추가 정보를 받아 최종 회원가입을 완료합니다. 완료 후 pre-auth 쿠키가 삭제되고 access 토큰 쿠키가 설정됩니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "회원가입 성공", response = AuthResponseDTO.class),
-            @ApiResponse(code = 400, message = "입력값 검증 실패 (실명, 주민등록번호, 휴대폰, 은행정보 등)\n\n" +
+            @ApiResponse(code = 200, message = "회원가입 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 400,\n" +
-                    "  \"code\": \"AUTH005\",\n" +
-                    "  \"message\": \"실명은 필수입니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
+                    "  \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTAzODA2MDB9.abcd1234...\",\n" +
+                    "  \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTA0NjUyMDB9.efgh5678...\",\n" +
+                    "  \"userId\": 12345,\n" +
+                    "  \"isAdmin\": false,\n" +
+                    "  \"role\": \"USER\",\n" +
+                    "  \"tokenType\": \"Bearer\",\n" +
+                    "  \"expiresIn\": 1800,\n" +
+                    "  \"issuedAt\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
-                    "```\n\n" +
+                    "```", response = AuthResponseDTO.class),
+            @ApiResponse(code = 400, message = "입력값 검증 실패\n\n" +
+                    "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 400,\n" +
-                    "  \"code\": \"AUTH006\",\n" +
-                    "  \"message\": \"휴대폰 번호 형식이 올바르지 않습니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```\n\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 400,\n" +
-                    "  \"code\": \"AUTH007\",\n" +
-                    "  \"message\": \"주민등록번호 형식이 올바르지 않습니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
+                    "  \"message\": \"입력값이 올바르지 않습니다.\",\n" +
+                    "  \"success\": false,\n" +
+                    "  \"data\": {\n" +
+                    "    \"details\": [\"실명은 필수입니다.\", \"휴대폰 번호 형식이 올바르지 않습니다.\"]\n" +
+                    "  },\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
                     "```", response = ErrorResponse.class),
-            @ApiResponse(code = 401, message = "유효하지 않은 사전 인증 토큰\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH008\",\n" +
-                    "  \"message\": \"유효하지 않은 사전 인증 토큰입니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 403, message = "올바르지 않은 토큰 타입\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 403,\n" +
-                    "  \"code\": \"AUTH009\",\n" +
-                    "  \"message\": \"올바르지 않은 토큰 타입입니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH010\",\n" +
-                    "  \"message\": \"회원가입 처리 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class)
+            @ApiResponse(code = 401, message = "유효하지 않은 사전 인증 토큰", response = ErrorResponse.class),
+            @ApiResponse(code = 403, message = "올바르지 않은 토큰 타입", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<?> registerFinal(@RequestBody @ApiParam(value = "회원가입 추가 정보", required = true) UserRegistrationRequestDTO registrationRequest,
                                                   HttpServletRequest request,
                                                   HttpServletResponse response) {
+        
+        log.info("🚀 [회원가입 시작] 요청 데이터: {}", registrationRequest.toMaskedString());
+        
+        // 🔍 모든 쿠키 로그 출력 (디버깅용)
+        cookieUtil.logAllCookies(request);
+        
         // 1. 사전 인증 토큰 검증
         String preAuthToken = jwtTokenProvider.resolveToken(request);
-        if (preAuthToken == null || !jwtTokenProvider.validateToken(preAuthToken)) {
+        log.info("🔍 [토큰 추출] preAuthToken 존재 여부: {}", preAuthToken != null);
+        
+        if (preAuthToken == null) {
+            log.error("❌ [토큰 오류] preAuthToken이 null입니다.");
+            log.error("🔍 [상세 확인] 요청 헤더 Authorization: {}", request.getHeader("Authorization"));
+            
             // 유효하지 않은 토큰시 pre-auth 토큰 쿠키 삭제
-            CookieUtil.deletePreAuthTokenCookie(response);
+            cookieUtil.deletePreAuthTokenCookie(response, request);
+            return ResponseEntity.status(401).body(SimpleResponseDTO.error("사전 인증 토큰이 없습니다."));
+        }
+        
+        // 토큰 일부만 로그 출력 (보안)
+        String tokenPreview = preAuthToken.length() > 20 ? 
+            preAuthToken.substring(0, 20) + "..." : preAuthToken;
+        log.info("🔍 [토큰 내용] preAuthToken 미리보기: {}", tokenPreview);
+        
+        if (!jwtTokenProvider.validateToken(preAuthToken)) {
+            log.error("❌ [토큰 검증] preAuthToken이 유효하지 않습니다: {}", tokenPreview);
+            cookieUtil.deletePreAuthTokenCookie(response, request);
             return ResponseEntity.status(401).body(SimpleResponseDTO.error("유효하지 않은 사전 인증 토큰입니다."));
         }
+        
+        log.info("✅ [토큰 검증] preAuthToken 유효성 검증 통과");
 
         Claims claims = jwtTokenProvider.getClaims(preAuthToken);
-        if (!"pre-auth".equals(claims.get("type", String.class))) {
-            // 잘못된 토큰 타입시 pre-auth 토큰 삭제
-            CookieUtil.deletePreAuthTokenCookie(response);
+        String tokenType = claims.get("type", String.class);
+        log.info("🔍 [토큰 타입] {}", tokenType);
+        
+        if (!"pre-auth".equals(tokenType)) {
+            log.error("❌ [토큰 타입 오류] 예상: pre-auth, 실제: {}", tokenType);
+            cookieUtil.deletePreAuthTokenCookie(response, request);
             return ResponseEntity.status(403).body(SimpleResponseDTO.error("올바르지 않은 토큰 타입입니다."));
         }
+        
+        log.info("✅ [토큰 타입] pre-auth 타입 확인 완료");
 
         // 2. 서버 사이드 검증 (클라이언트 검증 우회 방지)
         UserRegistrationRequestDTO.ValidationResult validationResult = registrationRequest.validate();
         if (!validationResult.isValid()) {
-            log.warn("회원가입 요청 검증 실패: {}", validationResult.getErrors());
-            // 검증 실패시 pre-auth 토큰 삭제
-            CookieUtil.deletePreAuthTokenCookie(response);
+            log.warn("❌ [검증 실패] 회원가입 요청 검증 실패: {}", validationResult.getErrors());
+            cookieUtil.deletePreAuthTokenCookie(response, request);
             return ResponseEntity.badRequest().body(
                 SimpleResponseDTO.error("입력값이 올바르지 않습니다.", 
                     Map.of("details", validationResult.getErrors()))
             );
         }
+        
+        log.info("✅ [입력값 검증] 회원가입 데이터 검증 통과");
 
         try {
+            log.info("🔄 [회원가입 처리] 최종 회원가입 시작 - 사용자: {}", claims.getSubject());
             AuthResponseDTO finalAuthResponse = userService.registerUserAndCreateFinalToken(registrationRequest, claims);
-            // Access Token을 쿠키로 설정
-            CookieUtil.setAccessTokenCookie(response, finalAuthResponse.getAccessToken());
-            // Pre-Auth Token 쿠키 삭제 (회원가입 완료)
-            CookieUtil.deletePreAuthTokenCookie(response);
             
-            log.info("회원가입 성공: {}", registrationRequest.toMaskedString());
+            // Access Token을 쿠키로 설정
+            cookieUtil.setAccessTokenCookie(response, request, finalAuthResponse.getAccessToken());
+            // Pre-Auth Token 쿠키 삭제 (회원가입 완료)
+            cookieUtil.deletePreAuthTokenCookie(response, request);
+            
+            log.info("✅ [회원가입 성공] 사용자: {}", claims.getSubject());
             return ResponseEntity.ok(finalAuthResponse);
+            
         } catch (Exception e) {
-            log.error("회원가입 처리 중 오류 발생", e);
+            log.error("❌ [회원가입 실패] 처리 중 오류 발생", e);
+            log.error("❌ [오류 상세] 메시지: {}", e.getMessage());
+            log.error("❌ [오류 타입] {}", e.getClass().getSimpleName());
+            
             // 오류 발생시 pre-auth 토큰 삭제
-            CookieUtil.deletePreAuthTokenCookie(response);
-            return ResponseEntity.status(500).body(SimpleResponseDTO.error("회원가입 처리 중 오류가 발생했습니다."));
+            cookieUtil.deletePreAuthTokenCookie(response, request);
+            return ResponseEntity.status(500).body(SimpleResponseDTO.error("회원가입 처리 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 
@@ -187,17 +204,16 @@ public class AuthController {
     @PostMapping("/oauth/logout")
     @ApiOperation(value = "로그아웃", notes = "액세스 토큰 쿠키 삭제 및 리프레시 토큰을 DB에서 제거합니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "로그아웃 성공", response = SimpleResponseDTO.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
+            @ApiResponse(code = 200, message = "로그아웃 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH011\",\n" +
-                    "  \"message\": \"로그아웃 처리 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/logout\"\n" +
+                    "  \"message\": \"로그아웃이 완료되었습니다.\",\n" +
+                    "  \"success\": true,\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
-                    "```", response = ErrorResponse.class)
+                    "```", response = SimpleResponseDTO.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<SimpleResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
         String token = jwtTokenProvider.resolveToken(request);
@@ -210,7 +226,7 @@ public class AuthController {
         }
 
         // 쿠키 삭제
-        CookieUtil.deleteAccessTokenCookie(response);
+        cookieUtil.deleteAccessTokenCookie(response, request);
 
         return ResponseEntity.ok(SimpleResponseDTO.success("로그아웃이 완료되었습니다."));
     }
@@ -222,43 +238,30 @@ public class AuthController {
     @PostMapping("/oauth/token-refresh")
     @ApiOperation(value = "액세스 토큰 갱신", notes = "만료된 액세스 토큰을 새로운 토큰으로 갱신합니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "토큰 갱신 성공", response = AuthResponseDTO.class),
-            @ApiResponse(code = 401, message = "토큰 갱신 실패 (토큰 없음, 유효하지 않은 토큰, 리프레시 토큰 만료 등)\n\n" +
+            @ApiResponse(code = 200, message = "토큰 갱신 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH012\",\n" +
+                    "  \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTAzODA2MDB9.newtoken1234...\",\n" +
+                    "  \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTA0NjUyMDB9.efgh5678...\",\n" +
+                    "  \"userId\": 12345,\n" +
+                    "  \"isAdmin\": false,\n" +
+                    "  \"role\": \"USER\",\n" +
+                    "  \"tokenType\": \"Bearer\",\n" +
+                    "  \"expiresIn\": 1800,\n" +
+                    "  \"issuedAt\": \"2025-08-06 12:30:45\"\n" +
+                    "}\n" +
+                    "```", response = AuthResponseDTO.class),
+            @ApiResponse(code = 401, message = "토큰 갱신 실패\n\n" +
+                    "**예시:**\n" +
+                    "```json\n" +
+                    "{\n" +
                     "  \"message\": \"토큰이 제공되지 않았습니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
-                    "}\n" +
-                    "```\n\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH013\",\n" +
-                    "  \"message\": \"유효하지 않은 토큰입니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
-                    "}\n" +
-                    "```\n\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH014\",\n" +
-                    "  \"message\": \"Refresh Token이 만료되었습니다. 다시 로그인해주세요.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
+                    "  \"success\": false,\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
                     "```", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH015\",\n" +
-                    "  \"message\": \"토큰 갱신 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class)
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
 
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -285,7 +288,7 @@ public class AuthController {
             // DB에서 해당 사용자의 refresh token으로 새 access token 발급
             AuthResponseDTO newAuthResponse = userService.refreshAccessTokenByEmail(email);
             // 새로운 Access Token을 쿠키로 설정
-            CookieUtil.setAccessTokenCookie(response, newAuthResponse.getAccessToken());
+            cookieUtil.setAccessTokenCookie(response, request, newAuthResponse.getAccessToken());
             
             log.info("토큰 갱신 완료: {}", email);
             // AuthResponseDTO를 직접 반환 (일관성 있는 응답)

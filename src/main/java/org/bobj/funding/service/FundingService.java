@@ -3,11 +3,13 @@ package org.bobj.funding.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
+import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.dto.FundingEndedResponseDTO;
 import org.bobj.funding.dto.FundingTotalResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
+import org.bobj.point.service.PointService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ import java.util.concurrent.Future;
 public class FundingService {
     private final FundingMapper fundingMapper;
     private final FundingOrderMapper fundingOrderMapper;
+    private final PointService pointService;
 
     private static final int BATCH_SIZE = 1000;
 
@@ -61,6 +64,14 @@ public class FundingService {
                     fundingOrderMapper.updateFundingOrderStatusToRefundedByOrderIds(fundingOrderIdBatch);
 
                     /* 여기에 포인트 환불 로직 추가 해주세요!(point테이블)*/
+                    List<FundingOrderVO> allOrders = fundingOrderMapper.findAllOrdersByFundingId(fId);
+
+                    for (FundingOrderVO order : allOrders) {
+                        if (fundingOrderIdBatch.contains(order.getOrderId())) {
+                            pointService.refundForFundingFailure(order.getUserId(), order.getOrderPrice());
+                        }
+                    }
+
                     return null;
                 });
             }
@@ -71,6 +82,10 @@ public class FundingService {
 
             for(Future<Void> future: futures){
                 future.get();
+            }
+
+            for (Long fId : failedFundingIds) {
+                fundingMapper.updateCurrentAmountToZero(fId);
             }
         } catch(Exception e){
             log.error("펀딩 주문 상태 변경 또는 포인트 환불 중 실패 → 전체 롤백됩니다.", e);
@@ -98,5 +113,9 @@ public class FundingService {
         }
 
         return new CustomSlice<>(content,hasNext);
+    }
+
+    public String getPropertyTitleByFundingId(Long fundingId){
+        return fundingMapper.getPropertyTitleByFundingId(fundingId);
     }
 }

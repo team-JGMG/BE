@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,4 +18,7 @@ public class FundingEndedResponseDTO {
 
     @ApiModelProperty("매물 제목")
     private String title;
+
+    @ApiModelProperty("해시태그 리스트")
+    private List<String> tags;
 }
