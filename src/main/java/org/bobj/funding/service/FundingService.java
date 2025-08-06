@@ -111,7 +111,7 @@ public class FundingService {
         }
     }
 
-    public void soldProperty(){
+    public void soldProperty() {
 
     }
 

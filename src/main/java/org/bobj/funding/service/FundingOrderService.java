@@ -11,6 +11,7 @@ import org.bobj.funding.dto.FundingOrderUserResponseDTO;
 import org.bobj.funding.event.ShareDistributionEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
+import org.bobj.notification.service.NotificationService;
 import org.bobj.point.service.PointService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -26,10 +28,12 @@ import java.util.List;
 public class FundingOrderService {
     private final FundingOrderMapper fundingOrderMapper;
     private final FundingMapper fundingMapper;
-    private final ShareDistributionService shareDistributionService;
+
     private final ApplicationEventPublisher eventPublisher;
     private final AllocationService allocationService;
     private final PointService pointService;
+
+    private final NotificationService notificationService;
 
     // 주문 추가
     @Transactional
@@ -78,6 +82,8 @@ public class FundingOrderService {
             // 2. 모든 주문을 성공 상태로 변경
             fundingOrderMapper.markOrdersAsSuccessByFundingId(fundingId);
 
+            // 펀딩 성공 알림 전송 메서드 호출
+            sendFundingSuccessNotifications(fundingId);
             // 3. 지분 분배 이벤트 발행
             eventPublisher.publishEvent(new ShareDistributionEvent(fundingId));
 
@@ -126,5 +132,33 @@ public class FundingOrderService {
     @Transactional(readOnly = true)
     public FundingOrderLimitDTO getFundingOrderLimit(Long userId, Long fundingId) {
         return fundingOrderMapper.findFundingOrderLimit(userId, fundingId);
+    }
+
+    private void sendFundingSuccessNotifications(Long fundingId) {
+        String propertyTitle = fundingMapper.getPropertyTitleByFundingId(fundingId);
+
+        // 1. 등록자 알림 (펀딩을 올린 사용자)
+        Long ownerUserId = fundingMapper.getUserIdbyFundingId(fundingId);
+
+        if (ownerUserId != null) {
+            String title = "펀딩 성공!";
+            String body = "'" + propertyTitle + "' 펀딩이 목표 금액 달성에 성공했습니다. 축하합니다!";
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
+        }
+
+        // 2. 참여자 알림
+        // 펀딩 ID로 모든 참여자들의 userId를 조회합니다.
+        List<Long> participantUserIds = fundingOrderMapper.findAllOrdersByFundingId(fundingId).stream()
+                .map(FundingOrderVO::getUserId)
+                .distinct()
+                .toList();
+
+        if (!participantUserIds.isEmpty()) {
+            String title = "펀딩 성공!";
+            String body = "'" + propertyTitle + "' 펀딩이 목표 금액 달성에 성공했습니다. 지분이 곧 분배됩니다.";
+            for (Long participantId : participantUserIds) {
+                notificationService.sendNotificationAndSave(participantId, title, body);
+            }
+        }
     }
 }
