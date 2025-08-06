@@ -237,6 +237,15 @@
         VALUES (#{propertyId}, #{documentType}, #{fileUrl}, NOW());
     </insert>
 
+    <!-- 해시 태그 추가 -->
+    <insert id="insertHashtag">
+        INSERT INTO property_hashtags (property_id, hashtag_id)
+        VALUES
+        <foreach collection="hashtagIds" item="tagId" separator=",">
+            (#{propertyId}, #{tagId})
+        </foreach>
+    </insert>
+
     <update id="updatePropertiesAsSold">
         UPDATE properties
         SET status = 'SOLD',

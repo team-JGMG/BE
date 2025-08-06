@@ -10,6 +10,7 @@ import org.bobj.property.domain.PropertyVO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -74,6 +75,9 @@ public class PropertyCreateDTO {
     @ApiModelProperty(value ="임대수익", example = "5000000")
     private BigDecimal rentalIncome; //임대수익, 실거래가 api 통해 이용.
 
+    @ApiModelProperty(value = "해시태그 번호 리스트", example = "[1, 2, 3]")
+    private List<Long> hashTagIds;
+
     public static PropertyCreateDTO of(PropertyVO vo){
         return PropertyCreateDTO.builder()
                 .userId(vo.getUserId())
@@ -99,6 +103,7 @@ public class PropertyCreateDTO {
                 .description(vo.getDescription())
                 .rawdCd(vo.getRawdCd())
                 .rentalIncome(vo.getRentalIncome())
+                .hashTagIds(null)
                 .build();
     }
 

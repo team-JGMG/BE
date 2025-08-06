@@ -260,6 +260,13 @@
       #{id}
     </foreach>
   </update>
+
+  <!-- 펀딩 현재 금액을 0로 변경-->
+  <update id="updateCurrentAmountToZero">
+    UPDATE fundings
+    SET current_amount = 0
+    WHERE funding_id = #{fundingId}
+  </update>
   <!-- 펀딩 완료 후 2년된 매물 찾기 -->
   <select id="findSoldFundingIds" resultType="org.bobj.funding.dto.FundingSoldResponseDTO">
     SELECT

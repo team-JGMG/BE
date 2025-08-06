@@ -32,6 +32,8 @@ public interface PropertyMapper {
     void update(@Param("propertyId") Long propertyId, @Param("status") String status);
 
     void insert(PropertyVO propertyVO);
+    // 해시 태그 추가
+    void insertHashtag(@Param("propertyId") Long propertyId, @Param("hashtagIds") List<Long> hashtagIds);
 
     // 사진 업로드
     void insertPropertyPhoto(@Param("propertyId") Long propertyId,

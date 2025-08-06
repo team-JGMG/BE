@@ -17,8 +17,11 @@ public class PhotoDTO {
     private String photoUrl;
 
     public static PhotoDTO of(PropertyPhotoVO vo, S3Service s3Service) {
+        String key = getS3KeyFromUrl(vo.getPhotoUrl());
+        String originalFilename = s3Service.getOriginalFilenameFromS3(key);
+
         return PhotoDTO.builder()
-                .photoUrl(s3Service.generatePresignedUrl(getS3KeyFromUrl(vo.getPhotoUrl())))
+                .photoUrl(s3Service.generatePresignedUrl(key, originalFilename))
                 .build();
     }
 
@@ -26,12 +29,6 @@ public class PhotoDTO {
     // 예: https://s3.amazonaws.com/your-bucket/uploads/abc.pdf
     // → uploads/abc.pdf 추출
     private static String getS3KeyFromUrl(String url) {
-        return url.substring(url.indexOf(".com/") + 5); // uploads/abc.pdf
-    }
-
-    public PropertyPhotoVO toVO(){
-        return PropertyPhotoVO.builder()
-                .photoUrl(photoUrl)
-                .build();
+        return url.substring(url.indexOf(".com/") + 5);
     }
 }

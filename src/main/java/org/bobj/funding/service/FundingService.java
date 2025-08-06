@@ -83,6 +83,10 @@ public class FundingService {
             for(Future<Void> future: futures){
                 future.get();
             }
+
+            for (Long fId : failedFundingIds) {
+                fundingMapper.updateCurrentAmountToZero(fId);
+            }
         } catch(Exception e){
             log.error("펀딩 주문 상태 변경 또는 포인트 환불 중 실패 → 전체 롤백됩니다.", e);
             throw new RuntimeException("펀딩 실패 처리 중 오류", e);
