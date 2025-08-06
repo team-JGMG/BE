@@ -44,7 +44,7 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
 
     @Override
     protected void customizeRegistration(ServletRegistration.Dynamic registration) {
-        String location = "/tmp"; // 업로드된 파일 임시 저장 경로(배포 기준) -> C:/temp (윈도우 기준(로컬에서))
+        String location = System.getProperty("java.io.tmpdir");
         long maxFileSize = 52428800; // 50MB
         long maxRequestSize = 209715200; // 200MB
         int fileSizeThreshold = 0;
