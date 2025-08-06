@@ -67,4 +67,13 @@
             user_id = #{userId}
     </select>
 
+    <select id="getDeviceTokenByUserId" resultType="java.lang.String">
+        SELECT
+            device_token
+        FROM
+            user_device_tokens
+        WHERE
+            user_id = #{userId}
+    </select>
+
 </mapper>

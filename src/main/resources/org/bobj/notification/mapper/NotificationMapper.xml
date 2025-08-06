@@ -14,7 +14,7 @@
         VALUES (
             #{userId},
             #{title},
-            #{body},
+            #{body}
         )
         <selectKey resultType="Long" keyProperty="notificationId" keyColumn="notification_id" order="AFTER">
             SELECT LAST_INSERT_ID()

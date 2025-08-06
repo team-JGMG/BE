@@ -50,4 +50,15 @@ public class NotificationServiceImpl implements NotificationService{
     public void markAllNotificationsAsRead(Long userId) {
         notificationMapper.markAllAsReadByUserId(userId);
     }
+
+    @Override
+    public void registerNotification(Long userId, String title, String body) {
+        NotificationVO notificationVO = NotificationVO.builder()
+                .userId(userId)
+                .title(title)
+                .body(body)
+                .build();
+
+        notificationMapper.registerNotification(notificationVO);
+    }
 }

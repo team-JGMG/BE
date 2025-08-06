@@ -52,4 +52,9 @@ public class UserDeviceTokenServiceImpl implements UserDeviceTokenService{
     public void deleteToken(Long userId, String deviceToken) {
         userDeviceTokenMapper.deleteByUserIdAndDeviceToken(userId, deviceToken);
     }
+
+    @Override
+    public String getDeviceTokenByUserId(Long userId) {
+        return userDeviceTokenMapper.getDeviceTokenByUserId(userId);
+    }
 }

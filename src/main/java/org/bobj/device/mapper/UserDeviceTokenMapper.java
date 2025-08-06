@@ -21,4 +21,5 @@ public interface UserDeviceTokenMapper {
     // 기존 디바이스 토큰 사용자 ID 업데이트
     void updateUserId(@Param("userDeviceTokenId") Long userDeviceTokenId, @Param("userId") Long userId);
 
+    String getDeviceTokenByUserId(Long userId);
 }

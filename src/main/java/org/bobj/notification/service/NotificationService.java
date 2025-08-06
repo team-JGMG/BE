@@ -10,4 +10,6 @@ public interface NotificationService {
     void markNotificationAsRead(Long userId, Long notificationId);
 
     void markAllNotificationsAsRead(Long userId);
+
+    void registerNotification(Long userId, String title, String body);
 }

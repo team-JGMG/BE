@@ -2,9 +2,11 @@ package org.bobj.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.device.service.UserDeviceTokenService;
 import org.bobj.funding.service.FundingService;
 import org.bobj.fcm.dto.request.FcmRequestDto;
 import org.bobj.fcm.service.FcmService;
+import org.bobj.notification.service.NotificationService;
 import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderType;
 import org.bobj.order.mapper.OrderMapper;
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -35,9 +38,11 @@ public class OrderMatchingService {
     private final PointService pointService;
 
     private final OrderBookService orderBookService;
-    private final OrderBookWebSocketService orderBookWebSocketService;
     private final FcmService fcmService;
     private final FundingService fundingService;
+    private final UserDeviceTokenService userDeviceTokenService;
+    private final NotificationService notificationService;
+
 
     @Transactional
     public int processOrderMatching(OrderVO newOrder) {
@@ -133,40 +138,27 @@ public class OrderMatchingService {
             processBuyTradeAssets(buyerUserId, newOrder.getFundingId(), tradeCount, actualTradePrice);
             // 매도자 포인트 업데이트
             processSellTradeAssets(sellerUserId, newOrder.getFundingId(), tradeCount, actualTradePrice);
-
-            String propertyTitle = fundingService.getPropertyTitleByFundingId(newOrder.getFundingId());
-
-            // 체결 완료 알림
-            FcmRequestDto fcmRequestDto = FcmRequestDto.builder()
-                    .deviceToken("dbHbnjjAgOAxaUSNlnnfmD:APA91bG9CpdoIBrMeLKMavQTJ3ZFGvD5kNcu1PLe2RuDHIRIt7WC5ns_mI9IdAL1KfTKOkESf_juNM-c_ovcH5iMm0rRzkHE8-ltsxHZ_wAmq0R26F_VpuY")
-                    .title(propertyTitle + " 거래가 체결되었어요!")
-                    .body(tradeCount + "주가 " + actualTradePrice + "원에 체결되었습니다.").build();
-
-            try {
-                fcmService.sendMessageTo(fcmRequestDto);
-            } catch (IOException e) {
-                log.error("체결 알림 발송 실패 - fundingId: {}, token: {}", newOrder.getFundingId(), fcmRequestDto.getDeviceToken(), e);
-            }
         }
 
-        // 4. 모든 체결 처리 후 최종 알림을 한 번만 보냄 (반복문 밖으로 이동)
+        // 알림 전송 단계
         if (!trades.isEmpty()) {
+
             String propertyTitle = fundingService.getPropertyTitleByFundingId(newOrder.getFundingId());
 
-            // 체결된 총 수량과 최종 체결 가격을 계산하여 알림 내용 생성
+            // 1. 매수자에게 전체 합산 알림 1번
+            Long buyerUserId = trades.get(0).getBuyerUserId(); // 모든 체결의 매수자는 동일
             int totalTradeCount = trades.stream().mapToInt(TradeVO::getTradeCount).sum();
             BigDecimal lastTradePrice = trades.get(trades.size() - 1).getTradePricePerShare();
+            sendTradeNotification(buyerUserId, propertyTitle, totalTradeCount, lastTradePrice);
 
-            FcmRequestDto fcmRequestDto = FcmRequestDto.builder()
-                    .deviceToken("dbHbnjjAgOAxaUSNlnnfmD:APA91bG9CpdoIBrMeLKMavQTJ3ZFGvD5kNcu1PLe2RuDHIRIt7WC5ns_mI9IdAL1KfTKOkESf_juNM-c_ovcH5iMm0rRzkHE8-ltsxHZ_wAmq0R26F_VpuY")
-                    .title(propertyTitle + " 거래가 체결되었어요!")
-                    .body(totalTradeCount + "주가 " + lastTradePrice + "원에 체결되었습니다.").build();
-
-            try {
-                fcmService.sendMessageTo(fcmRequestDto);
-            } catch (IOException e) {
-                log.error("체결 알림 발송 실패 - fundingId: {}, token: {}", newOrder.getFundingId(), fcmRequestDto.getDeviceToken(), e);
-            }
+            // 2. 매도자별로 각각 알림 1번
+            trades.stream()
+                    .collect(Collectors.groupingBy(TradeVO::getSellerUserId))
+                    .forEach((sellerUserId, sellerTrades) -> {
+                        int sellerTotalCount = sellerTrades.stream().mapToInt(TradeVO::getTradeCount).sum();
+                        BigDecimal sellerLastPrice = sellerTrades.get(sellerTrades.size() - 1).getTradePricePerShare();
+                        sendTradeNotification(sellerUserId, propertyTitle, sellerTotalCount, sellerLastPrice);
+                    });
         }
 
         return remainingNewOrderCount;
@@ -250,6 +242,31 @@ public class OrderMatchingService {
         } else {
             // 일부 주식을 매도한 경우: 수량만 감소 (평균 단가는 매도 시 변하지 않음)
             shareMapper.update(existingShare.getShareId(), newShareCount, existingShare.getAverageAmount());
+        }
+    }
+
+    // 체결 완료 알림 보내기
+    private void sendTradeNotification(Long userId, String propertyTitle, int tradeCount, BigDecimal price) {
+        String title = propertyTitle + " 거래가 체결되었어요!";
+        String body = tradeCount + "주가 " + price + "원에 체결되었습니다.";
+
+        try {
+            String deviceToken = userDeviceTokenService.getDeviceTokenByUserId(userId);
+
+            log.info("디바이스 토큰 : "+deviceToken);
+
+            if (deviceToken != null) {
+                FcmRequestDto fcmDto = FcmRequestDto.builder()
+                        .deviceToken(deviceToken)
+                        .title(title)
+                        .body(body)
+                        .build();
+                fcmService.sendMessageTo(fcmDto);
+            }
+        } catch (Exception e) {
+            log.error("사용자(ID: {}) FCM 알림 발송 실패", userId, e);
+        } finally {
+            notificationService.registerNotification(userId, title, body);
         }
     }
 }
