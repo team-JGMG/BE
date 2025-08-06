@@ -1,6 +1,8 @@
 package org.bobj.config;
 
 import javax.servlet.Filter;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletRegistration;
 
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
@@ -40,5 +42,16 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         return new Filter[]{characterEncodingFilter};
     }
 
+    @Override
+    protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+        String location = "C:/temp"; // 업로드된 파일 임시 저장 경로
+        long maxFileSize = 52428800; // 50MB
+        long maxRequestSize = 209715200; // 200MB
+        int fileSizeThreshold = 0;
 
+        MultipartConfigElement multipartConfigElement =
+                new MultipartConfigElement(location, maxFileSize, maxRequestSize, fileSizeThreshold);
+
+        registration.setMultipartConfig(multipartConfigElement);
+    }
 }

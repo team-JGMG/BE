@@ -60,6 +60,11 @@ public class PropertyService {
         propertyMapper.insert(vo);
         Long propertyId = vo.getPropertyId();
 
+        if (dto.getHashTagIds() != null && !dto.getHashTagIds().isEmpty()) {
+            propertyMapper.insertHashtag(propertyId, dto.getHashTagIds());
+            log.info("해시태그 매핑 완료 - 매물ID: {}, 해시태그ID: {}", propertyId, dto.getHashTagIds());
+        }
+
         // insert 후 생성된 ID 확인
         log.info("매물 등록 완료 - ID: {}, 제목: {}", vo.getPropertyId(), vo.getTitle());
         
@@ -80,7 +85,7 @@ public class PropertyService {
         // 이미지 업로드 및 DB 저장
         if (photoFiles != null) {
             for (MultipartFile photo : photoFiles) {
-                String photoUrl = s3Service.upload(photo); // S3 업로드
+                String photoUrl = s3Service.upload(photo, true); // public-read로 업로드
                 propertyMapper.insertPropertyPhoto(propertyId, photoUrl); // DB 저장
             }
         }
@@ -90,7 +95,7 @@ public class PropertyService {
             for (PropertyDocumentRequestDTO request : documentRequests) {
                 MultipartFile file = request.getFile();
                 PropertyDocumentType type = request.getType();
-                String url = s3Service.upload(file);
+                String url = s3Service.upload(file, false); // 비공개로 업로드
                 propertyMapper.insertPropertyDocument(propertyId, type.name(), url);
             }
         }

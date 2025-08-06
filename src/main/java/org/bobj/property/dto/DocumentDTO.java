@@ -21,9 +21,12 @@ public class DocumentDTO {
     private String fileUrl;
 
     public static DocumentDTO of(PropertyDocumentVO vo, S3Service s3Service) {
+        String key = getS3KeyFromUrl(vo.getFileUrl());
+        String originalFilename = s3Service.getOriginalFilenameFromS3(key);
+
         return DocumentDTO.builder()
                 .documentType(vo.getDocumentType())
-                .fileUrl(s3Service.generatePresignedUrl(getS3KeyFromUrl(vo.getFileUrl())))
+                .fileUrl(s3Service.generatePresignedUrl(key, originalFilename))
                 .build();
     }
 
@@ -32,12 +35,5 @@ public class DocumentDTO {
     // → uploads/abc.pdf 추출
     private static String getS3KeyFromUrl(String url) {
         return url.substring(url.indexOf(".com/") + 5); // uploads/abc.pdf
-    }
-
-    public PropertyDocumentVO toVO(){
-        return PropertyDocumentVO.builder()
-                .documentType(documentType)
-                .fileUrl(fileUrl)
-                .build();
     }
 }
