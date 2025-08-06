@@ -14,6 +14,7 @@ import org.bobj.property.dto.*;
 import org.bobj.property.mapper.PropertyMapper;
 import org.bobj.share.domain.ShareVO;
 import org.bobj.share.mapper.ShareMapper;
+import org.bobj.share.mapper.ShareMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,8 @@ import java.util.stream.Collectors;
 public class PropertyService {
     private final PropertyMapper propertyMapper;
     private final FundingMapper fundingMapper;
+    private final ShareMapper shareMapper;
+
     private final RentalIncomeService rentalIncomeService;
     private final S3Service s3Service;
     private final NotificationService notificationService;
@@ -68,6 +71,7 @@ public class PropertyService {
 
             notificationService.sendNotificationAndSave(ownerUserId, title, body);
         }
+
     }
 
     // 매물 등록
@@ -239,6 +243,10 @@ public class PropertyService {
 
         for(FundingSoldResponseDTO dto : fundings) {
             Long fundingId = dto.getFundingId();
+
+            // 펀딩 등록자와 참여자에게 매각 완료 알림 전송
+            sendFundingSoldNotifications(fundingId);
+
             executor.submit(()->{
                 /* fundingId에 해당하는 share 가져오기(share 테이블)*/
                 List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
@@ -267,5 +275,27 @@ public class PropertyService {
 
         log.info("법정동 코드 조회 성공 - 매물ID: {}, 법정동코드: {}", propertyId, rawdCd);
         return rawdCd;
+    }
+
+    private void sendFundingSoldNotifications(Long fundingId) {
+        String propertyTitle = fundingMapper.getPropertyTitleByFundingId(fundingId);
+
+        // 1. 등록자 알림 (펀딩을 올린 사용자)
+        Long ownerUserId = fundingMapper.getUserIdbyFundingId(fundingId);
+        if (ownerUserId != null) {
+            String title = "매각 완료!";
+            String body = "'" + propertyTitle + "' 매물이 성공적으로 매각되었습니다. 수익금을 확인해 주세요.";
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
+        }
+
+        // 2. 참여자 알림
+        List<Long> participantUserIds = shareMapper.findShareHolderUserIdsByFundingId(fundingId);
+        if (!participantUserIds.isEmpty()) {
+            String title = "매각 완료!";
+            String body = "'" + propertyTitle + "' 매각이 완료되어 지분 수익금이 정산되었습니다.";
+            for (Long participantId : participantUserIds) {
+                notificationService.sendNotificationAndSave(participantId, title, body);
+            }
+        }
     }
 }

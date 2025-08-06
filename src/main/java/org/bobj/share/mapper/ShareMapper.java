@@ -33,6 +33,9 @@ public interface ShareMapper {
     //주식 데이터 배치 삽입
     int insertSharesBatch(List<ShareVO> shares);
 
+    // 펀딩의 지분을 보유한 모든 사용자 ID를 조회
+    List<Long> findShareHolderUserIdsByFundingId(@Param("fundingId") Long fundingId);
+
     List<ShareVO> findByFundingId(Long fundingId);
 
 
