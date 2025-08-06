@@ -24,10 +24,10 @@ import java.util.Set;
 public class OAuth2ClientConfig {
 
     // Spring의 @Value를 사용해서 application.properties 또는 환경변수에서 값 읽기
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:d6f410db14e162483d6845398daf3718}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:ec2974cb702f5750b661d29add7454a7}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:37dIrL5vdJT4uE4PrAjr7HrNc2LqKTgm}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:4AWJ19fh35ZIXf4X50Y6y7arHOGzor8O}")
     private String clientSecret;
 
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:https://half-to-half.site/login/oauth2/code/kakao}")
