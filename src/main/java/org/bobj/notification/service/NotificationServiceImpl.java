@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.bobj.common.constants.ErrorCode;
 import org.bobj.common.exception.CustomException;
+import org.bobj.device.service.UserDeviceTokenService;
+import org.bobj.fcm.dto.request.FcmRequestDto;
+import org.bobj.fcm.service.FcmService;
 import org.bobj.notification.domain.NotificationVO;
 import org.bobj.notification.dto.response.NotificationResponseDTO;
 import org.bobj.notification.mapper.NotificationMapper;
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService{
 
     private final NotificationMapper notificationMapper;
+    private final FcmService fcmService;
+    private final UserDeviceTokenService userDeviceTokenService;
 
     @Override
     public List<NotificationResponseDTO> getNotificationsByUserId(Long userId, String readStatus, int page, int size) {
@@ -60,5 +65,27 @@ public class NotificationServiceImpl implements NotificationService{
                 .build();
 
         notificationMapper.registerNotification(notificationVO);
+    }
+
+    @Override
+    public void sendNotificationAndSave(Long userId, String title, String body) {
+        try {
+            String deviceToken = userDeviceTokenService.getDeviceTokenByUserId(userId);
+            log.info("사용자(ID: {})의 디바이스 토큰: {}", userId, deviceToken);
+
+            if (deviceToken != null) {
+                FcmRequestDto fcmDto = FcmRequestDto.builder()
+                        .deviceToken(deviceToken)
+                        .title(title)
+                        .body(body)
+                        .build();
+                fcmService.sendMessageTo(fcmDto);
+            }
+        } catch (Exception e) {
+            log.error("사용자(ID: {}) FCM 알림 발송 실패", userId, e);
+        } finally {
+            // FCM 발송 성공/실패와 관계없이 DB에 알림을 저장
+            registerNotification(userId, title, body);
+        }
     }
 }

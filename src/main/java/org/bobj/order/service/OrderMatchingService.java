@@ -38,9 +38,7 @@ public class OrderMatchingService {
     private final PointService pointService;
 
     private final OrderBookService orderBookService;
-    private final FcmService fcmService;
     private final FundingService fundingService;
-    private final UserDeviceTokenService userDeviceTokenService;
     private final NotificationService notificationService;
 
 
@@ -149,15 +147,20 @@ public class OrderMatchingService {
             Long buyerUserId = trades.get(0).getBuyerUserId(); // 모든 체결의 매수자는 동일
             int totalTradeCount = trades.stream().mapToInt(TradeVO::getTradeCount).sum();
             BigDecimal lastTradePrice = trades.get(trades.size() - 1).getTradePricePerShare();
-            sendTradeNotification(buyerUserId, propertyTitle, totalTradeCount, lastTradePrice);
 
+            String title = propertyTitle + " 거래가 체결되었어요!";
+            String buyerBody = totalTradeCount + "주가 " + lastTradePrice + "원에 체결되었습니다.";
+
+            notificationService.sendNotificationAndSave(buyerUserId, title, buyerBody);
             // 2. 매도자별로 각각 알림 1번
             trades.stream()
                     .collect(Collectors.groupingBy(TradeVO::getSellerUserId))
                     .forEach((sellerUserId, sellerTrades) -> {
                         int sellerTotalCount = sellerTrades.stream().mapToInt(TradeVO::getTradeCount).sum();
                         BigDecimal sellerLastPrice = sellerTrades.get(sellerTrades.size() - 1).getTradePricePerShare();
-                        sendTradeNotification(sellerUserId, propertyTitle, sellerTotalCount, sellerLastPrice);
+
+                        String sellerBody = sellerTotalCount + "주가 " + sellerLastPrice + "원에 체결되었습니다.";
+                        notificationService.sendNotificationAndSave(sellerUserId, title, sellerBody);;
                     });
         }
 
@@ -245,28 +248,4 @@ public class OrderMatchingService {
         }
     }
 
-    // 체결 완료 알림 보내기
-    private void sendTradeNotification(Long userId, String propertyTitle, int tradeCount, BigDecimal price) {
-        String title = propertyTitle + " 거래가 체결되었어요!";
-        String body = tradeCount + "주가 " + price + "원에 체결되었습니다.";
-
-        try {
-            String deviceToken = userDeviceTokenService.getDeviceTokenByUserId(userId);
-
-            log.info("디바이스 토큰 : "+deviceToken);
-
-            if (deviceToken != null) {
-                FcmRequestDto fcmDto = FcmRequestDto.builder()
-                        .deviceToken(deviceToken)
-                        .title(title)
-                        .body(body)
-                        .build();
-                fcmService.sendMessageTo(fcmDto);
-            }
-        } catch (Exception e) {
-            log.error("사용자(ID: {}) FCM 알림 발송 실패", userId, e);
-        } finally {
-            notificationService.registerNotification(userId, title, body);
-        }
-    }
 }

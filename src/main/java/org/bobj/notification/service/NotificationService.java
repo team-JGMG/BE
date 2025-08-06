@@ -12,4 +12,6 @@ public interface NotificationService {
     void markAllNotificationsAsRead(Long userId);
 
     void registerNotification(Long userId, String title, String body);
+
+    void sendNotificationAndSave(Long userId, String title, String body);
 }

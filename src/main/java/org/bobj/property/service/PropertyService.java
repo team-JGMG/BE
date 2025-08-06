@@ -6,6 +6,7 @@ import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.s3.S3Service;
 import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
+import org.bobj.notification.service.NotificationService;
 import org.bobj.point.service.PointService;
 import org.bobj.property.domain.PropertyDocumentType;
 import org.bobj.property.domain.PropertyVO;
@@ -35,6 +36,7 @@ public class PropertyService {
     private final FundingMapper fundingMapper;
     private final RentalIncomeService rentalIncomeService;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
     private final ShareMapper shareMapper;
     private final PointService pointService;
 
@@ -43,9 +45,28 @@ public class PropertyService {
     public void updatePropertyStatus(Long propertyId, String status) {
         propertyMapper.update(propertyId,status);
 
+        PropertyVO vo = propertyMapper.findByPropertyId(propertyId);
+
+        Long ownerUserId = vo.getUserId();
+        String propertyTitle = vo.getTitle();
+
         // 상태가 APPROVED일 때만 fundings 테이블에 insert
         if ("APPROVED".equalsIgnoreCase(status)) {
+
+            //매물 승인 알림
+            String title = "매물이 승인되었어요!";
+            String body = "회원님의 매물(" + propertyTitle + ")이 승인되어 펀딩이 시작되었습니다.";
+
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
+
             fundingMapper.insertFunding(propertyId);
+
+        }else if ("REJECTED".equalsIgnoreCase(status)) {
+            // 거절 알림
+            String title = "매물이 거절되었어요!";
+            String body = "회원님의 매물(" + propertyTitle + ")이 관리자 검토 후 거절되었습니다.";
+
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
         }
     }
 
