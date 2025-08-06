@@ -21,6 +21,9 @@ public class VerifyRequestDto {
     @ApiModelProperty(value = "포트원 imp_uid", example = "imp_123456789012", required = true)
     private String impUid;
 
+    @ApiModelProperty(value = "가맹점 고유 주문번호 (merchant_uid)", example = "point_20250804001510_1_fba1d505", required = true)
+    private String merchantUid;
+
     @ApiModelProperty(value = "결제 금액", example = "5000", required = true)
     private BigDecimal amount;
 
