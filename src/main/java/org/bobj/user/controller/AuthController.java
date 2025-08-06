@@ -50,7 +50,7 @@ public class AuthController {
                     "  \"message\": \"카카오 로그인 URL을 제공합니다.\",\n" +
                     "  \"success\": true,\n" +
                     "  \"data\": {\n" +
-                    "    \"loginUrl\": \"http://localhost:8080/oauth2/authorization/kakao\",\n" +
+                    "    \"loginUrl\": \"https://half-to-half.site/oauth2/authorization/kakao\",\n" +
                     "    \"flow\": {\n" +
                     "      \"step1\": \"카카오 로그인 완료 후 pre-auth 토큰이 HttpOnly 쿠키로 설정됩니다.\",\n" +
                     "      \"step2a\": \"기존 사용자면 바로 최종 토큰을 받습니다.\",\n" +
