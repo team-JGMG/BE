@@ -30,7 +30,7 @@ public class OAuth2ClientConfig {
     @Value("${spring.security.oauth2.client.registration.kakao.client-secret:37dIrL5vdJT4uE4PrAjr7HrNc2LqKTgm}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://localhost:8080/login/oauth2/code/kakao}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:https://half-to-half.site/login/oauth2/code/kakao}")
     private String redirectUri;
 
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
