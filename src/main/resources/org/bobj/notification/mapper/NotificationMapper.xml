@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.notification.mapper.NotificationMapper">
+
+    <!-- 새로운 알림 등록 -->
+    <insert id="registerNotification" parameterType="org.bobj.notification.domain.NotificationVO">
+        INSERT INTO notifications (
+            user_id,
+            title,
+            body
+        )
+        VALUES (
+            #{userId},
+            #{title},
+            #{body},
+        )
+        <selectKey resultType="Long" keyProperty="notificationId" keyColumn="notification_id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <select id="findById" resultType="org.bobj.notification.domain.NotificationVO">
+        SELECT
+            notification_id,
+            user_id,
+            title,
+            body,
+            is_read,
+            created_at
+        FROM
+            notifications
+        WHERE
+            notification_id = #{notificationId}
+    </select>
+
+    <select id="findNotificationsByUserId" resultType="org.bobj.notification.domain.NotificationVO">
+        SELECT
+            notification_id,
+            user_id,
+            title,
+            body,
+            is_read,
+            created_at
+        FROM
+            notifications
+        WHERE
+            user_id = #{userId}
+            <if test="readStatus == 'unread'">
+                AND is_read = FALSE
+            </if>
+        ORDER BY
+            created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <update id="markAsRead">
+        UPDATE
+            notifications
+        SET
+            is_read = TRUE
+        WHERE
+            notification_id = #{notificationId}
+    </update>
+
+    <!-- 사용자의 모든 알림 읽음 처리 -->
+    <update id="markAllAsReadByUserId">
+        UPDATE
+            notifications
+        SET
+            is_read = TRUE
+        WHERE
+            user_id = #{userId}
+          AND is_read = FALSE
+    </update>
+
+</mapper>
