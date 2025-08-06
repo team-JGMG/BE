@@ -17,7 +17,7 @@ public class CookieUtil {
     private static final int ACCESS_TOKEN_MAX_AGE = 30 * 60; // 30분
     private static final int PRE_AUTH_TOKEN_MAX_AGE = 15 * 60; // 15분
 
-    @Value("${server.domain:http://localhost:8080}")
+    @Value("${server.domain:https://half-to-half.site/}")
     private String serverDomain;
 
     /**
