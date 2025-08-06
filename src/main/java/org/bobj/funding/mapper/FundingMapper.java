@@ -68,6 +68,8 @@ public interface FundingMapper {
     //펀딩 아이디로 매물 title 가져오기
     String getPropertyTitleByFundingId(@Param("fundingId") Long fundingId);
 
+    Long getUserIdbyFundingId(@Param("fundingId") Long fundingId);
+
     // 펀딩 현재 금액을 0로 변경
     void updateCurrentAmountToZero(Long fundingId);
 }

@@ -7,9 +7,6 @@ import org.bobj.device.mapper.UserDeviceTokenMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Log4j2
 @Service
 @RequiredArgsConstructor
