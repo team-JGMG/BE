@@ -4,6 +4,7 @@ import javax.servlet.Filter;
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.ServletRegistration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
@@ -42,16 +43,13 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         return new Filter[]{characterEncodingFilter};
     }
 
+    @Value("${multipart.upload.location:/tmp}")
+    private String uploadLocation;
+
     @Override
     protected void customizeRegistration(ServletRegistration.Dynamic registration) {
-        String location = System.getProperty("java.io.tmpdir");
-        long maxFileSize = 52428800; // 50MB
-        long maxRequestSize = 209715200; // 200MB
-        int fileSizeThreshold = 0;
-
         MultipartConfigElement multipartConfigElement =
-                new MultipartConfigElement(location, maxFileSize, maxRequestSize, fileSizeThreshold);
-
+                new MultipartConfigElement(uploadLocation, 52428800, 209715200, 0);
         registration.setMultipartConfig(multipartConfigElement);
     }
 }
