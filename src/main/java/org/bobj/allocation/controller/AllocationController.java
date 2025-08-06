@@ -134,32 +134,12 @@ public class AllocationController {
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"ALLOCATION004\",\n" +
-                    "  \"message\": \"인증이 필요합니다. 관리자 로그인 후 다시 시도해주세요.\",\n" +
-                    "  \"path\": \"/api/allocations/process-payment\"\n" +
+                    "  \"status\": \"error\",\n" +
+                    "  \"message\": \"배당금 지급 처리에 실패했습니다.\"\n" +
                     "}\n" +
                     "```", response = ErrorResponse.class),
-            @ApiResponse(code = 403, message = "관리자 권한 필요\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 403,\n" +
-                    "  \"code\": \"ALLOCATION005\",\n" +
-                    "  \"message\": \"관리자 권한이 필요합니다.\",\n" +
-                    "  \"path\": \"/api/allocations/process-payment\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"ALLOCATION006\",\n" +
-                    "  \"message\": \"배당금 지급 처리 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/allocations/process-payment\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class)
+            @ApiResponse(code = 403, message = "관리자 권한 필요", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<String>> processPayment() {
         
