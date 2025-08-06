@@ -43,17 +43,25 @@ public class AuthController {
     @GetMapping("/login/kakao")
     @ApiOperation(value = "카카오 로그인 시작", notes = "카카오 로그인 URL과 로그인 플로우 안내를 제공합니다. 로그인 완료 시 토큰이 HttpOnly 쿠키로 설정됩니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "카카오 로그인 URL 제공 성공", response = SimpleResponseDTO.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
+            @ApiResponse(code = 200, message = "카카오 로그인 URL 제공 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH001\",\n" +
-                    "  \"message\": \"카카오 로그인 설정 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/login/kakao\"\n" +
+                    "  \"message\": \"카카오 로그인 URL을 제공합니다.\",\n" +
+                    "  \"success\": true,\n" +
+                    "  \"data\": {\n" +
+                    "    \"loginUrl\": \"http://localhost:8080/oauth2/authorization/kakao\",\n" +
+                    "    \"flow\": {\n" +
+                    "      \"step1\": \"카카오 로그인 완료 후 pre-auth 토큰이 HttpOnly 쿠키로 설정됩니다.\",\n" +
+                    "      \"step2a\": \"기존 사용자면 바로 최종 토큰을 받습니다.\",\n" +
+                    "      \"step2b\": \"신규 사용자면 추가 정보 입력 후 /api/auth/signup API로 최종 회원가입\"\n" +
+                    "    },\n" +
+                    "    \"callbackInfo\": \"로그인 완료 시 리다이렉트\"\n" +
+                    "  },\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
-                    "```", response = ErrorResponse.class)
+                    "```", response = SimpleResponseDTO.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<SimpleResponseDTO> startKakaoLogin() {
         String kakaoLoginUrl = serverDomain + "/oauth2/authorization/kakao";
@@ -77,63 +85,35 @@ public class AuthController {
     @PostMapping("/signup")
     @ApiOperation(value = "OAuth 회원가입 완료", notes = "HttpOnly 쿠키의 pre-auth 토큰과 추가 정보를 받아 최종 회원가입을 완료합니다. 완료 후 pre-auth 쿠키가 삭제되고 access 토큰 쿠키가 설정됩니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "회원가입 성공", response = AuthResponseDTO.class),
-            @ApiResponse(code = 400, message = "입력값 검증 실패 (실명, 주민등록번호, 휴대폰, 은행정보 등)\n\n" +
+            @ApiResponse(code = 200, message = "회원가입 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 400,\n" +
-                    "  \"code\": \"AUTH005\",\n" +
-                    "  \"message\": \"실명은 필수입니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
+                    "  \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTAzODA2MDB9.abcd1234...\",\n" +
+                    "  \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTA0NjUyMDB9.efgh5678...\",\n" +
+                    "  \"userId\": 12345,\n" +
+                    "  \"isAdmin\": false,\n" +
+                    "  \"role\": \"USER\",\n" +
+                    "  \"tokenType\": \"Bearer\",\n" +
+                    "  \"expiresIn\": 1800,\n" +
+                    "  \"issuedAt\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
-                    "```\n\n" +
+                    "```", response = AuthResponseDTO.class),
+            @ApiResponse(code = 400, message = "입력값 검증 실패\n\n" +
+                    "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 400,\n" +
-                    "  \"code\": \"AUTH006\",\n" +
-                    "  \"message\": \"휴대폰 번호 형식이 올바르지 않습니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```\n\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 400,\n" +
-                    "  \"code\": \"AUTH007\",\n" +
-                    "  \"message\": \"주민등록번호 형식이 올바르지 않습니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
+                    "  \"message\": \"입력값이 올바르지 않습니다.\",\n" +
+                    "  \"success\": false,\n" +
+                    "  \"data\": {\n" +
+                    "    \"details\": [\"실명은 필수입니다.\", \"휴대폰 번호 형식이 올바르지 않습니다.\"]\n" +
+                    "  },\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
                     "```", response = ErrorResponse.class),
-            @ApiResponse(code = 401, message = "유효하지 않은 사전 인증 토큰\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH008\",\n" +
-                    "  \"message\": \"유효하지 않은 사전 인증 토큰입니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 403, message = "올바르지 않은 토큰 타입\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 403,\n" +
-                    "  \"code\": \"AUTH009\",\n" +
-                    "  \"message\": \"올바르지 않은 토큰 타입입니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH010\",\n" +
-                    "  \"message\": \"회원가입 처리 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/signup\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class)
+            @ApiResponse(code = 401, message = "유효하지 않은 사전 인증 토큰", response = ErrorResponse.class),
+            @ApiResponse(code = 403, message = "올바르지 않은 토큰 타입", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<?> registerFinal(@RequestBody @ApiParam(value = "회원가입 추가 정보", required = true) UserRegistrationRequestDTO registrationRequest,
                                                   HttpServletRequest request,
@@ -224,17 +204,16 @@ public class AuthController {
     @PostMapping("/oauth/logout")
     @ApiOperation(value = "로그아웃", notes = "액세스 토큰 쿠키 삭제 및 리프레시 토큰을 DB에서 제거합니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "로그아웃 성공", response = SimpleResponseDTO.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
+            @ApiResponse(code = 200, message = "로그아웃 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH011\",\n" +
-                    "  \"message\": \"로그아웃 처리 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/logout\"\n" +
+                    "  \"message\": \"로그아웃이 완료되었습니다.\",\n" +
+                    "  \"success\": true,\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
-                    "```", response = ErrorResponse.class)
+                    "```", response = SimpleResponseDTO.class),
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<SimpleResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
         String token = jwtTokenProvider.resolveToken(request);
@@ -259,43 +238,30 @@ public class AuthController {
     @PostMapping("/oauth/token-refresh")
     @ApiOperation(value = "액세스 토큰 갱신", notes = "만료된 액세스 토큰을 새로운 토큰으로 갱신합니다.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "토큰 갱신 성공", response = AuthResponseDTO.class),
-            @ApiResponse(code = 401, message = "토큰 갱신 실패 (토큰 없음, 유효하지 않은 토큰, 리프레시 토큰 만료 등)\n\n" +
+            @ApiResponse(code = 200, message = "토큰 갱신 성공\n\n" +
                     "**예시:**\n" +
                     "```json\n" +
                     "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH012\",\n" +
+                    "  \"accessToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTAzODA2MDB9.newtoken1234...\",\n" +
+                    "  \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyQGV4YW1wbGUuY29tIiwiaWF0IjoxNjkwMzc4ODAwLCJleHAiOjE2OTA0NjUyMDB9.efgh5678...\",\n" +
+                    "  \"userId\": 12345,\n" +
+                    "  \"isAdmin\": false,\n" +
+                    "  \"role\": \"USER\",\n" +
+                    "  \"tokenType\": \"Bearer\",\n" +
+                    "  \"expiresIn\": 1800,\n" +
+                    "  \"issuedAt\": \"2025-08-06 12:30:45\"\n" +
+                    "}\n" +
+                    "```", response = AuthResponseDTO.class),
+            @ApiResponse(code = 401, message = "토큰 갱신 실패\n\n" +
+                    "**예시:**\n" +
+                    "```json\n" +
+                    "{\n" +
                     "  \"message\": \"토큰이 제공되지 않았습니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
-                    "}\n" +
-                    "```\n\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH013\",\n" +
-                    "  \"message\": \"유효하지 않은 토큰입니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
-                    "}\n" +
-                    "```\n\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 401,\n" +
-                    "  \"code\": \"AUTH014\",\n" +
-                    "  \"message\": \"Refresh Token이 만료되었습니다. 다시 로그인해주세요.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
+                    "  \"success\": false,\n" +
+                    "  \"timestamp\": \"2025-08-06 12:30:45\"\n" +
                     "}\n" +
                     "```", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "서버 내부 오류\n\n" +
-                    "**예시:**\n" +
-                    "```json\n" +
-                    "{\n" +
-                    "  \"status\": 500,\n" +
-                    "  \"code\": \"AUTH015\",\n" +
-                    "  \"message\": \"토큰 갱신 중 서버 오류가 발생했습니다.\",\n" +
-                    "  \"path\": \"/api/auth/oauth/token-refresh\"\n" +
-                    "}\n" +
-                    "```", response = ErrorResponse.class)
+            @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
 
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
