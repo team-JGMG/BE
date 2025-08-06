@@ -84,9 +84,9 @@ public class UserResponseDTO {
         this.name = userPrincipal.getName();
         this.email = userPrincipal.getEmail();
         this.nickname = userPrincipal.getNickname();
-        this.phone = null; // UserPrincipal에 없는 정보는 null
-        this.accountNumber = null; // UserPrincipal에 없는 정보는 null
-        this.bankCode = null; // UserPrincipal에 없는 정보는 null
+        this.phone = userPrincipal.getPhone(); // UserPrincipal에 없는 정보는 null
+        this.accountNumber = userPrincipal.getAccountNumber(); // UserPrincipal에 없는 정보는 null
+        this.bankCode = userPrincipal.getBankCode(); // UserPrincipal에 없는 정보는 null
         this.isAdmin = userPrincipal.isAdminUser();
         this.role = userPrincipal.getRole();
         this.createdAt = null; // UserPrincipal에 없는 정보

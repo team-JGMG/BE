@@ -40,12 +40,12 @@
   <select id="findTotalPointByUserId" resultType="java.math.BigDecimal" parameterType="long">
     SELECT COALESCE(SUM(
                       CASE
-                        WHEN type IN ('DEPOSIT', 'TRADE_SALE', 'PAYOUT', 'REFUND', 'CANCEL') AND status = 'COMPLETED' THEN amount
+                        WHEN type IN ('DEPOSIT', 'TRADE_SALE', 'PAYOUT', 'REFUND', 'CANCEL', 'ALLOCATION') AND status = 'COMPLETED' THEN amount
                         WHEN type IN ('INVEST', 'WITHDRAW') AND status = 'COMPLETED' THEN -amount
                         ELSE 0
                         END
                     ), 0)
-    FROM point_transactions
+    FROM point_transaction
     WHERE user_id = #{userId}
   </select>
 

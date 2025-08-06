@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.bobj.allocation.mapper.AllocationMapper">
+
+    <!-- 특정 펀딩의 배당금 내역 조회 -->
+    <select id="findAllocationsByFundingId" resultType="org.bobj.allocation.dto.AllocationResponseDTO">
+        SELECT 
+            a.allocations_id as allocationsId,
+            a.funding_id as fundingId,
+            p.title as propertyTitle,
+            a.dividend_per_share as dividendPerShare,
+            a.total_dividend_amount as totalDividendAmount,
+            f.total_shares as totalShares,
+            a.payment_date as paymentDate,
+            a.payment_status as paymentStatus
+        FROM allocations a
+        JOIN fundings f ON a.funding_id = f.funding_id
+        JOIN properties p ON f.property_id = p.property_id
+        WHERE a.funding_id = #{fundingId}
+        ORDER BY a.payment_date DESC
+    </select>
+
+    <!-- 배당금 생성 -->
+    <insert id="insertAllocation" parameterType="org.bobj.allocation.domain.AllocationVO">
+        INSERT INTO allocations (
+            funding_id,
+            dividend_per_share,
+            total_dividend_amount,
+            payment_date,
+            payment_status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{fundingId},
+            #{dividendPerShare},
+            #{totalDividendAmount},
+            #{paymentDate},
+            #{paymentStatus},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- 지급일이 도래한 PENDING 상태의 배당금 조회 -->
+    <select id="findPendingAllocationsForPayment" resultType="org.bobj.allocation.domain.AllocationVO">
+        SELECT 
+            allocations_id as allocationsId,
+            funding_id as fundingId,
+            dividend_per_share as dividendPerShare,
+            total_dividend_amount as totalDividendAmount,
+            payment_date as paymentDate,
+            payment_status as paymentStatus,
+            created_at as createdAt,
+            updated_at as updatedAt
+        FROM allocations
+        WHERE payment_date = #{paymentDate}
+        AND payment_status = 'PENDING'
+    </select>
+
+    <!-- 배당금 상태 업데이트 -->
+    <update id="updateAllocationStatus">
+        UPDATE allocations
+        SET payment_status = #{paymentStatus},
+            updated_at = NOW()
+        WHERE allocations_id = #{allocationsId}
+    </update>
+
+    <!-- 펀딩 ID로 임대수익과 총 주식 수 조회 (배당금 계산용) -->
+    <select id="findRentalIncomeAndTotalShares" resultType="org.bobj.allocation.domain.AllocationVO">
+        SELECT 
+            f.funding_id as fundingId,
+            p.rental_income as dividendPerShare,  -- 실제 임대수익 (나중에 서비스에서 나누기 계산)
+            f.total_shares as totalDividendAmount -- 실제 총 주식 수 (임시로 이 필드 사용)
+        FROM fundings f
+        JOIN properties p ON f.property_id = p.property_id
+        WHERE f.funding_id = #{fundingId}
+    </select>
+
+    <!-- 펀딩이 거래가능 상태가 된 날짜 조회 -->
+    <select id="findFundingEndDate" resultType="java.time.LocalDate">
+        SELECT DATE(funding_end_date) as funding_end_date
+        FROM fundings
+        WHERE funding_id = #{fundingId}
+        AND status = 'ENDED'
+    </select>
+
+    <!-- 특정 펀딩의 다음 배당 예정일 조회 -->
+    <select id="findNextPaymentDate" resultType="java.time.LocalDate">
+        SELECT DATE_ADD(MAX(payment_date), INTERVAL 1 MONTH) as next_payment_date
+        FROM allocations
+        WHERE funding_id = #{fundingId}
+    </select>
+
+</mapper>
