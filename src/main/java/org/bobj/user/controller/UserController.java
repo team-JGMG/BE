@@ -21,10 +21,10 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * 내 정보 조회 (최적화됨 - DB 조회 없이 UserPrincipal 사용)
+     * 내 정보 조회 (전체 개인정보 포함)
      */
     @GetMapping("/me")
-    @ApiOperation(value = "내 정보 조회", notes = "현재 로그인한 사용자의 정보를 조회합니다. (성능 최적화: DB 조회 없음)")
+    @ApiOperation(value = "내 정보 조회", notes = "현재 로그인한 사용자의 모든 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "내 정보 조회 성공", response = UserResponseDTO.class),
             @ApiResponse(code = 401, message = "인증 필요\n\n" +
@@ -49,8 +49,8 @@ public class UserController {
                     "```", response = ErrorResponse.class)
     })
     public ResponseEntity<UserResponseDTO> getMyInfo(@AuthenticationPrincipal UserPrincipal userPrincipal) {
-        // UserPrincipal의 정보를 직접 사용하여 DB 조회 없이 응답 생성 (성능 최적화)
-        UserResponseDTO myInfo = UserResponseDTO.of(userPrincipal);
+        // UserPrincipal에서 userId를 가져와 DB에서 전체 사용자 정보 조회
+        UserResponseDTO myInfo = userService.findUserInfoById(userPrincipal.getUserId());
         return ResponseEntity.ok(myInfo);
     }
 
