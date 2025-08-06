@@ -144,4 +144,18 @@
         WHERE funding_id = #{fundingId}
     </select>
 
+    <!-- 특정 펀딩의 모든 주식 보유자 조회 (배당 지급용) -->
+    <select id="findShareHoldersByFundingId" resultType="org.bobj.allocation.dto.DividendPaymentDTO">
+        SELECT
+            s.user_id as userId,
+            u.name as userName,
+            s.share_count as shareCount,
+            s.funding_id as fundingId
+        FROM shares s
+        JOIN users u ON s.user_id = u.user_id
+        WHERE s.funding_id = #{fundingId}
+        AND s.share_count > 0
+        ORDER BY s.user_id
+    </select>
+
 </mapper>
