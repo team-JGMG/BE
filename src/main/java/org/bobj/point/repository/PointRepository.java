@@ -42,4 +42,13 @@ public class PointRepository {
         return pointMapper.findTotalPointByUserId(userId);
     }
 
+    // ✅ 추가: 여러 유저의 포인트를 FOR UPDATE로 조회
+    public List<PointVO> findByUserIdsForUpdate(List<Long> userIds) {
+        return pointMapper.findByUserIdsForUpdate(userIds);
+    }
+
+    // ✅ 추가: 여러 포인트를 일괄 업데이트
+    public void bulkUpdate(List<PointVO> points) {
+        pointMapper.bulkUpdate(points);
+    }
 }
