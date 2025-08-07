@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.context.annotation.Bean;
@@ -53,8 +55,15 @@ public class RootConfig {
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfig() {
-        return new PropertySourcesPlaceholderConfigurer();
+        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+        configurer.setIgnoreResourceNotFound(true);
+        configurer.setLocations(
+            new ClassPathResource("application.properties"),                 // 로컬 fallback
+            new FileSystemResource("/config/application.env")                // EC2 도커 환경용
+        );
+        return configurer;
     }
+
 
     @Value("${jdbc.driver}")
     private String driver;
