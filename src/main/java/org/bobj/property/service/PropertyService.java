@@ -14,7 +14,6 @@ import org.bobj.property.dto.*;
 import org.bobj.property.mapper.PropertyMapper;
 import org.bobj.share.domain.ShareVO;
 import org.bobj.share.mapper.ShareMapper;
-import org.bobj.share.mapper.ShareMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +39,6 @@ public class PropertyService {
     private final RentalIncomeService rentalIncomeService;
     private final S3Service s3Service;
     private final NotificationService notificationService;
-    private final ShareMapper shareMapper;
     private final PointService pointService;
 
     // 매물 승인 + 펀딩 등록 or 거절

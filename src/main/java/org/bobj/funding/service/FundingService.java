@@ -32,7 +32,6 @@ public class FundingService {
     private final FundingOrderMapper fundingOrderMapper;
 
     private final ApplicationEventPublisher eventPublisher;
-    private final NotificationService notificationService;
     private final PointService pointService;
 
     private static final int BATCH_SIZE = 1000;
@@ -72,8 +71,8 @@ public class FundingService {
             // 모든 주문 정보를 한 번에 가져옴
             List<FundingOrderVO> allOrders = fundingOrderMapper.findAllOrdersByFundingId(fId);
 
-            // 1. 알림 보내기 로직
-            sendFundingFailureNotifications(fId, allOrders); // 알림 메서드에 주문 리스트를 넘겨줌
+            // 펀딩 실패 이벤트 발생(알림)
+            eventPublisher.publishEvent(new FundingFailureEvent(fId));
 
             List<Long> fundingOrderIds = allOrders.stream()
                     .map(FundingOrderVO::getOrderId)

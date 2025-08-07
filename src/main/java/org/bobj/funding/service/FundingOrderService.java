@@ -81,8 +81,8 @@ public class FundingOrderService {
             // 2. 모든 주문을 성공 상태로 변경
             fundingOrderMapper.markOrdersAsSuccessByFundingId(fundingId);
 
-             // 3. 지분 분배 이벤트 발행
-            eventPublisher.publishEvent(new ShareDistributionEvent(fundingId));
+             // 3. 펀딩 성공 이벤트(지분 분배, 알림)
+            eventPublisher.publishEvent(new FundingSuccessEvent(fundingId));
 
             // 4. 첫 배당금 생성 (한달 후 지급 예정)
             try {
