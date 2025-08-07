@@ -76,4 +76,17 @@ public class FundingController {
         CustomSlice<FundingEndedResponseDTO> detail = fundingService.getEndedFundingProperties(page, size);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(detail));
     }
+
+
+
+    @GetMapping("/expire")
+    public String testExpireFunding() {
+        try {
+            fundingService.expireFunding();
+            return "expireFunding() 실행 완료";
+        } catch (Exception e) {
+            log.error("expireFunding 테스트 실패", e);
+            return "expireFunding() 실행 중 오류 발생: " + e.getMessage();
+        }
+    }
 }

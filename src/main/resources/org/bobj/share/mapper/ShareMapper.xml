@@ -126,6 +126,12 @@
         </foreach>
     </insert>
 
+    <select id="findShareHolderUserIdsByFundingId" resultType="java.lang.Long">
+        SELECT user_id
+        FROM shares
+        WHERE funding_id = #{fundingId}
+    </select>
+
     <resultMap id="shareResponseDTOMap" type="org.bobj.share.dto.response.ShareResponseDTO">
         <id property="shareId" column="s_share_id"/>
         <result property="userId" column="s_user_id"/>

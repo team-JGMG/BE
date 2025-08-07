@@ -14,7 +14,11 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
     // 루트 설정 클래스 (DB, 보안 등 전역 설정)
     @Override
     protected Class<?>[] getRootConfigClasses() {
-        return new Class[]{RootConfig.class,  AsyncConfig.class, RedisConfig.class};
+        return new Class[]{
+                RootConfig.class,
+                AsyncConfig.class,
+                RedisConfig.class,
+                FirebaseConfig.class};
     }
 
 

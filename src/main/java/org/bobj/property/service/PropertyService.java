@@ -6,6 +6,7 @@ import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.s3.S3Service;
 import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
+import org.bobj.notification.service.NotificationService;
 import org.bobj.point.service.PointService;
 import org.bobj.property.domain.PropertyDocumentType;
 import org.bobj.property.domain.PropertyVO;
@@ -33,9 +34,11 @@ import java.util.stream.Collectors;
 public class PropertyService {
     private final PropertyMapper propertyMapper;
     private final FundingMapper fundingMapper;
+    private final ShareMapper shareMapper;
+
     private final RentalIncomeService rentalIncomeService;
     private final S3Service s3Service;
-    private final ShareMapper shareMapper;
+    private final NotificationService notificationService;
     private final PointService pointService;
 
     // 매물 승인 + 펀딩 등록 or 거절
@@ -43,10 +46,30 @@ public class PropertyService {
     public void updatePropertyStatus(Long propertyId, String status) {
         propertyMapper.update(propertyId,status);
 
+        PropertyVO vo = propertyMapper.findByPropertyId(propertyId);
+
+        Long ownerUserId = vo.getUserId();
+        String propertyTitle = vo.getTitle();
+
         // 상태가 APPROVED일 때만 fundings 테이블에 insert
         if ("APPROVED".equalsIgnoreCase(status)) {
+
+            //매물 승인 알림
+            String title = "매물이 승인되었어요!";
+            String body = "회원님의 매물(" + propertyTitle + ")이 승인되어 펀딩이 시작되었습니다.";
+
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
+
             fundingMapper.insertFunding(propertyId);
+
+        }else if ("REJECTED".equalsIgnoreCase(status)) {
+            // 거절 알림
+            String title = "매물이 거절되었어요!";
+            String body = "회원님의 매물(" + propertyTitle + ")이 관리자 검토 후 거절되었습니다.";
+
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
         }
+
     }
 
     // 매물 등록
@@ -218,6 +241,10 @@ public class PropertyService {
 
         for(FundingSoldResponseDTO dto : fundings) {
             Long fundingId = dto.getFundingId();
+
+            // 펀딩 등록자와 참여자에게 매각 완료 알림 전송
+            sendFundingSoldNotifications(fundingId);
+
             executor.submit(()->{
                 /* fundingId에 해당하는 share 가져오기(share 테이블)*/
                 List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
@@ -246,5 +273,31 @@ public class PropertyService {
 
         log.info("법정동 코드 조회 성공 - 매물ID: {}, 법정동코드: {}", propertyId, rawdCd);
         return rawdCd;
+    }
+
+    private void sendFundingSoldNotifications(Long fundingId) {
+        String propertyTitle = fundingMapper.getPropertyTitleByFundingId(fundingId);
+
+        // 1. 등록자 알림 (펀딩을 올린 사용자)
+        Long ownerUserId = fundingMapper.getUserIdbyFundingId(fundingId);
+        if (ownerUserId != null) {
+            String title = "매각 완료!";
+            String body = "'" + propertyTitle + "' 매물이 성공적으로 매각되었습니다. 수익금을 확인해 주세요.";
+            notificationService.sendNotificationAndSave(ownerUserId, title, body);
+        }
+
+        // 2. 참여자 알림
+        List<Long> participantUserIds = shareMapper.findShareHolderUserIdsByFundingId(fundingId);
+        if (!participantUserIds.isEmpty()) {
+            String title = "매각 완료!";
+            String body = "'" + propertyTitle + "' 매각이 완료되어 지분 수익금이 정산되었습니다.";
+
+            // 배치 전송 + 일괄 DB 저장
+            try {
+                notificationService.sendBatchNotificationsAndSave(participantUserIds, title, body);
+            } catch (Exception e) {
+                log.error("참여자 대상 매각 알림 전송 실패 - fundingId: {}", fundingId, e);
+            }
+        }
     }
 }

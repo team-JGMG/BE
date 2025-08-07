@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -51,5 +52,18 @@ public class UserDeviceTokenServiceImpl implements UserDeviceTokenService{
     @Transactional
     public void deleteToken(Long userId, String deviceToken) {
         userDeviceTokenMapper.deleteByUserIdAndDeviceToken(userId, deviceToken);
+    }
+
+    @Override
+    public String getDeviceTokenByUserId(Long userId) {
+        return userDeviceTokenMapper.getDeviceTokenByUserId(userId);
+    }
+
+    @Override
+    public Map<Long, String> getDeviceTokensByUserIds(List<Long> userIds) {
+        List<UserDeviceTokenVO> tokens = userDeviceTokenMapper.getDeviceTokensByUserIds(userIds);
+        return tokens.stream()
+                .filter(t -> t.getDeviceToken() != null && !t.getDeviceToken().isEmpty())
+                .collect(Collectors.toMap(UserDeviceTokenVO::getUserId, UserDeviceTokenVO::getDeviceToken));
     }
 }
