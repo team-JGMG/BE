@@ -7,9 +7,12 @@ import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.dto.FundingEndedResponseDTO;
 import org.bobj.funding.dto.FundingTotalResponseDTO;
+import org.bobj.funding.event.FundingFailureEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
 import org.bobj.point.service.PointService;
+import org.bobj.notification.service.NotificationService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,6 +30,8 @@ import java.util.concurrent.Future;
 public class FundingService {
     private final FundingMapper fundingMapper;
     private final FundingOrderMapper fundingOrderMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
     private final PointService pointService;
 
     private static final int BATCH_SIZE = 1000;
@@ -35,7 +41,7 @@ public class FundingService {
         List<FundingTotalResponseDTO> content = fundingMapper.findTotal(category, sort, offset, size+1);
 
         boolean hasNext = content.size() > size;
-        if(hasNext) {
+        if (hasNext) {
             content.remove(size);
         }
 
@@ -46,7 +52,11 @@ public class FundingService {
     public void expireFunding() {
         // 펀딩 실패인 펀딩 ID 리스트 생성
         List<Long> failedFundingIds = fundingMapper.findFailedFundingIds();
-        if(failedFundingIds.isEmpty()) return;
+
+        log.info("펀딩 실패 처리 대상 ID 목록: {}", failedFundingIds);
+
+
+        if (failedFundingIds.isEmpty()) return;
 
         // 펀딩 staus FAILED로 변경
         fundingMapper.updateFundingStatusToFailed(failedFundingIds);
@@ -56,22 +66,31 @@ public class FundingService {
         List<Callable<Void>> tasks = new ArrayList<>();
 
         // 펀딩 ID에 해당하는 펀딩 주문들 staus를 REFUNED로 변경
-        for(Long fId : failedFundingIds){
-            List<Long> fundingOrderIds = fundingOrderMapper.findFundingOrderIdsByFundingId(fId);
-            for(int i=0; i<fundingOrderIds.size(); i+=BATCH_SIZE){
-                List<Long> fundingOrderIdBatch = fundingOrderIds.subList(i, Math.min(i+BATCH_SIZE, fundingOrderIds.size()));
-                tasks.add(()->{
+        for (Long fId : failedFundingIds) {
+
+            // 모든 주문 정보를 한 번에 가져옴
+            List<FundingOrderVO> allOrders = fundingOrderMapper.findAllOrdersByFundingId(fId);
+
+            // 펀딩 실패 이벤트 발생(알림)
+            eventPublisher.publishEvent(new FundingFailureEvent(fId));
+
+            List<Long> fundingOrderIds = allOrders.stream()
+                    .map(FundingOrderVO::getOrderId)
+                    .toList();
+
+            if (allOrders.isEmpty()) continue;
+
+            for (int i = 0; i < fundingOrderIds.size(); i += BATCH_SIZE) {
+                List<Long> fundingOrderIdBatch = fundingOrderIds.subList(i, Math.min(i + BATCH_SIZE, fundingOrderIds.size()));
+                tasks.add(() -> {
                     fundingOrderMapper.updateFundingOrderStatusToRefundedByOrderIds(fundingOrderIdBatch);
 
                     /* 여기에 포인트 환불 로직 추가 해주세요!(point테이블)*/
-                    List<FundingOrderVO> allOrders = fundingOrderMapper.findAllOrdersByFundingId(fId);
-
                     for (FundingOrderVO order : allOrders) {
                         if (fundingOrderIdBatch.contains(order.getOrderId())) {
                             pointService.refundForFundingFailure(order.getUserId(), order.getOrderPrice());
                         }
                     }
-
                     return null;
                 });
             }
@@ -95,7 +114,7 @@ public class FundingService {
         }
     }
 
-    public void soldProperty(){
+    public void soldProperty() {
 
     }
 

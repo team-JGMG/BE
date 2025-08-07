@@ -174,4 +174,19 @@ public class PropertyController {
 //
 //        return ResponseEntity.ok(ApiCommonResponse.createSuccess(message));
 //    }
+
+
+    //매각 처리 테스트용 api
+//    @PostMapping("/sold-process")
+//    public ResponseEntity<String> processSoldProperties() {
+//        log.info("매각 처리 로직을 수동으로 시작합니다.");
+//        try {
+//            propertyService.soldProperties();
+//            log.info("매각 처리 로직이 성공적으로 완료되었습니다.");
+//            return ResponseEntity.ok("매각 처리 로직이 성공적으로 호출되었습니다.");
+//        } catch (Exception e) {
+//            log.error("매각 처리 중 오류가 발생했습니다.", e);
+//            return ResponseEntity.status(500).body("매각 처리 중 오류가 발생했습니다: " + e.getMessage());
+//        }
+//    }
 }

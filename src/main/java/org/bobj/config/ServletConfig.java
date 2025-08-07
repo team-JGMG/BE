@@ -26,6 +26,8 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.payment.controller",
         "org.bobj.notification.controller",
         "org.bobj.device.controller",
+        "org.bobj.fcm.controller",
+        "org.bobj.device.controller",
         "org.bobj.allocation.controller"
         })
 

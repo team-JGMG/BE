@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Param;
 import org.bobj.device.domain.UserDeviceTokenVO;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserDeviceTokenMapper {
     // 디바이스 토큰이 이미 존재하는지 확인
@@ -21,4 +22,7 @@ public interface UserDeviceTokenMapper {
     // 기존 디바이스 토큰 사용자 ID 업데이트
     void updateUserId(@Param("userDeviceTokenId") Long userDeviceTokenId, @Param("userId") Long userId);
 
+    String getDeviceTokenByUserId(Long userId);
+
+    List<UserDeviceTokenVO> getDeviceTokensByUserIds(@Param("userIds") List<Long> userIds);
 }

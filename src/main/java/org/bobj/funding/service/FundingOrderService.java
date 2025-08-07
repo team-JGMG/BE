@@ -8,9 +8,10 @@ import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.domain.FundingVO;
 import org.bobj.funding.dto.FundingOrderLimitDTO;
 import org.bobj.funding.dto.FundingOrderUserResponseDTO;
-import org.bobj.funding.event.ShareDistributionEvent;
+import org.bobj.funding.event.FundingSuccessEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
+import org.bobj.notification.service.NotificationService;
 import org.bobj.point.service.PointService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -26,10 +28,11 @@ import java.util.List;
 public class FundingOrderService {
     private final FundingOrderMapper fundingOrderMapper;
     private final FundingMapper fundingMapper;
-    private final ShareDistributionService shareDistributionService;
+
     private final ApplicationEventPublisher eventPublisher;
     private final AllocationService allocationService;
     private final PointService pointService;
+
 
     // 주문 추가
     @Transactional
@@ -78,8 +81,8 @@ public class FundingOrderService {
             // 2. 모든 주문을 성공 상태로 변경
             fundingOrderMapper.markOrdersAsSuccessByFundingId(fundingId);
 
-            // 3. 지분 분배 이벤트 발행
-            eventPublisher.publishEvent(new ShareDistributionEvent(fundingId));
+             // 3. 펀딩 성공 이벤트(지분 분배, 알림)
+            eventPublisher.publishEvent(new FundingSuccessEvent(fundingId));
 
             // 4. 첫 배당금 생성 (한달 후 지급 예정)
             try {
@@ -127,4 +130,5 @@ public class FundingOrderService {
     public FundingOrderLimitDTO getFundingOrderLimit(Long userId, Long fundingId) {
         return fundingOrderMapper.findFundingOrderLimit(userId, fundingId);
     }
+
 }

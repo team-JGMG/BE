@@ -286,4 +286,11 @@
       WHERE f.funding_id = #{fundingId}
   </select>
 
+  <select id="getUserIdbyFundingId" resultType="java.lang.Long">
+    SELECT p.user_id
+    FROM fundings f
+           JOIN properties p ON f.property_id = p.property_id
+    WHERE f.funding_id = #{fundingId};
+  </select>
+
 </mapper>
