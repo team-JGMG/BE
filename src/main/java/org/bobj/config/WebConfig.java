@@ -43,8 +43,9 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         return new Filter[]{characterEncodingFilter};
     }
 
-    @Value("${multipart.upload.location:/tmp}")
-    private String uploadLocation;
+//    @Value("${multipart.upload.location:/tmp}")
+//    private String uploadLocation = "tmp";
+    private String uploadLocation = "C:/temp";
 
     @Override
     protected void customizeRegistration(ServletRegistration.Dynamic registration) {
