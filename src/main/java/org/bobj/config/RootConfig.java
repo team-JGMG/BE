@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @PropertySource(
     value = {
         "classpath:/application.properties",
-        "classpath:/application.env"
+        "file:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.env"
     },
     ignoreResourceNotFound = true
 )
@@ -63,8 +63,9 @@ public class RootConfig {
         configurer.setIgnoreResourceNotFound(true);
         configurer.setLocations(
             new ClassPathResource("application.properties"),
-            new ClassPathResource("application.env") // ← 이거만 바꾸면 끝
+            new FileSystemResource("/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.env")
         );
+
         return configurer;
     }
 
