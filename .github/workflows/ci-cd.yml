@@ -24,19 +24,11 @@ jobs:
       - name: Inject application.properties
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.APP_PROPERTIES_BASE64 }}" | base64 -d > src/main/resources/application.properties
-
-      - name: 🔍 Debug print application.properties
-        run: |
-          echo "===== application.properties (START) ====="
-          cat src/main/resources/application.properties
-          echo "===== application.properties (END) ====="
-
+          cat <<EOF > src/main/resources/application.properties
+          ${{ secrets.APP_PROPERTIES }}
+          EOF
       - name: Build WAR file (Skip tests)
-        run: ./gradlew clean build -x test
-
-      - name: Check WAR output
-        run: ls -al build/libs
+        run: ./gradlew build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -64,7 +56,6 @@ jobs:
       - name: Add EC2 to known hosts
         run: |
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
       - name: Deploy with docker-compose (from /home/ubuntu/app)
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} <<EOF
@@ -72,6 +63,6 @@ jobs:
           cd /home/ubuntu/app
           docker compose down || true
           docker compose pull
-          docker compose up -d --build
+          docker compose up -d
           docker compose ps
           EOF
