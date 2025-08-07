@@ -24,9 +24,7 @@ jobs:
       - name: Inject application.properties
         run: |
           mkdir -p src/main/resources
-          cat <<EOF > src/main/resources/application.properties
-          ${{ secrets.APP_PROPERTIES }}
-          EOF
+          echo "${{ secrets.APP_PROPERTIES_BASE64 }}" | base64 -d > src/main/resources/application.properties
 
       - name: 🔍 Debug print application.properties
         run: |
