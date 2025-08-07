@@ -17,4 +17,3 @@ COPY build/libs/BOBJ-1.0-SNAPSHOT.war /usr/local/tomcat/webapps/ROOT.war
 # 포트 오픈
 EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
