@@ -3,6 +3,7 @@ package org.bobj.funding.controller;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/funding")
 @RequiredArgsConstructor
-@Log4j2
+@Slf4j
 @Api(tags="펀딩 API")
 public class FundingController {
     private final FundingService fundingService;
