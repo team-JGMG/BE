@@ -28,8 +28,16 @@ jobs:
           ${{ secrets.APP_PROPERTIES }}
           EOF
 
+      - name:
+          🔍 Debug: print application.properties
+        run: |
+          echo "===== application.properties (START) ====="
+          cat src/main/resources/application.properties
+          echo "===== application.properties (END) ====="
+
       - name: Build WAR file (Skip tests)
         run: ./gradlew clean build -x test
+
 
       - name: Check WAR output
         run: ls -al build/libs
