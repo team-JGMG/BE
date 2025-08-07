@@ -1,10 +1,15 @@
 package org.bobj.notification.service;
 
 
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.SendResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.bobj.common.constants.ErrorCode;
 import org.bobj.common.exception.CustomException;
+import org.bobj.device.domain.UserDeviceTokenVO;
 import org.bobj.device.service.UserDeviceTokenService;
 import org.bobj.fcm.dto.request.FcmRequestDto;
 import org.bobj.fcm.service.FcmService;
@@ -12,8 +17,16 @@ import org.bobj.notification.domain.NotificationVO;
 import org.bobj.notification.dto.response.NotificationResponseDTO;
 import org.bobj.notification.mapper.NotificationMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -88,4 +101,69 @@ public class NotificationServiceImpl implements NotificationService{
             registerNotification(userId, title, body);
         }
     }
+
+    @Override
+    public void sendBatchNotificationsAndSave(List<Long> userIds, String title, String body) {
+        // 1. 모든 사용자의 디바이스 토큰 조회
+        Map<Long, String> userTokenMap = userDeviceTokenService.getDeviceTokensByUserIds(userIds);
+
+        // 2. 토큰이 있는 사용자들만 필터링
+        List<Long> validUserIds = userIds.stream()
+                .filter(userTokenMap::containsKey)
+                .toList();
+
+        if (validUserIds.isEmpty()) {
+            log.warn("유효한 디바이스 토큰을 가진 사용자가 없습니다.");
+            // 토큰이 없어도 DB에는 알림을 저장
+            // registerBatchNotifications(userIds, title, body);
+            return;
+        }
+
+        // 3. FCM 토큰 리스트 생성
+        List<String> fcmTokens = validUserIds.stream()
+                .map(userTokenMap::get)
+                .toList();
+
+
+        // 4. FCM 발송 (예외 처리)
+        try {
+            fcmService.sendMulticast(fcmTokens, title, body);
+        } catch (IOException e) {
+            log.error("FCM 발송 중 IOException 발생", e);
+        }
+
+        // 5. 모든 사용자(FCM 성공/실패 무관)에게 DB 알림 저장
+        registerBatchNotifications(userIds, title, body);
+
+        log.info("배치 알림 발송 완료 - 처리된 사용자 수: {}", userIds.size());
+    }
+
+
+    //알림 Notifications 테이블에 저장
+    private void registerBatchNotifications(List<Long> userIds, String title, String body) {
+        List<NotificationVO> notifications = userIds.stream()
+                .map(userId -> NotificationVO.builder()
+                        .userId(userId)
+                        .title(title)
+                        .body(body)
+                        .build())
+                .collect(Collectors.toList());
+
+        notificationMapper.insertBatchNotifications(notifications);
+        log.info("배치 알림 DB 저장 완료 - 저장된 알림 수: {}", notifications.size());
+    }
+
+    //토큰 리스트 배치 크기만큼 분할
+    private List<List<String>> splitIntoBatches(List<String> tokens, int batchSize) {
+        List<List<String>> batches = new ArrayList<>();
+
+        for (int i = 0; i < tokens.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, tokens.size());
+            batches.add(tokens.subList(i, end));
+        }
+
+        return batches;
+    }
+
+
 }

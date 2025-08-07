@@ -7,6 +7,10 @@ import org.bobj.device.mapper.UserDeviceTokenMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Log4j2
 @Service
 @RequiredArgsConstructor
@@ -53,5 +57,13 @@ public class UserDeviceTokenServiceImpl implements UserDeviceTokenService{
     @Override
     public String getDeviceTokenByUserId(Long userId) {
         return userDeviceTokenMapper.getDeviceTokenByUserId(userId);
+    }
+
+    @Override
+    public Map<Long, String> getDeviceTokensByUserIds(List<Long> userIds) {
+        List<UserDeviceTokenVO> tokens = userDeviceTokenMapper.getDeviceTokensByUserIds(userIds);
+        return tokens.stream()
+                .filter(t -> t.getDeviceToken() != null && !t.getDeviceToken().isEmpty())
+                .collect(Collectors.toMap(UserDeviceTokenVO::getUserId, UserDeviceTokenVO::getDeviceToken));
     }
 }

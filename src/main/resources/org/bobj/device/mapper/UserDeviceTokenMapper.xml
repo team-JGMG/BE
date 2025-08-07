@@ -76,4 +76,13 @@
             user_id = #{userId}
     </select>
 
+    <select id="getDeviceTokensByUserIds" resultType="org.bobj.device.domain.UserDeviceTokenVO">
+        SELECT *
+        FROM
+            user_device_tokens
+         WHERE user_id IN
+        <foreach item="userId" collection="userIds" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
 </mapper>

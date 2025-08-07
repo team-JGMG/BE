@@ -27,4 +27,6 @@ public interface NotificationMapper {
 
     // 사용자의 모든 알림을 읽음 처리
     void markAllAsReadByUserId(@Param("userId") Long userId);
+
+    void insertBatchNotifications(List<NotificationVO> notifications);
 }

@@ -14,4 +14,6 @@ public interface NotificationService {
     void registerNotification(Long userId, String title, String body);
 
     void sendNotificationAndSave(Long userId, String title, String body);
+
+    void sendBatchNotificationsAndSave(List<Long> userIds, String title, String body);
 }

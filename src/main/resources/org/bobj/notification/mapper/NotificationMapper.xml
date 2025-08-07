@@ -75,4 +75,13 @@
           AND is_read = FALSE
     </update>
 
+    <insert id="insertBatchNotifications" parameterType="list">
+        INSERT INTO
+            notifications (user_id, title, body)
+        VALUES
+        <foreach collection="list" item="notification" separator="," open="" close="">
+            (#{notification.userId}, #{notification.title}, #{notification.body})
+        </foreach>
+    </insert>
+
 </mapper>
