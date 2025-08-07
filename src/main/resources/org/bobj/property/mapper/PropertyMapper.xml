@@ -251,7 +251,7 @@
         SET status = 'SOLD',
         sold_at = NOW(),
         updated_at = NOW(),
-        cumulative_return = ROUND(24 * rental_income / price * 100, 2)
+        cumulative_return = ROUND(24 * rental_income*0.9 / price * 100, 2)
         WHERE property_id IN
         <foreach collection="propertyIds" item="id" open="(" separator="," close=")">
             #{id}
