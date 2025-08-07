@@ -26,9 +26,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
 @Configuration
-@PropertySource(value = {"classpath:/application.properties",
-                        "file:/config/application.env"
-                        },ignoreResourceNotFound = true)
+@PropertySource(
+    value = {
+        "classpath:/application.properties",
+        "classpath:/application.env"
+    },
+    ignoreResourceNotFound = true
+)
 @MapperScan(basePackages = {
         "org.bobj.order.mapper",
         "org.bobj.share.mapper",
@@ -58,8 +62,8 @@ public class RootConfig {
         PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
         configurer.setIgnoreResourceNotFound(true);
         configurer.setLocations(
-            new ClassPathResource("application.properties"),                 // 로컬 fallback
-            new FileSystemResource("/config/application.env")                // EC2 도커 환경용
+            new ClassPathResource("application.properties"),
+            new ClassPathResource("application.env") // ← 이거만 바꾸면 끝
         );
         return configurer;
     }
