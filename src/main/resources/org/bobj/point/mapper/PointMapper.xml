@@ -7,34 +7,34 @@
 <mapper namespace="org.bobj.point.mapper.PointMapper">
 
   <select id="findById" resultType="PointVO">
-    select * from point where point_id = #{pointId};
+    select * from points where point_id = #{pointId};
   </select>
 
   <select id="findByUserId" resultType="PointVO">
-    select * from point where user_id = #{userId};
+    select * from points where user_id = #{userId};
   </select>
 
   <select id="findByUserIdForUpdate" resultType="org.bobj.point.domain.PointVO">
     select *
-    from point
+    from points
     where user_id = #{userId} FOR UPDATE;
   </select>
 
   <insert id="insert" parameterType="PointVO" useGeneratedKeys="true" keyProperty="pointId">
-    insert into point(user_id, amount, updated_at)
+    insert into points(user_id, amount, updated_at)
     VALUES (#{userId}, #{amount}, NOW())
   </insert>
 
 
   <update id="update" parameterType="PointVO">
-    update point
+    update points
     set amount = #{amount},
         updated_at = NOW()
     WHERE point_id = #{pointId}
   </update>
 
   <delete id="delete">
-    DELETE FROM point WHERE point_id = #{pointId}
+    DELETE FROM points WHERE point_id = #{pointId}
   </delete>
 
   <select id="findTotalPointByUserId" resultType="java.math.BigDecimal" parameterType="long">
