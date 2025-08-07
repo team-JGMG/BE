@@ -50,12 +50,8 @@ public class FundingOrderService {
         BigDecimal sharePrice = BigDecimal.valueOf(5000);
         BigDecimal orderPrice = sharePrice.multiply(BigDecimal.valueOf(shareCount));
 
-        /* 요기 구현해주시면 됩니다! (Point) */
-
-        // user의 point 가져오는 api 부탁드려요!! PointMapper.findUserPoints(userId)
         BigDecimal userPoints = pointService.getTotalPoint(userId);
 
-//        BigDecimal userPoints = BigDecimal.valueOf(100000);
         if (userPoints.compareTo(orderPrice) < 0) {
             throw new IllegalArgumentException("포인트가 부족합니다.");
         }
@@ -63,8 +59,7 @@ public class FundingOrderService {
         // 주문 생성
         fundingOrderMapper.insertFundingOrder(userId, fundingId, shareCount, orderPrice);
 
-        /* 요기 구현해주시면 됩니다! (Point) */
-        // 포인트 차감 과정(추후 구현)
+        // 포인트 차감 과정
         pointService.investPoint(userId, orderPrice);
 
         // 펀딩 현재 모인 금액 증가

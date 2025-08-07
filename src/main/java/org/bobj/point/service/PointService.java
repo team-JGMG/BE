@@ -1,5 +1,6 @@
 package org.bobj.point.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.bobj.point.domain.PointTransactionType;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -206,28 +209,32 @@ public class PointService {
      * 펀딩 실패 시 포인트 환급
      */
     @Transactional
-    public void refundForFundingFailure(Long userId, BigDecimal amount) {
-        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+    public void refundForFundingFailure(Map<Long, BigDecimal> refundMap) {
+        if (refundMap.isEmpty()) return;
 
-        if (point == null) {
-            point = PointVO.builder()
-                    .userId(userId)
-                    .amount(amount)
-                    .build();
-            pointRepository.insert(point);
-        } else {
-            point.setAmount(point.getAmount().add(amount));
-            pointRepository.update(point);
+        List<Long> userIds = new ArrayList<>(refundMap.keySet());
+        List<PointVO> points = pointRepository.findByUserIdsForUpdate(userIds);
+
+        Map<Long, PointVO> userIdToPoint = points.stream()
+                .collect(Collectors.toMap(PointVO::getUserId, p -> p));
+
+        for (Map.Entry<Long, BigDecimal> entry : refundMap.entrySet()) {
+            PointVO point = userIdToPoint.get(entry.getKey());
+            point.setAmount(point.getAmount().add(entry.getValue()));
         }
 
-        PointTransactionVO tx = PointTransactionVO.builder()
-                .pointId(point.getPointId())
-                .type(PointTransactionType.REFUND)
-                .amount(amount)
-                .createdAt(LocalDateTime.now())
-                .build();
+        pointRepository.bulkUpdate(points);
 
-        pointTransactionRepository.insert(tx);
+        List<PointTransactionVO> txs = refundMap.entrySet().stream()
+                .map(entry -> PointTransactionVO.builder()
+                        .pointId(userIdToPoint.get(entry.getKey()).getPointId())
+                        .type(PointTransactionType.REFUND)
+                        .amount(entry.getValue())
+                        .createdAt(LocalDateTime.now())
+                        .build())
+                .collect(Collectors.toList());
+
+        pointTransactionRepository.bulkInsert(txs);
     }
 
     /**

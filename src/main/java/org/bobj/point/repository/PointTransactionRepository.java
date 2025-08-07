@@ -20,5 +20,8 @@ public class PointTransactionRepository {
         return pointTransactionMapper.findByUserId(userId);
     }
 
-
+    // ✅ 추가: bulk insert
+    public void bulkInsert(List<PointTransactionVO> transactions) {
+        pointTransactionMapper.bulkInsert(transactions);
+    }
 }

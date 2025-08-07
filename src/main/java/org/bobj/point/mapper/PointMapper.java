@@ -24,6 +24,9 @@ public interface PointMapper {
 
     BigDecimal findTotalPointByUserId(Long userId);
 
+    // ✅ 추가: 여러 유저의 포인트를 FOR UPDATE로 조회
+    List<PointVO> findByUserIdsForUpdate(@Param("userIds") List<Long> userIds);
 
-
+    // ✅ 추가: 여러 포인트를 한 번에 업데이트
+    void bulkUpdate(@Param("points") List<PointVO> points);
 }
