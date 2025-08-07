@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
 @Configuration
-@PropertySource("classpath:/application.properties")
+@PropertySource(value = {"classpath:/application.properties",
+                        "file:/config/application.env\"
+                        },ignoreResourceNotFound = true)
 @MapperScan(basePackages = {
         "org.bobj.order.mapper",
         "org.bobj.share.mapper",
