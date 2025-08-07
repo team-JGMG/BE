@@ -160,25 +160,31 @@ public class PointService {
 
     //userId에게 amount만큼 환급 포인트를 지급
     @Transactional
-    public void refundForShareSell(Long userId, BigDecimal amount) {
-        PointVO point = pointRepository.findByUserIdForUpdate(userId);
-        if (point == null) {
-            point = PointVO.builder().userId(userId).amount(amount).build();
-            pointRepository.insert(point);
-        } else {
-            point.setAmount(point.getAmount().add(amount));
-            pointRepository.update(point);
+    public void refundForShareSell(Map<Long, BigDecimal> refundMap) {
+        if (refundMap.isEmpty()) return;
+
+        List<Long> userIds = new ArrayList<>(refundMap.keySet());
+        List<PointVO> points = pointRepository.findByUserIdsForUpdate(userIds);
+
+        Map<Long, PointVO> userIdToPoint = points.stream()
+                .collect(Collectors.toMap(PointVO::getUserId, p -> p));
+
+        for (Map.Entry<Long, BigDecimal> entry : refundMap.entrySet()) {
+            PointVO point = userIdToPoint.get(entry.getKey());
+            point.setAmount(point.getAmount().add(entry.getValue()));
         }
 
-        //트랜잭션 로그로 남기기 위해 PointTransactionVO 객체를 생성
-        PointTransactionVO tx = PointTransactionVO.builder()
-                .pointId(point.getPointId())
-                .type(PointTransactionType.REFUND)
-                .amount(amount)
-                .createdAt(LocalDateTime.now())
-                .build();
-        //위에서 만든 트랜잭션 기록을 POINT_TRANSACTION 테이블에 insert
-        pointTransactionRepository.insert(tx);
+        pointRepository.bulkUpdate(points);
+
+        List<PointTransactionVO> txs = refundMap.entrySet().stream()
+                .map(entry -> PointTransactionVO.builder()
+                        .pointId(userIdToPoint.get(entry.getKey()).getPointId())
+                        .type(PointTransactionType.TRADE_SALE)
+                        .amount(entry.getValue())
+                        .createdAt(LocalDateTime.now())
+                        .build())
+                .collect(Collectors.toList());
+        pointTransactionRepository.bulkInsert(txs);
     }
 
 
@@ -228,12 +234,11 @@ public class PointService {
         List<PointTransactionVO> txs = refundMap.entrySet().stream()
                 .map(entry -> PointTransactionVO.builder()
                         .pointId(userIdToPoint.get(entry.getKey()).getPointId())
-                        .type(PointTransactionType.REFUND)
+                        .type(PointTransactionType.REFUND)  // DB ENUM에 REFUND가 있어야 오류 없음
                         .amount(entry.getValue())
                         .createdAt(LocalDateTime.now())
                         .build())
                 .collect(Collectors.toList());
-
         pointTransactionRepository.bulkInsert(txs);
     }
 

@@ -54,11 +54,17 @@
   </select>
 
   <update id="bulkUpdate">
-    <foreach collection="list" item="point" separator=";">
-      UPDATE points
-      SET amount = #{point.amount},
-      updated_at = NOW()
-      WHERE point_id = #{point.pointId}
+    UPDATE points
+    SET
+    amount = CASE
+    <foreach collection="points" item="point">
+      WHEN point_id = #{point.pointId} THEN #{point.amount}
+    </foreach>
+    END,
+    updated_at = NOW()
+    WHERE point_id IN
+    <foreach collection="points" item="point" separator="," open="(" close=")">
+      #{point.pointId}
     </foreach>
   </update>
 </mapper>

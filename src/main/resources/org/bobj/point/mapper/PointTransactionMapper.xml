@@ -21,19 +21,17 @@
 
     <insert id="bulkInsert">
         INSERT INTO point_transaction (
-        user_id,
+        point_id,
+        type,
         amount,
-        transaction_type,
-        description,
         created_at
         )
         VALUES
-        <foreach collection="transactions" item="tx" separator=",">
+        <foreach collection="list" item="tx" separator=",">
             (
-            #{tx.userId},
+            #{tx.pointId},
+            #{tx.type},
             #{tx.amount},
-            #{tx.transactionType},
-            #{tx.description},
             NOW()
             )
         </foreach>
