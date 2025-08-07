@@ -2,6 +2,7 @@ FROM tomcat:9.0-jdk17-temurin
 
 # ✅ tzdata 설치 및 타임존 설정 추가
 RUN apt-get update && \
+    apt-get install -y vim && \
     apt-get install -y tzdata && \
     ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
     echo "Asia/Seoul" > /etc/timezone && \
