@@ -293,9 +293,6 @@ public class PropertyService {
         if (!participantUserIds.isEmpty()) {
             String title = "매각 완료!";
             String body = "'" + propertyTitle + "' 매각이 완료되어 지분 수익금이 정산되었습니다.";
-//            for (Long participantId : participantUserIds) {
-//                notificationService.sendNotificationAndSave(participantId, title, body);
-//            }
 
             // 배치 전송 + 일괄 DB 저장
             try {

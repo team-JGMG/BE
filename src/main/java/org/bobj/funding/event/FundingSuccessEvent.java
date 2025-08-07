@@ -5,6 +5,6 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class ShareDistributionEvent {
+public class FundingSuccessEvent {
     private final Long fundingId;
 }

@@ -7,10 +7,12 @@ import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.dto.FundingDetailResponseDTO;
 import org.bobj.funding.dto.FundingEndedResponseDTO;
 import org.bobj.funding.dto.FundingTotalResponseDTO;
+import org.bobj.funding.event.FundingFailureEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
 import org.bobj.point.service.PointService;
 import org.bobj.notification.service.NotificationService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,8 @@ import java.util.stream.Collectors;
 public class FundingService {
     private final FundingMapper fundingMapper;
     private final FundingOrderMapper fundingOrderMapper;
+
+    private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
     private final PointService pointService;
 
@@ -38,7 +42,7 @@ public class FundingService {
         List<FundingTotalResponseDTO> content = fundingMapper.findTotal(category, sort, offset, size+1);
 
         boolean hasNext = content.size() > size;
-        if(hasNext) {
+        if (hasNext) {
             content.remove(size);
         }
 
@@ -133,33 +137,5 @@ public class FundingService {
 
     public String getPropertyTitleByFundingId(Long fundingId){
         return fundingMapper.getPropertyTitleByFundingId(fundingId);
-    }
-
-    private void sendFundingFailureNotifications(Long fundingId, List<FundingOrderVO> allOrders) {
-        String propertyTitle = getPropertyTitleByFundingId(fundingId);
-
-        // 1. 등록자 알림
-        Long ownerUserId = fundingMapper.getUserIdbyFundingId(fundingId);
-
-        if (ownerUserId != null) {
-            String title = "펀딩이 실패되었어요!";
-            String body = "'" + propertyTitle + "' 펀딩이 목표 달성 실패로 마감되었습니다.";
-            notificationService.sendNotificationAndSave(ownerUserId, title, body);
-        }
-
-        // 2. 참여자 알림
-        if (!allOrders.isEmpty()) {
-            List<Long> participantUserIds = allOrders.stream()
-                    .map(FundingOrderVO::getUserId)
-                    .distinct()
-                    .toList();
-
-            String title = "펀딩이 실패되었어요!";
-            String body = "'" + propertyTitle + "' 펀딩이 목표 금액을 달성하지 못해 마감되었습니다. "
-                    + "결제 포인트는 순차적으로 환불 처리되며, 환불 완료까지 시간이 소요될 수 있습니다.";
-            for (Long participantId : participantUserIds) {
-                notificationService.sendNotificationAndSave(participantId, title, body);
-            }
-        }
     }
 }

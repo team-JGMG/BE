@@ -153,17 +153,4 @@ public class NotificationServiceImpl implements NotificationService{
         log.info("배치 알림 DB 저장 완료 - 저장된 알림 수: {}", notifications.size());
     }
 
-    //토큰 리스트 배치 크기만큼 분할
-    private List<List<String>> splitIntoBatches(List<String> tokens, int batchSize) {
-        List<List<String>> batches = new ArrayList<>();
-
-        for (int i = 0; i < tokens.size(); i += batchSize) {
-            int end = Math.min(i + batchSize, tokens.size());
-            batches.add(tokens.subList(i, end));
-        }
-
-        return batches;
-    }
-
-
 }
