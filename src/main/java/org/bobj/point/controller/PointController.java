@@ -1,5 +1,6 @@
 package org.bobj.point.controller;
 
+import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -67,14 +68,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/point")
 @RequiredArgsConstructor
+@Api(tags = "포인트 API (테스트용)")
 public class PointController {
 
     private final PointService pointService;
 
     @GetMapping("/transactions")
     @ApiOperation(value = "포인트 입출금 내역 조회 (테스트용)", notes = "userId를 파라미터로 받아 테스트합니다.")
+    @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "query")
     public ResponseEntity<ApiCommonResponse<List<PointTransactionVO>>> getTransactionsForTest(
-        @RequestParam Long userId
+        @RequestParam(name = "userId") Long userId   // <-- 이름 명시
     ) {
         List<PointTransactionVO> transactions = pointService.findTransactionsByUserId(userId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(transactions));
@@ -82,8 +85,9 @@ public class PointController {
 
     @GetMapping("/balance")
     @ApiOperation(value = "현재 포인트 보유량 조회 (테스트용)", notes = "userId를 파라미터로 받아 테스트합니다.")
+    @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "query")
     public ResponseEntity<ApiCommonResponse<BigDecimal>> getPointBalanceForTest(
-        @RequestParam Long userId
+        @RequestParam(name = "userId") Long userId   // <-- 이름 명시
     ) {
         BigDecimal balance = pointService.getTotalPoint(userId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(balance));
@@ -91,14 +95,15 @@ public class PointController {
 
     @PostMapping("/refund")
     @ApiOperation(value = "포인트 환급 요청 (테스트용)", notes = "userId를 파라미터로 받아 테스트합니다.")
-    @ApiResponses(value = {
+    @ApiResponses({
         @ApiResponse(code = 200, message = "환급 요청 성공", response = ApiCommonResponse.class),
         @ApiResponse(code = 400, message = "잘못된 요청 (잔액 부족 등)", response = ErrorResponse.class),
         @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
+    @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "query")
     public ResponseEntity<ApiCommonResponse<String>> requestRefundForTest(
-        @RequestParam Long userId,
-        @RequestBody RefundRequestDto refundRequestDto
+        @RequestParam(name = "userId") Long userId,  // <-- 이름 명시
+        @RequestBody @Valid RefundRequestDto refundRequestDto
     ) {
         pointService.requestRefund(userId, refundRequestDto.getAmount());
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("환급 요청이 완료되었습니다."));
