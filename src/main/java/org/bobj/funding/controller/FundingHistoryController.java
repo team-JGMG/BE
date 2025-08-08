@@ -22,9 +22,9 @@ public class FundingHistoryController {
     @GetMapping("/{fundingId}/trades")
     @ApiOperation(value = "펀딩 일별 거래 내역 조회", notes = "특정 펀딩의 일별 종가, 거래량 및 변화율을 조회합니다. (daily 고정)")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "fundingId", value = "조회할 펀딩 ID", required = true, dataType = "long", paramType = "path"),
+            @ApiImplicitParam(name = "fundingId", value = "조회할 펀딩 ID", required = true, dataType = "long", paramType = "path", example = "1"),
             @ApiImplicitParam(name = "startDate", value = "조회 시작일 (YYYY-MM-DD)", required = false, dataType = "string", paramType = "query", example = "2025-06-01"),
-            @ApiImplicitParam(name = "endDate", value = "조회 종료일 (YYYY-MM-DD)", required = false, dataType = "string", paramType = "query", example = "2025-06-31"),
+            @ApiImplicitParam(name = "endDate", value = "조회 종료일 (YYYY-MM-DD)", required = false, dataType = "string", paramType = "query", example = "2025-06-30"),
             @ApiImplicitParam(name = "limit", value = "반환할 데이터 포인트 최대 개수", required = false, dataType = "int", paramType = "query", example = "100"),
             @ApiImplicitParam(name = "offset", value = "페이지네이션 오프셋", required = false, dataType = "int", paramType = "query", example = "0")
     })

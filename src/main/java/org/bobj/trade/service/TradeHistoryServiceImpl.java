@@ -40,6 +40,15 @@ public class TradeHistoryServiceImpl implements TradeHistoryService{
             throw new IllegalArgumentException("funding id에 대한 펀딩이 존재하지 않습니다.");
         }
 
+        LocalDate today = LocalDate.now();
+        LocalDate maxAllowedDate = today.minusDays(1);
+        LocalDate requestedEndDate = requestDTO.getEndDate();
+
+        if (requestedEndDate.isAfter(maxAllowedDate)) {
+            throw new IllegalArgumentException("체결 내역은 현재 날짜 전날까지만 조회할 수 있습니다. (요청 endDate: "
+                    + requestedEndDate + ", 최대 허용: " + maxAllowedDate + ")");
+        }
+
         // 일별 체결 요약 데이터 조회
         List<DailyTradeHistoryDTO> dailySummaries = tradeMapper.findDailyTradeSummary(fundingId, requestDTO.getStartDate(), requestDTO.getEndDate());
 

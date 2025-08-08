@@ -74,7 +74,7 @@
         FROM trades t
             JOIN order_books ob ON t.buy_order_id = ob.order_id OR t.sell_order_id = ob.order_id
         WHERE ob.funding_id = #{fundingId}
-          AND t.created_at BETWEEN #{startDate} AND DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+          AND t.created_at BETWEEN #{startDate} AND #{endDate}
             ) AS daily_trades_with_rn
         GROUP BY trade_date
         ORDER BY trade_date ASC
