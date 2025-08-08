@@ -15,6 +15,8 @@
         FLOOR((f.current_amount / f.target_amount) * 100) AS achievement_rate,
         (f.target_amount - f.current_amount) / 5000 AS remaining_shares,
         (f.target_amount - f.current_amount) AS remaining_amount,
+        fo.order_id,
+        fo.order_price,
         fo.share_count,
         (SELECT photo_url
         FROM property_photos
@@ -40,6 +42,7 @@
   <resultMap id="FundingOrderUserMap" type="org.bobj.funding.dto.FundingOrderUserResponseDTO">
     <id property="propertyId" column="property_id"/>
     <id property="fundingId" column="funding_id"/>
+    <id property="orderId" column="order_id"/>
     <result property="title" column="title"/>
     <result property="shareCount" column="share_count"/>
     <result property="targetAmount" column="target_amount"/>
@@ -47,6 +50,7 @@
     <result property="achievementRate" column="achievement_rate"/>
     <result property="remainingShares" column="remaining_shares"/>
     <result property="remainingAmount" column="remaining_amount"/>
+    <result property="orderPrice" column="order_price"/>
     <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">
       <result property="photoUrl" column="thumbnail_url"/>
     </association>
