@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.s3.S3Service;
+import org.bobj.funding.domain.FundingOrderVO;
 import org.bobj.funding.dto.FundingSoldResponseDTO;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.notification.service.NotificationService;
@@ -22,10 +23,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +45,7 @@ public class PropertyService {
     private final NotificationService notificationService;
     private final PointService pointService;
 
+    private static final int BATCH_SIZE = 1000;
     // 매물 승인 + 펀딩 등록 or 거절
     @Transactional
     public void updatePropertyStatus(Long propertyId, String status) {
@@ -241,21 +246,39 @@ public class PropertyService {
 
         for(FundingSoldResponseDTO dto : fundings) {
             Long fundingId = dto.getFundingId();
-
+            List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
             // 펀딩 등록자와 참여자에게 매각 완료 알림 전송
             sendFundingSoldNotifications(fundingId);
+            for (int i = 0; i < shares.size(); i += BATCH_SIZE){
+                List<ShareVO> shareBatch = shares.subList(i, Math.min(i + BATCH_SIZE, shares.size()));
 
-            executor.submit(()->{
-                /* fundingId에 해당하는 share 가져오기(share 테이블)*/
-                List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
-                /* 해당하는 지분에 point 환불(point 테이블) */
-                for (ShareVO share : shares) {
-                    pointService.refundForShareSell(share.getUserId(),
-                        BigDecimal.valueOf(5000* share.getShareCount()));
-                }
-            });
+                tasks.add(() -> {
+                    Map<Long, BigDecimal> refundMap = new HashMap<>();
+                    for (ShareVO share : shareBatch) {
+                        refundMap.merge(
+                                share.getUserId(),
+                                BigDecimal.valueOf(5000L * share.getShareCount()),
+                                BigDecimal::add
+                        );
+                    }
+                    pointService.refundForShareSell(refundMap);
+                    return null;
+                });
+            }
         }
-        executor.shutdown();
+
+        try{
+            List<Future<Void>> futures = executor.invokeAll(tasks);
+
+            for(Future<Void> future: futures){
+                future.get();
+            }
+        } catch(Exception e){
+            log.error("매각 처리 또는 포인트 환불 중 실패 → 전체 롤백됩니다.", e);
+            throw new RuntimeException("펀딩 실패 처리 중 오류", e);
+        } finally {
+            executor.shutdown();
+        }
     }
 
     /**

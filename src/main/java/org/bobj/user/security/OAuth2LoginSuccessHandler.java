@@ -100,12 +100,15 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                     // 관리자인 경우 status=admin
                     targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
                             .queryParam("status", "ADMIN")
+                            .queryParam("accessToken", authResponse.getAccessToken())
+
                             .build().toUriString();
                     log.info("관리자 로그인 완료. status=admin으로 리다이렉트: {}", targetUrl);
                 } else {
                     // 일반 사용자인 경우 status=success
                     targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
                             .queryParam("status", "SUCCESS")
+                            .queryParam("accessToken", authResponse.getAccessToken())
                             .build().toUriString();
                     log.info("일반 사용자 로그인 완료. status=success로 리다이렉트: {}", targetUrl);
                 }

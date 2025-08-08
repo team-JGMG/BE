@@ -19,9 +19,26 @@
         )
   </insert>
 
+    <insert id="bulkInsert">
+        INSERT INTO point_transaction (
+        point_id,
+        type,
+        amount,
+        created_at
+        )
+        VALUES
+        <foreach collection="list" item="tx" separator=",">
+            (
+            #{tx.pointId},
+            #{tx.type},
+            #{tx.amount},
+            NOW()
+            )
+        </foreach>
+    </insert>
 
 
-  <select id="findByUserId" resultType="org.bobj.point.domain.PointTransactionVO">
+    <select id="findByUserId" resultType="org.bobj.point.domain.PointTransactionVO">
         SELECT pt.*
         FROM point_transaction pt
         JOIN points p ON pt.point_id = p.point_id

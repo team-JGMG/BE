@@ -11,18 +11,19 @@ import org.bobj.funding.event.FundingFailureEvent;
 import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.funding.mapper.FundingOrderMapper;
 import org.bobj.point.service.PointService;
-import org.bobj.notification.service.NotificationService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -66,31 +67,25 @@ public class FundingService {
         List<Callable<Void>> tasks = new ArrayList<>();
 
         // 펀딩 ID에 해당하는 펀딩 주문들 staus를 REFUNED로 변경
-        for (Long fId : failedFundingIds) {
-
-            // 모든 주문 정보를 한 번에 가져옴
-            List<FundingOrderVO> allOrders = fundingOrderMapper.findAllOrdersByFundingId(fId);
+        for(Long fId : failedFundingIds){
+            List<Long> fundingOrderIds = fundingOrderMapper.findFundingOrderIdsByFundingId(fId);
 
             // 펀딩 실패 이벤트 발생(알림)
             eventPublisher.publishEvent(new FundingFailureEvent(fId));
 
-            List<Long> fundingOrderIds = allOrders.stream()
-                    .map(FundingOrderVO::getOrderId)
-                    .toList();
-
-            if (allOrders.isEmpty()) continue;
-
-            for (int i = 0; i < fundingOrderIds.size(); i += BATCH_SIZE) {
-                List<Long> fundingOrderIdBatch = fundingOrderIds.subList(i, Math.min(i + BATCH_SIZE, fundingOrderIds.size()));
-                tasks.add(() -> {
+            for(int i=0; i<fundingOrderIds.size(); i+=BATCH_SIZE){
+                List<Long> fundingOrderIdBatch = fundingOrderIds.subList(i, Math.min(i+BATCH_SIZE, fundingOrderIds.size()));
+                tasks.add(()->{
                     fundingOrderMapper.updateFundingOrderStatusToRefundedByOrderIds(fundingOrderIdBatch);
+                    List<FundingOrderVO> orders = fundingOrderMapper.findAllOrdersByFundingId(fId);
 
-                    /* 여기에 포인트 환불 로직 추가 해주세요!(point테이블)*/
-                    for (FundingOrderVO order : allOrders) {
+                    Map<Long, BigDecimal> refundMap = new HashMap<>();
+                    for (FundingOrderVO order : orders) {
                         if (fundingOrderIdBatch.contains(order.getOrderId())) {
-                            pointService.refundForFundingFailure(order.getUserId(), order.getOrderPrice());
+                            refundMap.merge(order.getUserId(), order.getOrderPrice(), BigDecimal::add);
                         }
                     }
+                    pointService.refundForFundingFailure(refundMap);
                     return null;
                 });
             }
@@ -112,10 +107,6 @@ public class FundingService {
         } finally {
             executor.shutdown();
         }
-    }
-
-    public void soldProperty() {
-
     }
 
     public FundingDetailResponseDTO getFundingDetail(Long fundingId) {

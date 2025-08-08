@@ -40,7 +40,7 @@
         FROM
             trades t
         JOIN
-            ORDER_BOOKS ob_buy ON t.buy_order_id = ob_buy.order_id
+            order_books ob_buy ON t.buy_order_id = ob_buy.order_id
         WHERE
             ob_buy.funding_id = #{fundingId}
         AND t.created_at BETWEEN #{startDate} AND #{endDate}
@@ -52,7 +52,7 @@
         SELECT t.trade_price_per_share
         FROM trades t
          JOIN
-             ORDER_BOOKS ob_buy ON t.buy_order_id = ob_buy.order_id
+             order_books ob_buy ON t.buy_order_id = ob_buy.order_id
         WHERE
             ob_buy.funding_id = #{fundingId}
         ORDER BY
@@ -72,9 +72,9 @@
              t.trade_count AS total_volume,
              ROW_NUMBER() OVER (PARTITION BY DATE(t.created_at) ORDER BY t.created_at DESC) AS rn
         FROM trades t
-            JOIN ORDER_BOOKS ob ON t.buy_order_id = ob.order_id OR t.sell_order_id = ob.order_id
+            JOIN order_books ob ON t.buy_order_id = ob.order_id OR t.sell_order_id = ob.order_id
         WHERE ob.funding_id = #{fundingId}
-          AND t.created_at BETWEEN #{startDate} AND DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+          AND t.created_at BETWEEN #{startDate} AND #{endDate}
             ) AS daily_trades_with_rn
         GROUP BY trade_date
         ORDER BY trade_date ASC

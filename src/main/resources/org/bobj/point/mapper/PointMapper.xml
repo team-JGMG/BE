@@ -38,21 +38,33 @@
   </delete>
 
   <select id="findTotalPointByUserId" resultType="java.math.BigDecimal" parameterType="long">
-    SELECT COALESCE(SUM(
-                      CASE
-                        WHEN type IN ('DEPOSIT', 'TRADE_SALE', 'PAYOUT', 'REFUND', 'CANCEL', 'ALLOCATION') AND status = 'COMPLETED' THEN amount
-                        WHEN type IN ('INVEST', 'WITHDRAW') AND status = 'COMPLETED' THEN -amount
-                        ELSE 0
-                        END
-                    ), 0)
-    FROM point_transaction
+    SELECT amount
+    FROM points
     WHERE user_id = #{userId}
   </select>
 
+  <select id="findByUserIdsForUpdate" resultType="org.bobj.point.domain.PointVO">
+    SELECT *
+    FROM points
+    WHERE user_id IN
+    <foreach item="id" collection="userIds" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    FOR UPDATE
+  </select>
 
-
-
-
-
-
+  <update id="bulkUpdate">
+    UPDATE points
+    SET
+    amount = CASE
+    <foreach collection="points" item="point">
+      WHEN point_id = #{point.pointId} THEN #{point.amount}
+    </foreach>
+    END,
+    updated_at = NOW()
+    WHERE point_id IN
+    <foreach collection="points" item="point" separator="," open="(" close=")">
+      #{point.pointId}
+    </foreach>
+  </update>
 </mapper>
