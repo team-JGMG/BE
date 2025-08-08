@@ -16,13 +16,20 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/point")
 @RequiredArgsConstructor
-@Api(tags = "포인트 API (테스트용)")
+@Api(tags = "포인트 API ")
 public class PointController {
 
     private final PointService pointService;
 
-    @GetMapping("/transactions")
-    @ApiOperation(value = "포인트 입출금 내역 조회 (테스트용)", notes = "userId를 쿼리 파라미터로 받아 테스트합니다.")
+    /**
+     * 포인트 입출금 내역 조회 (테스트용)
+     * GET /api/point/transactions-test?userId=1
+     */
+    @GetMapping("/transactions-test")
+    @ApiOperation(
+        value = "포인트 입출금 내역 조회 (테스트용)",
+        notes = "userId를 쿼리 파라미터로 받아 테스트합니다."
+    )
     public ResponseEntity<ApiCommonResponse<List<PointTransactionVO>>> getTransactionsForTest(
         @ApiParam(value = "사용자 ID", required = true, example = "1")
         @RequestParam(name = "userId") Long userId
@@ -31,8 +38,15 @@ public class PointController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(transactions));
     }
 
-    @GetMapping("/balance")
-    @ApiOperation(value = "현재 포인트 보유량 조회 (테스트용)", notes = "userId를 쿼리 파라미터로 받아 테스트합니다.")
+    /**
+     * 현재 포인트 보유량 조회 (테스트용)
+     * GET /api/point/balance-test?userId=1
+     */
+    @GetMapping("/balance-test")
+    @ApiOperation(
+        value = "현재 포인트 보유량 조회 (테스트용)",
+        notes = "userId를 쿼리 파라미터로 받아 테스트합니다."
+    )
     public ResponseEntity<ApiCommonResponse<BigDecimal>> getPointBalanceForTest(
         @ApiParam(value = "사용자 ID", required = true, example = "1")
         @RequestParam(name = "userId") Long userId
@@ -41,8 +55,16 @@ public class PointController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(balance));
     }
 
-    @PostMapping("/refund")
-    @ApiOperation(value = "포인트 환급 요청 (테스트용)", notes = "userId를 쿼리 파라미터로 받아 테스트합니다.")
+    /**
+     * 포인트 환급 요청 (테스트용)
+     * POST /api/point/refund-test?userId=1
+     * Body: { "amount": 5000 }
+     */
+    @PostMapping("/refund-test")
+    @ApiOperation(
+        value = "포인트 환급 요청 (테스트용)",
+        notes = "userId를 쿼리 파라미터로 받아 테스트합니다."
+    )
     @ApiResponses({
         @ApiResponse(code = 200, message = "환급 요청 성공", response = ApiCommonResponse.class),
         @ApiResponse(code = 400, message = "잘못된 요청 (잔액 부족 등)", response = ErrorResponse.class),
