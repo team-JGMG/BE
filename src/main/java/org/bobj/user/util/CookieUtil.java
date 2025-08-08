@@ -32,7 +32,8 @@ public class CookieUtil {
         
         // 요청 출처 분석
         String requestSource = origin != null ? origin : (referer != null ? referer : ("http://" + host));
-        
+
+
         // localhost 계열 감지 (localhost, 127.0.0.1, 포트 포함)
         boolean isLocalhost = requestSource.contains("localhost") || 
                              requestSource.contains("127.0.0.1") ||
@@ -75,14 +76,28 @@ public class CookieUtil {
     }
 
     /**
+     * 요청이 HTTPS인지 확인 (localhost HTTPS 포함)
+     */
+    private boolean isRequestSecure(HttpServletRequest request) {
+        // 1. 직접 HTTPS 요청
+        if (request.isSecure()) {
+            return true;
+        }
+
+        // 2. 요청 URL 직접 확인 (localhost HTTPS 포함)
+        String requestURL = request.getRequestURL().toString();
+        return requestURL.startsWith("https://");
+    }
+
+    /**
      * 공통 쿠키 설정 메소드 (동적 도메인, HTTPS 감지)
      */
     private void setCookieCommon(HttpServletResponse response, HttpServletRequest request, String name, String value, int maxAge) {
         // 🔥 요청 Origin에 따른 동적 도메인 결정
         String dynamicDomain = determineCookieDomain(request);
-        
-        // HTTPS 환경 감지하여 Secure 플래그 자동 설정
-        boolean isHttps = serverDomain.startsWith("https://");
+
+        // ✅ 실제 요청 기준으로 HTTPS 판단
+        boolean isHttps = isRequestSecure(request);
         String secureFlag = isHttps ? "; Secure" : "";
         
         // 도메인 설정 (localhost는 생략, 배포환경만 설정)

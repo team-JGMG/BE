@@ -165,7 +165,9 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:5173");    // Vue3 + Vite 기본 포트
         configuration.addAllowedOrigin("http://localhost:8080");    // Vue3 + Vue CLI 기본 포트
         configuration.addAllowedOrigin("http://localhost:8081");    // 기존 프론트엔드 포트
-        
+
+        configuration.addAllowedOrigin("https://localhost:5173"); //vite secutiry 포트
+
         // 배포 환경 도메인
         configuration.addAllowedOrigin("https://half-to-half.site");        // 백엔드 배포 URL
         configuration.addAllowedOrigin("https://half-to-half.vercel.app");  // 프론트엔드 배포 URL

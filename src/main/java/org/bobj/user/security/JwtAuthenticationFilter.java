@@ -81,6 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // Pre-auth 허용 경로 업데이트
     private boolean isPreAuthAllowedPath(String path) {
         return "/api/auth/login/callback".equals(path) ||
+                "/api/**".equals(path) ||
                 "/api/auth/signup".equals(path);  // oauth/signup → signup으로 수정
     }
 
