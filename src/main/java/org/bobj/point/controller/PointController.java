@@ -22,47 +22,85 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
+//Principal 적용 코드
+//@RestController
+//@RequestMapping("/api/point")
+//@RequiredArgsConstructor
+//public class PointController {
+//    private final PointService pointService;
+//    @GetMapping("/transactions")
+//    @ApiOperation(value = "포인트 입출금 내역 조회", notes = "로그인한 사용자의 포인트 입출금 트랜잭션 내역을 조회합니다.")
+//    public ResponseEntity<ApiCommonResponse<List<PointTransactionVO>>> getTransactions(Principal principal){
+//        Long userId = Long.parseLong(principal.getName());
+//        List<PointTransactionVO> transactions = pointService.findTransactionsByUserId(userId);
+//        return ResponseEntity.ok(ApiCommonResponse.createSuccess(transactions));
+//    }
+//
+//
+//    @GetMapping("/balance")
+//    @ApiOperation(value = "현재 포인트 보유량 조회", notes = "로그인한 사용자의 현재 포인트 보유량을 반환합니다.")
+//    public ResponseEntity<ApiCommonResponse<BigDecimal>> getPointBalance(Principal principal) {
+//        Long userId = Long.parseLong(principal.getName());
+//        BigDecimal balance = pointService.getTotalPoint(userId);
+//        return ResponseEntity.ok(ApiCommonResponse.createSuccess(balance));
+//    }
+//
+//
+//
+//    @PostMapping("/refund")
+//    @ApiOperation(value = "포인트 환급 요청", notes = "사용자가 입력한 금액만큼 포인트를 환급 요청합니다.")
+//    @ApiResponses(value = {
+//        @ApiResponse(code = 200, message = "환급 요청 성공", response = ApiCommonResponse.class),
+//        @ApiResponse(code = 400, message = "잘못된 요청 (잔액 부족 등)", response = ErrorResponse.class),
+//        @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
+//    })
+//    public ResponseEntity<ApiCommonResponse<String>> requestRefund(
+//        @RequestBody RefundRequestDto refundRequestDto,
+//        Principal principal
+//    ) {
+//        Long userId = Long.parseLong(principal.getName());
+//        pointService.requestRefund(userId, refundRequestDto.getAmount());
+//        return ResponseEntity.ok(ApiCommonResponse.createSuccess("환급 요청이 완료되었습니다."));
+//    }
+//}
 @RestController
 @RequestMapping("/api/point")
 @RequiredArgsConstructor
 public class PointController {
+
     private final PointService pointService;
+
     @GetMapping("/transactions")
-    @ApiOperation(value = "포인트 입출금 내역 조회", notes = "로그인한 사용자의 포인트 입출금 트랜잭션 내역을 조회합니다.")
-    public ResponseEntity<ApiCommonResponse<List<PointTransactionVO>>> getTransactions(Principal principal){
-        Long userId = Long.parseLong(principal.getName());
+    @ApiOperation(value = "포인트 입출금 내역 조회 (테스트용)", notes = "userId를 파라미터로 받아 테스트합니다.")
+    public ResponseEntity<ApiCommonResponse<List<PointTransactionVO>>> getTransactionsForTest(
+        @RequestParam Long userId
+    ) {
         List<PointTransactionVO> transactions = pointService.findTransactionsByUserId(userId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(transactions));
     }
 
-
     @GetMapping("/balance")
-    @ApiOperation(value = "현재 포인트 보유량 조회", notes = "로그인한 사용자의 현재 포인트 보유량을 반환합니다.")
-    public ResponseEntity<ApiCommonResponse<BigDecimal>> getPointBalance(Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
+    @ApiOperation(value = "현재 포인트 보유량 조회 (테스트용)", notes = "userId를 파라미터로 받아 테스트합니다.")
+    public ResponseEntity<ApiCommonResponse<BigDecimal>> getPointBalanceForTest(
+        @RequestParam Long userId
+    ) {
         BigDecimal balance = pointService.getTotalPoint(userId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(balance));
     }
 
-
-
     @PostMapping("/refund")
-    @ApiOperation(value = "포인트 환급 요청", notes = "사용자가 입력한 금액만큼 포인트를 환급 요청합니다.")
+    @ApiOperation(value = "포인트 환급 요청 (테스트용)", notes = "userId를 파라미터로 받아 테스트합니다.")
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "환급 요청 성공", response = ApiCommonResponse.class),
         @ApiResponse(code = 400, message = "잘못된 요청 (잔액 부족 등)", response = ErrorResponse.class),
         @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public ResponseEntity<ApiCommonResponse<String>> requestRefund(
-        @RequestBody RefundRequestDto refundRequestDto,
-        Principal principal
+    public ResponseEntity<ApiCommonResponse<String>> requestRefundForTest(
+        @RequestParam Long userId,
+        @RequestBody RefundRequestDto refundRequestDto
     ) {
-        Long userId = Long.parseLong(principal.getName());
         pointService.requestRefund(userId, refundRequestDto.getAmount());
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("환급 요청이 완료되었습니다."));
     }
-
-
-
-
 }
