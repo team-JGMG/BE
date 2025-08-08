@@ -31,6 +31,11 @@ public class FundingOrderUserResponseDTO {
     @ApiModelProperty(value = "모집된 가격")
     private BigDecimal currentAmount;
 
+    @ApiModelProperty(value = "펀딩 주문 ID")
+    private Long orderId;
+    @ApiModelProperty(value = "주문 금액")
+    private BigDecimal orderPrice;
+
     // 펀딩 관련 필드 (APPROVED, SOLD 시만 유효)
     @ApiModelProperty(value = "달성률")
     private Integer achievementRate;
