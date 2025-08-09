@@ -80,9 +80,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Pre-auth 허용 경로 업데이트
     private boolean isPreAuthAllowedPath(String path) {
+        // 특정 경로를 허용하거나 "/api/"로 시작하는 경로 모두 허용
         return "/api/auth/login/callback".equals(path) ||
-                "/api/**".equals(path) ||
-                "/api/auth/signup".equals(path);  // oauth/signup → signup으로 수정
+                path.startsWith("/api/") ||  // 와일드카드 대신 startsWith 사용
+                "/api/auth/signup".equals(path);
     }
 
 

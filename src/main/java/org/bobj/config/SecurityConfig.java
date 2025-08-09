@@ -6,6 +6,7 @@ import org.bobj.user.security.JwtTokenProvider;
 import org.bobj.user.security.OAuth2LoginSuccessHandler;
 import org.bobj.user.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,6 +35,9 @@ public class SecurityConfig {
     
     @Autowired
     private CookieUtil cookieUtil;
+
+    @Value("${custom.oauth2.redirect-uri}")
+    private String frontendRedirectUri;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -136,7 +140,8 @@ public class SecurityConfig {
 
     @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
-        return new OAuth2LoginSuccessHandler(jwtTokenProvider, userService, cookieUtil);
+        // Spring Non-Boot 환경에서 값 직접 주입
+        return new OAuth2LoginSuccessHandler(jwtTokenProvider, userService, cookieUtil, frontendRedirectUri);
     }
 
     @Bean
@@ -196,6 +201,7 @@ public class SecurityConfig {
         // 브라우저 캐시 최적화 설정
         configuration.setMaxAge(3600L);            // Preflight 요청 결과를 1시간(3600초) 캐시
         // Vue3 개발 중 OPTIONS 요청 최소화로 성능 향상
+        configuration.addAllowedOriginPattern("http://localhost:[*]");
 
         // 클라이언트 접근 가능 헤더 설정
         configuration.addExposedHeader("Authorization");   // Vue3에서 응답의 Authorization 헤더 읽기 허용

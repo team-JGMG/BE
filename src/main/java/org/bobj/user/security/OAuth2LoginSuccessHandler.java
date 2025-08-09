@@ -21,22 +21,20 @@ import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
-// @Component 제거 - SecurityConfig에서 Bean으로 등록
-// @RequiredArgsConstructor 제거 - 수동 생성자 사용
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
     private final CookieUtil cookieUtil;
+    private final String frontendRedirectUri;
 
-    @Value("${custom.oauth2.redirect-uri}")
-    private String frontendRedirectUri;
-
-    // 수동 생성자 추가
-    public OAuth2LoginSuccessHandler(JwtTokenProvider jwtTokenProvider, UserService userService, CookieUtil cookieUtil) {
+    public OAuth2LoginSuccessHandler(JwtTokenProvider jwtTokenProvider, UserService userService, CookieUtil cookieUtil, String frontendRedirectUri) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userService = userService;
         this.cookieUtil = cookieUtil;
+        this.frontendRedirectUri = frontendRedirectUri;
+        
+        log.info("🏗️ OAuth2LoginSuccessHandler Bean 생성됨! frontendRedirectUri: {}", frontendRedirectUri);
     }
 
     @Override
