@@ -12,17 +12,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 멀티스테이지라서 필수는 아니지만 JDK는 그대로 둠(다른 스텝에서 쓸 수도)
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Grant permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Build WAR file (Skip tests)
-        run: ./gradlew clean build -x test
+      # (삭제) 로컬에서 gradle build 하던 스텝은 더 이상 필요 없음
+      # - name: Build WAR file (Skip tests)
+      #   run: ./gradlew clean build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,7 +32,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (multi-stage)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -41,6 +40,15 @@ jobs:
           push: true
           tags: yyssjjj/bobj:latest
           no-cache: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            BUILD_TIME=${{ github.run_id }}
+
+      # 이미지 안에 최신 WAR이 들어갔는지 확인(로그로 타임스탬프 확인)
+      - name: Verify WAR inside built image
+        run: |
+          docker pull yyssjjj/bobj:latest
+          docker run --rm yyssjjj/bobj:latest ls -l /usr/local/tomcat/webapps/ROOT.war
 
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.5.4
@@ -48,15 +56,17 @@ jobs:
           ssh-private-key: ${{ secrets.EC2_KEY }}
 
       - name: Add EC2 to known hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy with docker-compose (from /home/ubuntu/app)
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} <<EOF
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          cd /home/ubuntu/app
-          docker compose down || true
-          docker compose pull
-          docker compose up -d
-          docker compose ps
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} <<'EOF'
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            cd /home/ubuntu/app
+            docker compose down || true
+            docker compose pull
+            docker compose up -d
+            docker compose ps
+            # 컨테이너 내부 WAR 타임스탬프 체크
+            docker compose exec -T bobj ls -l /usr/local/tomcat/webapps/ROOT.war || true
           EOF
