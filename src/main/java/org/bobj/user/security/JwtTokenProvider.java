@@ -163,10 +163,12 @@ public class JwtTokenProvider {
      * 1순위: Authorization Header ("Authorization: Bearer [TOKEN]")
      * 2순위: Cookie에서 accessToken 추출 (일반 인증용)
      * 3순위: Cookie에서 preAuthToken 추출 (사전 인증용)
+     * signup에선 pre-token이 우선됨.
      */
     public String resolveToken(HttpServletRequest request) {
-        log.debug("🔍 [토큰 추출 시작] 요청 URI: {}", request.getRequestURI());
-        
+        String path = request.getRequestURI();
+        log.debug("🔍 [토큰 추출 시작] 요청 URI: {}", path);
+
         // 1. Authorization Header에서 토큰 추출
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
@@ -175,25 +177,34 @@ public class JwtTokenProvider {
         }
         log.debug("❌ [토큰 없음] Authorization Header에 토큰 없음");
 
-        // 2. Cookie에서 토큰 추출
+        // 2. 쿠키에서 토큰 추출
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             log.debug("🍪 [쿠키 확인] 총 {}개 쿠키 발견", cookies.length);
-            
-            for (Cookie cookie : cookies) {
-                log.debug("🍪 [쿠키 검사] 이름: {}, 값: {}...", 
-                    cookie.getName(), 
-                    cookie.getValue() != null ? cookie.getValue().substring(0, Math.min(20, cookie.getValue().length())) : "null");
-                
-                // Access Token (일반 인증용)
-                if ("accessToken".equals(cookie.getName())) {
-                    log.debug("✅ [토큰 발견] accessToken 쿠키에서 토큰 추출");
-                    return cookie.getValue();
+
+            if ("/api/auth/signup".equals(path)) {
+                // 회원가입 시에는 preAuthToken 우선 사용
+                for (Cookie cookie : cookies) {
+                    if ("preAuthToken".equals(cookie.getName())) {
+                        log.debug("✅ [토큰 발견] preAuthToken 쿠키에서 토큰 추출 (회원가입용)");
+                        return cookie.getValue();
+                    }
                 }
-                // Pre-Auth Token (사전 인증용)
-                if ("preAuthToken".equals(cookie.getName())) {
-                    log.debug("✅ [토큰 발견] preAuthToken 쿠키에서 토큰 추출");
-                    return cookie.getValue();
+                log.debug("❌ [preAuthToken 없음] 회원가입 요청에 preAuthToken 쿠키 없음");
+                return null; // 회원가입 시 preAuthToken 없으면 인증 실패 처리 가능
+            } else {
+                // 회원가입 외 경로는 기존 순서 유지 (accessToken 우선)
+                for (Cookie cookie : cookies) {
+                    if ("accessToken".equals(cookie.getName())) {
+                        log.debug("✅ [토큰 발견] accessToken 쿠키에서 토큰 추출");
+                        return cookie.getValue();
+                    }
+                }
+                for (Cookie cookie : cookies) {
+                    if ("preAuthToken".equals(cookie.getName())) {
+                        log.debug("✅ [토큰 발견] preAuthToken 쿠키에서 토큰 추출");
+                        return cookie.getValue();
+                    }
                 }
             }
         } else {
@@ -272,22 +283,22 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            
+
             Date expiration = claims.getExpiration();
             Date now = new Date();
-            
+
             long timeUntilExpiry = expiration.getTime() - now.getTime();
             long thresholdTime = minutesBeforeExpiry * 60 * 1000L; // 분 → 밀리초 변환
-            
+
             // 만료까지 남은 시간이 임계값보다 적으면 true
             boolean nearExpiry = timeUntilExpiry > 0 && timeUntilExpiry < thresholdTime;
-            
+
             if (nearExpiry) {
                 log.debug("토큰 만료 임박 감지: {}분 후 만료 예정", timeUntilExpiry / (60 * 1000));
             }
-            
+
             return nearExpiry;
-            
+
         } catch (ExpiredJwtException e) {
             // 이미 만료된 토큰 - 사전 갱신 대상 아님 (기존 만료 갱신 로직에서 처리)
             return false;
@@ -319,10 +330,10 @@ public class JwtTokenProvider {
             Claims claims = getClaims(token);
             Date expiration = claims.getExpiration();
             Date now = new Date();
-            
+
             long timeUntilExpiry = expiration.getTime() - now.getTime();
             return Math.max(0, timeUntilExpiry / (60 * 1000L)); // 밀리초 → 분 변환
-            
+
         } catch (Exception e) {
             log.warn("토큰 만료 시간 계산 중 오류: {}", e.getMessage());
             return 0;
