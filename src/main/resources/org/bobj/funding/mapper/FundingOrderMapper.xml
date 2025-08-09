@@ -28,7 +28,10 @@
            JOIN fundings f ON fo.funding_id = f.funding_id
            JOIN properties p ON f.property_id = p.property_id
     WHERE fo.user_id = #{userId}
-      AND fo.status != 'SUCCESS'
+      AND (
+        (f.status = 'FUNDING' AND fo.status = 'PENDING')
+            OR (f.status = 'FAILED' AND fo.status = 'REFUNDED')
+        )
     ORDER BY fo.created_at DESC
     LIMIT #{limit} OFFSET #{offset}
   </select>
