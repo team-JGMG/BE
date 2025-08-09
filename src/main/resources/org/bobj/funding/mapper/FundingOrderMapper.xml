@@ -130,7 +130,7 @@
 
   <select id="findById" resultType="org.bobj.funding.domain.FundingOrderVO">
     SELECT order_id, user_id, order_price
-    FROM funding_orders
+    FROM funding_order
     WHERE order_id = #{orderId}
   </select>
 
