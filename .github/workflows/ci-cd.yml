@@ -12,16 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 멀티스테이지라서 필수는 아니지만 JDK는 그대로 둠(다른 스텝에서 쓸 수도)
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      # (삭제) 로컬에서 gradle build 하던 스텝은 더 이상 필요 없음
-      # - name: Build WAR file (Skip tests)
-      #   run: ./gradlew clean build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -32,7 +27,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image (multi-stage)
+      # 멀티스테이지 빌드로 이미지 안에서 WAR 생성 & 해시 출력
+      - name: Build and push Docker image (multi-stage + hash)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -44,11 +40,16 @@ jobs:
             GIT_SHA=${{ github.sha }}
             BUILD_TIME=${{ github.run_id }}
 
-      # 이미지 안에 최신 WAR이 들어갔는지 확인(로그로 타임스탬프 확인)
-      - name: Verify WAR inside built image
+      # 이미지 내부 WAR 파일 검증
+      - name: Verify WAR inside built image (timestamp + sha256)
         run: |
+          echo "✅ Image WAR info:"
           docker pull yyssjjj/bobj:latest
           docker run --rm yyssjjj/bobj:latest ls -l /usr/local/tomcat/webapps/ROOT.war
+          echo "✅ Image WAR sha256:"
+          docker run --rm yyssjjj/bobj:latest sha256sum /usr/local/tomcat/webapps/ROOT.war
+          echo "✅ Image labels:"
+          docker image inspect yyssjjj/bobj:latest --format '{{ index .Config.Labels "git_sha" }} {{ index .Config.Labels "build_time" }}'
 
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.5.4
@@ -67,6 +68,8 @@ jobs:
             docker compose pull
             docker compose up -d
             docker compose ps
-            # 컨테이너 내부 WAR 타임스탬프 체크
+            echo "✅ EC2 container WAR info:"
             docker compose exec -T bobj ls -l /usr/local/tomcat/webapps/ROOT.war || true
+            echo "✅ EC2 container WAR sha256:"
+            docker compose exec -T bobj sha256sum /usr/local/tomcat/webapps/ROOT.war || true
           EOF

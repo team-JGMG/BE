@@ -10,17 +10,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.bobj.user.util.CookieUtil;
+
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
+    private final CookieUtil cookieUtil = new CookieUtil();
 
 
     // 일반 예외
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest requeset) {
+        cookieUtil.logAllCookies(requeset);
         log.error("IllegalArgumentException 발생: {}, URI: {}", ex.getMessage(), requeset.getRequestURI(), ex);
         ErrorResponse errorResponse = ErrorResponse.from(HttpStatus.BAD_REQUEST, ex.getMessage(), requeset.getRequestURI());
         return ResponseEntity.badRequest().body(errorResponse);
@@ -35,6 +39,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
           // 기본적으로 BAD_REQUEST로 처리하되, 특정 메시지에 따라 CONFLICT 등으로 변경할 수 있습니다.
         // 예: if (ex.getMessage().contains("이미 체결된 주문입니다.")) return ResponseEntity.status(HttpStatus.CONFLICT).body(...);
+        cookieUtil.logAllCookies(request);
         ErrorResponse errorResponse = ErrorResponse.from(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
@@ -43,6 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
         // 실제 예외 정보를 로그에 출력
+        cookieUtil.logAllCookies(request);
         log.error("예상치 못한 서버 오류 발생: {}, URI: {}", ex.getMessage(), request.getRequestURI(), ex);
         ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request.getRequestURI());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
