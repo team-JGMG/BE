@@ -22,6 +22,8 @@ public class FundingOrderUserResponseDTO {
     private String title;
     @ApiModelProperty(value = "구매한 주 수", example = "10")
     private Integer shareCount;
+    @ApiModelProperty(value = "펀딩 주문 상태")
+    private String status;
 
     @ApiModelProperty(value = "썸네일 이미지 정보")
     private PhotoDTO thumbnail;

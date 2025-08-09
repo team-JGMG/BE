@@ -66,7 +66,6 @@ public class FundingOrderController {
     @ApiOperation(value = "사용자의 투자 주문 목록 조회", notes = "주문 ID, Status에 따른 투자 주문 목록을 조회합니다. (무한스크롤 구현)")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "path"),
-            @ApiImplicitParam(name = "status", value = "주문 상태(pending -> 대기중, refunded -> 기간 만료(펀딩 실패)", defaultValue = "pending" ,dataType = "String", paramType = "query"),
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
     })
@@ -77,11 +76,10 @@ public class FundingOrderController {
     })
     public ResponseEntity<ApiCommonResponse<CustomSlice<FundingOrderUserResponseDTO>>> getFundingOrderUsers(
             @PathVariable @ApiParam(value = "사용자 ID", required = true) Long userId,
-            @RequestParam String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ){
-        CustomSlice<FundingOrderUserResponseDTO> response = fundingOrderService.getFundingOrderUsers(userId, status, page, size);
+        CustomSlice<FundingOrderUserResponseDTO> response = fundingOrderService.getFundingOrderUsers(userId, page, size);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }
 
