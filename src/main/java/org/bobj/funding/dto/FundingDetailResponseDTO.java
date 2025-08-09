@@ -85,6 +85,10 @@ public class FundingDetailResponseDTO {
     @ApiModelProperty(value = "판매자 정보")
     private SellerDTO seller;
 
+    @ApiModelProperty(value = "매물 등록일", example = "2025-07-23")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate createdAt;
+
     @ApiModelProperty(value="해시 태그 정보")
     private List<HashtagVO> tags;
 }
