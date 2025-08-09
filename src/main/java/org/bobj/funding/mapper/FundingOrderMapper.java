@@ -23,7 +23,6 @@ public interface FundingOrderMapper {
     // 내가 투자한 주문 리스트
     List<FundingOrderUserResponseDTO> findFundingOrdersByUserId(
             @Param("userId") Long userId,
-            @Param("status") String status,
             @Param("offset") int offset,
             @Param("limit") int limit);
 

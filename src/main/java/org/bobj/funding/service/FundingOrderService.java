@@ -108,11 +108,10 @@ public class FundingOrderService {
     }
 
     // 내가 투자한 주문 리스트
-    public CustomSlice<FundingOrderUserResponseDTO> getFundingOrderUsers(Long userId, String status, int page, int size) {
+    public CustomSlice<FundingOrderUserResponseDTO> getFundingOrderUsers(Long userId,  int page, int size) {
         int offset = page*size;
-        String upperStatus = status.toUpperCase();
 
-        List<FundingOrderUserResponseDTO> content = fundingOrderMapper.findFundingOrdersByUserId(userId,upperStatus,offset,size+1);
+        List<FundingOrderUserResponseDTO> content = fundingOrderMapper.findFundingOrdersByUserId(userId, offset,size+1);
         boolean hasNext = content.size() > size;
         if (hasNext) {
             content.remove(size);
