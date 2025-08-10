@@ -73,7 +73,6 @@
             5000 AS share_amount,
 
             -- 펀딩 관련
-            f.target_amount - f.current_amount AS remaining_amount,
             (f.target_amount - f.current_amount) / 5000 AS remaining_shares,
 
             -- 유저 보유 주 수

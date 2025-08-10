@@ -1,5 +1,6 @@
 package org.bobj.funding.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,14 +13,12 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class FundingOrderLimitDTO {
-    // 주 당 가격
-    private BigDecimal ShareAmount;
-    // 남은 주 수
+    @ApiModelProperty("한 주당 가격")
+    private BigDecimal shareAmount;
+    @ApiModelProperty("현재 펀딩 구매 가능한 주 수(남아있는 주)")
     private Integer remainingShares;
-    // 남은 금액
-    private BigDecimal remainingAmount;
-    // 유저가 보유한 주 수
+    @ApiModelProperty("유저가 보유하고 있는 주 수")
     private Integer userShareCount;
-    // 현재 유저가 보유한 포인트
+    @ApiModelProperty("유저가 현재 보유하고 있는 포인트")
     private BigDecimal userPoints;
 }
