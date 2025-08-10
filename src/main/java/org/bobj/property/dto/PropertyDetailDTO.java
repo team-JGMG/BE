@@ -105,15 +105,7 @@ public class PropertyDetailDTO {
                 .map(doc -> DocumentDTO.of(doc, s3Service))
                 .distinct()
                 .toList()
-                : List.of();
-
-        List<PhotoDTO> distinctPhotos = vo.getPhotos() != null
-                ? vo.getPhotos().stream()
-                .filter(photo -> Objects.nonNull(photo) && Objects.nonNull(photo.getPhotoId()))
-                .map(photo -> PhotoDTO.of(photo, s3Service))
-                .distinct()
-                .toList()
-                : List.of();
+                : List.of();;
 
         return PropertyDetailDTO.builder()
                 .propertyId(vo.getPropertyId())
@@ -144,7 +136,9 @@ public class PropertyDetailDTO {
                 .updatedAt(vo.getUpdatedAt())
                 .soldAt(vo.getSoldAt())
                 .documents(distinctDocuments)
-                .photos(distinctPhotos)
+                .photos(vo.getPhotos() != null
+                        ? vo.getPhotos().stream().map(PhotoDTO::of).collect(Collectors.toList())
+                        : List.of())
                 .tags(vo.getTags())
                 .build();
     }
