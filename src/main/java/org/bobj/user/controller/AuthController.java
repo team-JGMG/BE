@@ -24,7 +24,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Api(tags = "인증 및 회원가입 API")
 public class AuthController {
@@ -201,7 +201,7 @@ public class AuthController {
     /**
      * 로그아웃 - 쿠키 삭제 및 Refresh Token DB에서 제거
      */
-    @PostMapping("/oauth/logout")
+    @PostMapping("/auth/logout")
     @ApiOperation(value = "로그아웃", notes = "액세스 토큰 쿠키 삭제 및 리프레시 토큰을 DB에서 제거합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "로그아웃 성공\n\n" +
@@ -235,7 +235,7 @@ public class AuthController {
      * Access Token 재발급
      * 클라이언트는 만료된 Access Token만 보내고, 서버에서 DB의 Refresh Token으로 갱신
      */
-    @PostMapping("/oauth/token-refresh")
+    @PostMapping("/auth/token-refresh")
     @ApiOperation(value = "액세스 토큰 갱신", notes = "만료된 액세스 토큰을 새로운 토큰으로 갱신합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "토큰 갱신 성공\n\n" +
