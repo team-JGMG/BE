@@ -18,9 +18,6 @@ import java.math.BigDecimal;
 @ApiModel(description = "거래 주문 등록 요청 DTO")
 public class OrderRequestDTO {
 
-    @ApiModelProperty(value = "사용자 ID", example = "1", required = true)
-    private Long userId;
-
     @ApiModelProperty(value = "펀딩 ID", example = "1", required = true)
     private Long fundingId;
 
@@ -35,7 +32,6 @@ public class OrderRequestDTO {
 
     public OrderVO toVo() {
         return OrderVO.builder()
-                .userId(userId)
                 .fundingId(fundingId)
                 .orderType(OrderType.valueOf(orderType))
                 .orderPricePerShare(orderPricePerShare)
