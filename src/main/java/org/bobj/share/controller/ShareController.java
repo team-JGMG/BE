@@ -11,6 +11,7 @@ import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class ShareController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<List<ShareResponseDTO>>> getUserShares(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
