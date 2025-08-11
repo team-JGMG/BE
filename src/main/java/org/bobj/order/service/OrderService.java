@@ -10,7 +10,7 @@ public interface OrderService {
 
     OrderResponseDTO getOrderById(Long orderId);
 
-    OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO);
+    OrderResponseDTO placeOrder(Long userId, OrderRequestDTO orderRequestDTO);
 
     List<OrderResponseDTO> getOrderHistoryByUserId(Long userId, String orderType);
 

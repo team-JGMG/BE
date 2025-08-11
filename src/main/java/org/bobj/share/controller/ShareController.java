@@ -22,7 +22,7 @@ import java.util.List;
 public class ShareController {
     private final ShareService shareService;
 
-    @GetMapping // 엔드포인트 정의
+    @GetMapping("") // 엔드포인트 정의
     @ApiOperation(value = "사용자 보유 지분 조회", notes = "특정 사용자가 보유한 모든 주식 지분 정보를 조회합니다.")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0", dataType = "int", paramType = "query"),
