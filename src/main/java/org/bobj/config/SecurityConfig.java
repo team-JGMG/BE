@@ -80,43 +80,34 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests(authorize -> authorize
-                        // 인증 불필요한 API들 (가장 먼저 적용)
+                        // 인증 필요한 API (정규 토큰만 접근 가능)
+                        .antMatchers("/api/auth/**").authenticated()
+
+                        // 인증 불필요한 API (토큰 없어도 접근 가능)
                         .antMatchers(
-                                "/", "/error",
-                                "/test",                               // 테스트 API
-                                "/api/auth/login/**",// 로그인 시작 관련 (kakao)
-                                "/api/auth/signup",
-                                "/login/oauth2/code/**",              // 카카오 리다이렉트
+                                "/api/**",                           // 일반 API
+                                "/", "/error",                       // 기본 경로
+                                "/test",                             // 테스트 경로
+                                "/login/oauth2/code/**",             // OAuth2 리다이렉트
                                 "/swagger-ui.html", "/swagger-resources/**",
-                                "/v2/api-docs", "/webjars/**"
+                                "/v2/api-docs", "/v3/api-docs/**", "/webjars/**",
+                                "/swagger-ui/**"                     // Swagger 문서
                         ).permitAll()
 
-                        // 관리자 전용 API
-                        //.antMatchers("/api/admin/**").hasRole("ADMIN")
-                        
-                        // 사용자 정보 관련 (권한별 구분)
-                        .antMatchers("/api/users/me").hasAnyRole("USER", "ADMIN")           // 본인 정보는 모든 인증 사용자
-                        .antMatchers("/api/users/**").hasRole("ADMIN")                      // 타인 정보는 관리자만
-                        
-                        // 인증 필요 API들
-                        .antMatchers(
-                                "/api/auth/oauth/**"              // 로그아웃
-                        ).authenticated()
-
-                        // 그 외 모든 요청은 인증 필요
-                        .anyRequest().authenticated()
+                        // 기타 모든 요청은 거부
+                        .anyRequest().denyAll()
                 )
                 // 인증 실패 시 JSON 응답 반환하도록 설정
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"error\":\"Authentication required\"}");
+                            response.getWriter().write("{\"error\":\"Authentication required\",\"message\":\"Access token required for this endpoint\"}");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"error\":\"Access denied\"}");
+                            response.getWriter().write("{\"error\":\"Access denied\",\"message\":\"Insufficient permissions\"}");
                         })
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -149,17 +140,6 @@ public class SecurityConfig {
         return new CustomOAuth2UserService();
     }
 
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.addAllowedOrigin("http://localhost:8081");
-//        configuration.addAllowedMethod("*");
-//        configuration.addAllowedHeader("*");
-//        configuration.setAllowCredentials(true);
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

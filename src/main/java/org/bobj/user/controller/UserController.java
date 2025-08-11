@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/auth/users")
 @RequiredArgsConstructor
 @Api(tags = "사용자 정보 API")
 public class UserController {
@@ -46,7 +47,7 @@ public class UserController {
             @ApiResponse(code = 401, message = "인증 필요", response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public ResponseEntity<UserResponseDTO> getMyInfo(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<UserResponseDTO> getMyInfo(@ApiIgnore @AuthenticationPrincipal UserPrincipal userPrincipal) {
         // UserPrincipal에서 userId를 가져와 DB에서 전체 사용자 정보 조회
         UserResponseDTO myInfo = userService.findUserInfoById(userPrincipal.getUserId());
         return ResponseEntity.ok(myInfo);

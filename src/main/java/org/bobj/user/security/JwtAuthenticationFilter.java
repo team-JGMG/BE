@@ -182,15 +182,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
          * ================================
 
         if (token == null) {
+            // 토큰이 없는 경우
+            if (path.startsWith("/api/auth/")) {
+                // /api/auth/** 경로는 토큰 필수
+                log.warn("인증 필요한 경로에 토큰 없음: {}", path);
+                sendUnauthorizedResponse(response, "Access token required for this endpoint");
+                return;
+            } else if ("/api/signup".equals(path)) {
+                // /api/signup 경로는 임시토큰 필수
+                log.warn("회원가입 경로에 토큰 없음: {}", path);
+                sendUnauthorizedResponse(response, "Pre-auth token required for signup");
+                return;
+            }
+            // 기타 경로는 토큰 없어도 통과
             filterChain.doFilter(request, response);
             return;
         }
 
         if (jwtTokenProvider.validateToken(token)) {
             // 1. 토큰이 유효한 경우
+            String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
+            
+            // 인증이 필요한 경로에서만 토큰 타입 검증
+            if (path.startsWith("/api/auth/")) {
+                // /api/auth/** 경로는 정규토큰(access)만 허용
+                if (!"access".equals(tokenType)) {
+                    log.warn("인증 필요한 경로에 부적절한 토큰 타입: {} (경로: {})", tokenType, path);
+                    sendUnauthorizedResponse(response, "Access token required for authenticated endpoints");
+                    return;
+                }
+            } else if ("/api/signup".equals(path)) {
+                // /api/signup 경로는 임시토큰(pre-auth)만 허용
+                if (!"pre-auth".equals(tokenType)) {
+                    log.warn("회원가입 경로에 부적절한 토큰 타입: {} (경로: {})", tokenType, path);
+                    sendUnauthorizedResponse(response, "Pre-auth token required for signup");
+                    return;
+                }
+            }
+            // 그외 /api/** 경로는 어떤 토큰이든 허용 (토큰 없이 접근 가능한 곳이므로)
 
             // 1-1. 사전 갱신 체크 (Access Token만 대상)
-            String tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
             if ("access".equals(tokenType) && jwtTokenProvider.shouldPreemptivelyRefresh(token)) {
                 log.info("토큰 만료 임박 - 사전 갱신 시도: {} ({}분 후 만료)",
                     path, jwtTokenProvider.getTokenRemainingMinutes(token));
@@ -213,24 +244,72 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
 
         } else if (jwtTokenProvider.isTokenExpired(token)) {
-            // 2. 토큰이 만료된 경우 - 기존 갱신 로직
-            log.info("토큰 만료 감지 - 강제 갱신 시도: {}", path);
-            String refreshedToken = attemptTokenRefresh(token, request, response);
-            if (refreshedToken != null) {
-                if (handleValidToken(refreshedToken, path, response)) {
+            // 2. 토큰이 만료된 경우
+            String tokenType;
+            try {
+                tokenType = jwtTokenProvider.getClaims(token).get("type", String.class);
+            } catch (Exception e) {
+                // 토큰이 너무 손상되어 타입도 읽을 수 없는 경우
+                if (path.startsWith("/api/auth/") || "/api/signup".equals(path)) {
+                    log.warn("손상된 토큰으로 인증 필요한 경로 접근 시도: {}", path);
+                    sendUnauthorizedResponse(response, "Invalid token format");
+                    return;
+                } else {
+                    // 인증 불필요한 경로는 손상된 토큰 무시하고 통과
+                    log.debug("손상된 토큰이지만 인증 불필요한 경로이므로 통과: {}", path);
                     filterChain.doFilter(request, response);
+                    return;
                 }
-                return;
+            }
+            
+            // 인증이 필요한 경로에서만 만료 토큰 처리
+            if (path.startsWith("/api/auth/") || "/api/signup".equals(path)) {
+                // pre-auth 토큰은 갱신하지 않음 (임시 토큰이므로)
+                if ("pre-auth".equals(tokenType)) {
+                    log.warn("만료된 임시토큰으로 접근 시도: {}", path);
+                    sendUnauthorizedResponse(response, "Pre-auth token expired, please re-authenticate");
+                    return;
+                }
+                
+                // access 토큰만 자동 갱신 시도
+                if ("access".equals(tokenType)) {
+                    log.info("토큰 만료 감지 - 자동 갱신 시도: {}", path);
+                    String refreshedToken = attemptTokenRefresh(token, request, response);
+                    if (refreshedToken != null) {
+                        if (handleValidToken(refreshedToken, path, response)) {
+                            filterChain.doFilter(request, response);
+                        }
+                        return;
+                    } else {
+                        log.warn("토큰 자동 갱신 실패: {}", path);
+                        sendUnauthorizedResponse(response, "Token refresh failed, please re-authenticate");
+                        return;
+                    }
+                } else {
+                    log.warn("알 수 없는 만료된 토큰 타입: {} (경로: {})", tokenType, path);
+                    sendUnauthorizedResponse(response, "Unknown expired token type");
+                    return;
+                }
             } else {
-                log.warn("토큰 자동 갱신 실패: {}", path);
-                sendUnauthorizedResponse(response, "Token refresh failed");
+                // 인증 불필요한 경로는 만료된 토큰 무시하고 통과
+                log.debug("만료된 토큰이지만 인증 불필요한 경로이므로 통과: {}", path);
+                filterChain.doFilter(request, response);
                 return;
             }
         } else {
             // 3. 유효하지 않은 토큰
-            log.warn("유효하지 않은 토큰: {}", path);
-            sendUnauthorizedResponse(response, "Invalid token");
-            return;
+            log.warn("유효하지 않은 토큰으로 접근 시도: {}", path);
+            
+            // 인증이 필요한 경로인지 확인
+            if (path.startsWith("/api/auth/") || "/api/signup".equals(path)) {
+                sendUnauthorizedResponse(response, "Invalid token");
+                return;
+            } else {
+                // 인증이 필요하지 않은 경로는 무효한 토큰 무시하고 통과
+                log.debug("인증 불필요한 경로에서 무효한 토큰 무시: {}", path);
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
         */
 
