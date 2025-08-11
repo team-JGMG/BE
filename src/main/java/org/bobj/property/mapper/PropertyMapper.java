@@ -52,4 +52,9 @@ public interface PropertyMapper {
      * 매물 ID로 법정동 코드 조회
      */
     String findRawdCdByPropertyId(@Param("propertyId") Long propertyId);
+    
+    /**
+     * 매물 ID로 주소만 조회 (S3 의존성 없음)
+     */
+    String findAddressByPropertyId(@Param("propertyId") Long propertyId);
 }
