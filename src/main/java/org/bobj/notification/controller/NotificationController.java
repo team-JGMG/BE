@@ -7,13 +7,15 @@ import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.notification.dto.response.NotificationResponseDTO;
 import org.bobj.notification.service.NotificationService;
+import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/auth/notifications")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags="알림 API")
@@ -33,11 +35,12 @@ public class NotificationController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<List<NotificationResponseDTO>>> getNotifications(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "all") String readStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        // JWT 토큰에서 userId 추출
-        Long userId = getUserIdFromSecurityContext();
+
+        Long userId = principal.getUserId();
 
         List<NotificationResponseDTO> notifications = notificationService.getNotificationsByUserId(userId, readStatus, page, size);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(notifications));
@@ -53,9 +56,10 @@ public class NotificationController {
             @ApiResponse(code = 404, message = "해당 알림을 찾을 수 없음", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<String>> markNotificationAsRead(
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable @ApiParam(value = "알림 ID", required = true) Long notificationId) {
+        Long userId = principal.getUserId();
 
-        Long userId = getUserIdFromSecurityContext();
         notificationService.markNotificationAsRead(userId, notificationId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("알림이 읽음 처리되었습니다."));
     }
@@ -67,16 +71,11 @@ public class NotificationController {
             @ApiResponse(code = 401, message = "인증 실패 (로그인 필요)", response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public ResponseEntity<ApiCommonResponse<String>> markAllNotificationsAsRead() {
-        Long userId = getUserIdFromSecurityContext();
+    public ResponseEntity<ApiCommonResponse<String>> markAllNotificationsAsRead(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Long userId = principal.getUserId();
         notificationService.markAllNotificationsAsRead(userId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("모든 알림이 읽음 처리되었습니다."));
-    }
-
-    // 이 메서드는 실제 구현에 맞춰 변경되어야 합니다.
-    private Long getUserIdFromSecurityContext() {
-        // 실제로는 Spring Security Context, JWT 토큰 등에서 사용자의 ID를 추출하는 로직이 들어갑니다.
-        // 예시를 위해 임시로 1L을 반환합니다.
-        return 1L;
     }
 }
