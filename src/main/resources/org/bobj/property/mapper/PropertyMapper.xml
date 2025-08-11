@@ -264,4 +264,11 @@
         FROM properties
         WHERE property_id = #{propertyId}
     </select>
+
+    <!-- 매물 ID로 주소만 조회 (S3 의존성 없음) -->
+    <select id="findAddressByPropertyId" parameterType="long" resultType="string">
+        SELECT address
+        FROM properties
+        WHERE property_id = #{propertyId}
+    </select>
 </mapper>

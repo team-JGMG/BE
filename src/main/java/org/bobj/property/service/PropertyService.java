@@ -46,10 +46,11 @@ public class PropertyService {
     private final PointService pointService;
 
     private static final int BATCH_SIZE = 1000;
+
     // 매물 승인 + 펀딩 등록 or 거절
     @Transactional
     public void updatePropertyStatus(Long propertyId, String status) {
-        propertyMapper.update(propertyId,status);
+        propertyMapper.update(propertyId, status);
 
         PropertyVO vo = propertyMapper.findByPropertyId(propertyId);
 
@@ -67,7 +68,7 @@ public class PropertyService {
 
             fundingMapper.insertFunding(propertyId);
 
-        }else if ("REJECTED".equalsIgnoreCase(status)) {
+        } else if ("REJECTED".equalsIgnoreCase(status)) {
             // 거절 알림
             String title = "매물이 거절되었어요!";
             String body = "회원님의 매물(" + propertyTitle + ")이 관리자 검토 후 거절되었습니다.";
@@ -83,7 +84,7 @@ public class PropertyService {
                                  List<MultipartFile> photoFiles,
                                  List<PropertyDocumentRequestDTO> documentRequests) {
         PropertyVO vo = dto.toVO();
-        
+
         // 매물 등록 (DB 트랜잭션 내에서 처리)
         propertyMapper.insert(vo);
         Long propertyId = vo.getPropertyId();
@@ -95,7 +96,7 @@ public class PropertyService {
 
         // insert 후 생성된 ID 확인
         log.info("매물 등록 완료 - ID: {}, 제목: {}", vo.getPropertyId(), vo.getTitle());
-        
+
         // 트랜잭션 커밋 후 비동기로 월세 계산 처리
         if (vo.getPropertyId() != null && vo.getRawdCd() != null && !vo.getRawdCd().trim().isEmpty()) {
             // 트랜잭션 외부에서 API 호출 처리
@@ -128,7 +129,7 @@ public class PropertyService {
             }
         }
     }
-    
+
     /**
      * 트랜잭션 외부에서 월세 계산 및 업데이트 처리
      * DB 커넥션 점유 시간을 최소화하기 위해 별도 메서드로 분리
@@ -137,10 +138,10 @@ public class PropertyService {
     public void calculateAndUpdateRentalIncome(Long propertyId, String rawdCd, String address) {
         try {
             log.info("매물 자동 월세 계산 시작 - 매물ID: {}, 법정동코드: {}, 주소: {}", propertyId, rawdCd, address);
-            
+
             // API 호출로 월세 데이터 계산 (시간이 오래 걸릴 수 있음)
             BigDecimal calculatedRentalAmount = rentalIncomeService.getLatestMonthlyRentForProperty(rawdCd, address);
-            
+
             if (calculatedRentalAmount != null) {
                 // 새로운 트랜잭션에서 빠른 업데이트
                 propertyMapper.updateRentalIncome(propertyId, calculatedRentalAmount);
@@ -148,7 +149,7 @@ public class PropertyService {
             } else {
                 log.warn("매물 월세 자동 계산 실패 - 매물ID: {}, 매칭되는 월세 데이터 없음, 기본값 적용 안함", propertyId);
             }
-            
+
         } catch (Exception e) {
             log.error("매물 월세 자동 계산 중 오류 발생 - 매물ID: {}, 오류: {}", propertyId, e.getMessage(), e);
             // 월세 계산 실패해도 매물 등록은 성공으로 처리 (이미 커밋됨)
@@ -159,16 +160,16 @@ public class PropertyService {
     public CustomSlice<PropertyTotalDTO> getAllPropertiesByStatus(String category, int page, int size) {
         int offset = page * size;
 
-        List<PropertyVO> vos = propertyMapper.findTotal(category, offset, size+1);
+        List<PropertyVO> vos = propertyMapper.findTotal(category, offset, size + 1);
         boolean hasNext = vos.size() > size;
-        if(hasNext) {
+        if (hasNext) {
             vos.remove(size);
         }
 
         List<PropertyTotalDTO> dtoList = vos.stream()
                 .map(PropertyTotalDTO::of)
                 .collect(Collectors.toList());
-        return new CustomSlice<>(dtoList,hasNext);
+        return new CustomSlice<>(dtoList, hasNext);
     }
 
     // 유저의 매물 리스트 조회(마이페이지)
@@ -226,7 +227,7 @@ public class PropertyService {
     }
 
     // 매각 처리
-    public void soldProperties(){
+    public void soldProperties() {
         List<FundingSoldResponseDTO> fundings = fundingMapper.findSoldFundingIds();
         if (fundings.isEmpty()) {
             log.info("매각 대상 없음");
@@ -244,12 +245,12 @@ public class PropertyService {
         ExecutorService executor = Executors.newFixedThreadPool(10);
         List<Callable<Void>> tasks = new ArrayList<>();
 
-        for(FundingSoldResponseDTO dto : fundings) {
+        for (FundingSoldResponseDTO dto : fundings) {
             Long fundingId = dto.getFundingId();
             List<ShareVO> shares = shareMapper.findByFundingId(fundingId);
             // 펀딩 등록자와 참여자에게 매각 완료 알림 전송
             sendFundingSoldNotifications(fundingId);
-            for (int i = 0; i < shares.size(); i += BATCH_SIZE){
+            for (int i = 0; i < shares.size(); i += BATCH_SIZE) {
                 List<ShareVO> shareBatch = shares.subList(i, Math.min(i + BATCH_SIZE, shares.size()));
 
                 tasks.add(() -> {
@@ -267,13 +268,13 @@ public class PropertyService {
             }
         }
 
-        try{
+        try {
             List<Future<Void>> futures = executor.invokeAll(tasks);
 
-            for(Future<Void> future: futures){
+            for (Future<Void> future : futures) {
                 future.get();
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             log.error("매각 처리 또는 포인트 환불 중 실패 → 전체 롤백됩니다.", e);
             throw new RuntimeException("펀딩 실패 처리 중 오류", e);
         } finally {
@@ -322,5 +323,71 @@ public class PropertyService {
                 log.error("참여자 대상 매각 알림 전송 실패 - fundingId: {}", fundingId, e);
             }
         }
+    }
+
+    public String getPropertyAddressById(Long propertyId) {
+        log.info("매물 ID로 주소 조회 - 매물ID: {}", propertyId);
+
+        String address = propertyMapper.findAddressByPropertyId(propertyId);
+
+        if (address == null || address.trim().isEmpty()) {
+            log.warn("매물 ID: {}에 해당하는 주소를 찾을 수 없습니다", propertyId);
+            return null;
+        }
+
+        log.info("주소 조회 성공 - 매물ID: {}, 주소: {}", propertyId, address);
+        return address;
+    }
+
+    /**
+     * 펀딩 ID를 통해 매물 주소 조회 (S3 의존성 없음)
+     */
+    public String getPropertyAddressByFundingId(Long fundingId) {
+        log.info("펀딩 ID로 매물 주소 조회 - 펀딩ID: {}", fundingId);
+
+        // 1. 펀딩 ID로 매물 ID 조회
+        Long propertyId = fundingMapper.findPropertyIdByFundingId(fundingId);
+        if (propertyId == null) {
+            log.warn("펀딩 ID: {}에 해당하는 매물을 찾을 수 없습니다", fundingId);
+            return null;
+        }
+
+        log.info("펀딩 ID로 매물 ID 조회 성공 - 펀딩ID: {}, 매물ID: {}", fundingId, propertyId);
+
+        // 2. 매물 ID로 주소 조회
+        String address = propertyMapper.findAddressByPropertyId(propertyId);
+        if (address == null || address.trim().isEmpty()) {
+            log.warn("매물 ID: {}에 해당하는 주소를 찾을 수 없습니다", propertyId);
+            return null;
+        }
+
+        log.info("펀딩 ID로 주소 조회 성공 - 펀딩ID: {}, 매물ID: {}, 주소: {}", fundingId, propertyId, address);
+        return address;
+    }
+
+    /**
+     * 펀딩 ID로 법정동 코드 조회
+     */
+    public String getRawdCdByFundingId(Long fundingId) {
+        log.info("펀딩 ID로 법정동 코드 조회 - 펀딩ID: {}", fundingId);
+
+        // 1. 펀딩 ID로 매물 ID 조회
+        Long propertyId = fundingMapper.findPropertyIdByFundingId(fundingId);
+        if (propertyId == null) {
+            log.warn("펀딩 ID: {}에 해당하는 매물을 찾을 수 없습니다", fundingId);
+            return null;
+        }
+
+        log.info("펀딩 ID로 매물 ID 조회 성공 - 펀딩ID: {}, 매물ID: {}", fundingId, propertyId);
+
+        // 2. 매물 ID로 법정동 코드 조회
+        String rawdCd = propertyMapper.findRawdCdByPropertyId(propertyId);
+        if (rawdCd == null || rawdCd.trim().isEmpty()) {
+            log.warn("매물 ID: {}에 해당하는 법정동 코드를 찾을 수 없습니다", propertyId);
+            return null;
+        }
+
+        log.info("펀딩 ID로 법정동 코드 조회 성공 - 펀딩ID: {}, 매물ID: {}, 법정동코드: {}", fundingId, propertyId, rawdCd);
+        return rawdCd;
     }
 }

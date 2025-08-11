@@ -49,9 +49,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public OrderResponseDTO placeOrder(OrderRequestDTO orderRequestDTO) {
+    public OrderResponseDTO placeOrder(Long userId, OrderRequestDTO orderRequestDTO) {
 
         OrderVO orderVO = orderRequestDTO.toVo();
+
+        orderVO.setUserId(userId);
 
         // 1. 펀딩 상태 확인
 //        String fundingStatus = mapper.findFundingStatusByFundingId(orderBookVO.getFundingId());

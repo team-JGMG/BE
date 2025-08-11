@@ -10,14 +10,16 @@ import org.bobj.order.dto.response.OrderResponseDTO;
 import org.bobj.order.service.OrderService;
 import org.bobj.orderbook.dto.response.OrderBookResponseDTO;
 import org.bobj.orderbook.service.OrderBookService;
+import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/auth/orders")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags = "거래 주문 API")
@@ -39,7 +41,7 @@ public class OrderController {
                     "  \"status\": 400,\n" +
                     "  \"code\": \"OB001\",\n" +
                     "  \"message\": \"펀딩이 종료된 후에만 거래가 가능합니다.\",\n" +
-                    "  \"path\": \"/api/v1/orders\"\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```\n\n" +
                     "```json\n" +
@@ -47,7 +49,7 @@ public class OrderController {
                     "  \"status\": 400,\n" +
                     "  \"code\": \"OB002\",\n" +
                     "  \"message\": \"해당 종목을 보유하고 있지 않습니다.\",\n" +
-                    "  \"path\": \"/api/v1/orders\"\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```\n\n" +
                     "```json\n" +
@@ -55,7 +57,7 @@ public class OrderController {
                     "  \"status\": 400,\n" +
                     "  \"code\": \"OB003\",\n" +
                     "  \"message\": \"보유 주식 수량보다 많은 수량을 매도할 수 없습니다.\",\n" +
-                    "  \"path\": \"/api/v1/orders\"\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```\n\n" +
                     "```json\n" +
@@ -63,7 +65,7 @@ public class OrderController {
                     "  \"status\": 400,\n" +
                     "  \"code\": \"OB004\",\n" +
                     "  \"message\": \"총 발행 주식 수를 초과하는 수량은 매수할 수 없습니다.\",\n" +
-                    "  \"path\": \"/api/v1/orders\"\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```\n\n" +
                     "```json\n" +
@@ -71,7 +73,7 @@ public class OrderController {
                     "  \"status\": 400,\n" +
                     "  \"code\": \"C001\",\n" +
                     "  \"message\": \"잘못된 입력 값입니다.\",\n" +
-                    "  \"path\": \"/api/v1/orders\"\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```",
                     response = ErrorResponse.class),
@@ -82,16 +84,18 @@ public class OrderController {
                     "  \"status\": 409,\n" +
                     "  \"code\": \"OB005\",\n" +
                     "  \"message\": \"이미 체결된 주문입니다.\",\n" +
-                    "  \"path\": \"/api/v1/orders\"\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```",
                     response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<OrderResponseDTO>> placeOrder(
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody @ApiParam(value = "거래 주문 DTO", required = true) OrderRequestDTO dto) {
 
-        OrderResponseDTO created = service.placeOrder(dto);
+        Long userId = principal.getUserId();
+        OrderResponseDTO created = service.placeOrder(userId, dto);
 
         ApiCommonResponse<OrderResponseDTO> response = ApiCommonResponse.createSuccess(created);
 
@@ -110,10 +114,9 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("history/{userId}")
+    @GetMapping("")
     @ApiOperation(value = "거래 주문 내역 조회", notes = "사용자의 거래 주문 내역을 조회합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "userId", value = "조회할 사용자 ID", required = false, dataType = "long", paramType = "path"),
             @ApiImplicitParam(name = "orderType", value = "주문 타입 (BUY, SELL)", required = false, dataType = "string", paramType = "query")
     })
     @ApiResponses(value = {
@@ -123,9 +126,11 @@ public class OrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<List<OrderResponseDTO>>> getOrderHistory(
-            @PathVariable Long userId,
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(value = "orderType", required = false) String orderType
     ) {
+        Long userId = principal.getUserId();
+
         List<OrderResponseDTO> orderHistory = service.getOrderHistoryByUserId(userId, orderType);
 
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(orderHistory));

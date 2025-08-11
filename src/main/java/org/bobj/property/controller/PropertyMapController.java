@@ -90,121 +90,114 @@ public class PropertyMapController {
 //    }
 
     /**
-     * 매물 ID를 이용하여 최근 3개월 실거래가와 좌표 정보를 조회
+     * 펀딩 ID를 이용하여 최근 3개월 실거래가와 좌표 정보를 조회
      *
-     * @param propertyId 매물 ID
+     * @param fundingId 펀딩 ID
      * @return 실거래가와 좌표 정보 목록
      */
-    @GetMapping("/{propertyId}")
-    @ApiOperation(value = "매물 ID 기반 실거래가 위치 정보 조회",
-            notes = "매물 ID를 경로 변수로 받아서 해당 매물의 법정동 코드를 조회한 후, 최근 3개월 실거래가와 좌표 정보를 제공합니다.")
+    @GetMapping("/{fundingId}")
+    @ApiOperation(value = "펀딩 ID 기반 실거래가 위치 정보 조회",
+            notes = "펀딩 ID를 경로 변수로 받아서 해당 펀딩의 매물 법정동 코드를 조회한 후, 최근 3개월 실거래가와 좌표 정보를 제공합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "조회 성공", response = RealEstateLocationDTO.class, responseContainer = "List"),
-            @ApiResponse(code = 400, message = "잘못된 매물 ID 또는 법정동 코드 형식 오류"),
-            @ApiResponse(code = 404, message = "매물을 찾을 수 없거나 법정동 코드가 없음"),
+            @ApiResponse(code = 400, message = "잘못된 펀딩 ID 또는 법정동 코드 형식 오류"),
+            @ApiResponse(code = 404, message = "펀딩 또는 매물을 찾을 수 없거나 법정동 코드가 없음"),
             @ApiResponse(code = 500, message = "서버 내부 오류")
     })
     public ResponseEntity<List<RealEstateLocationDTO>> getRealEstateLocations(
-            @ApiParam(value = "매물 ID", required = true, example = "1")
-            @PathVariable("propertyId") Long propertyId) {
+            @ApiParam(value = "펀딩 ID", required = true, example = "1")
+            @PathVariable("fundingId") Long fundingId) {
 
         try {
-            log.info("최근 3개월 실거래가 위치 정보 요청 - 매물ID: {}", propertyId);
+            log.info("최근 3개월 실거래가 위치 정보 요청 - 펀딩ID: {}", fundingId);
 
             // 입력값 검증
-            if (propertyId == null || propertyId <= 0) {
-                log.warn("잘못된 매물 ID: {}", propertyId);
+            if (fundingId == null || fundingId <= 0) {
+                log.warn("잘못된 펀딩 ID: {}", fundingId);
                 return ResponseEntity.badRequest().build();
             }
 
-            // 매물 ID로 법정동 코드 조회
-            String rawdCd = propertyService.getRawdCdByPropertyId(propertyId);
+            // 펀딩 ID로 법정동 코드 조회
+            String rawdCd = propertyService.getRawdCdByFundingId(fundingId);
 
             if (rawdCd == null || rawdCd.trim().isEmpty()) {
-                log.warn("매물 ID: {}에 해당하는 법정동 코드를 찾을 수 없습니다", propertyId);
+                log.warn("펀딩 ID: {}에 해당하는 법정동 코드를 찾을 수 없습니다", fundingId);
                 return ResponseEntity.notFound().build();
             }
 
             // 법정동코드 형식 검증 (5자리 숫자)
             if (!rawdCd.matches("\\d{5}")) {
-                log.warn("법정동코드 형식 오류 - 매물ID: {}, 법정동코드: {}", propertyId, rawdCd);
+                log.warn("법정동코드 형식 오류 - 펀딩ID: {}, 법정동코드: {}", fundingId, rawdCd);
                 return ResponseEntity.badRequest().build();
             }
 
-            log.info("매물 ID: {}의 법정동 코드: {}", propertyId, rawdCd);
+            log.info("펀딩 ID: {}의 법정동 코드: {}", fundingId, rawdCd);
 
             // 실거래가 위치 정보 조회 (서비스에서 이미 50개로 제한됨)
             List<RealEstateLocationDTO> locations = propertyMapService.getRealEstateLocations(rawdCd);
 
-            log.info("최근 3개월 실거래가 위치 정보 응답 - 매물ID: {}, 법정동코드: {}, 총 {}건",
-                    propertyId, rawdCd, locations.size());
+            log.info("최근 3개월 실거래가 위치 정보 응답 - 펀딩ID: {}, 법정동코드: {}, 총 {}건",
+                    fundingId, rawdCd, locations.size());
 
             return ResponseEntity.ok(locations);
 
         } catch (Exception e) {
-            log.error("최근 3개월 실거래가 위치 정보 조회 중 오류 발생 - 매물ID: {}, 오류: {}", propertyId, e.getMessage(), e);
+            log.error("최근 3개월 실거래가 위치 정보 조회 중 오류 발생 - 펀딩ID: {}, 오류: {}", fundingId, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
 
     /**
-     * 매물 ID를 이용하여 해당 매물의 좌표를 반환하는 API
+     * 펀딩 ID를 이용하여 해당 매물의 좌표를 반환하는 API (S3 독립적)
      *
-     * @param propertyId 매물 ID
+     * @param fundingId 펀딩 ID
      * @return 좌표 정보
      */
-    @GetMapping("/coordinate/{propertyId}")
-    @ApiOperation(value = "매물 ID 기반 좌표 조회",
-            notes = "매물 ID를 경로 변수로 받아서 해당 매물의 주소를 조회한 후, 위도, 경도 좌표로 변환합니다.")
+    @GetMapping("/coordinate/{fundingId}")
+    @ApiOperation(value = "펀딩 ID 기반 좌표 조회",
+            notes = "펀딩 ID를 경로 변수로 받아서 해당 펀딩의 매물 주소를 조회한 후, 위도, 경도 좌표로 변환합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "변환 성공", response = CoordinateDTO.class),
-            @ApiResponse(code = 400, message = "잘못된 매물 ID"),
-            @ApiResponse(code = 404, message = "매물을 찾을 수 없거나 좌표 변환 실패"),
+            @ApiResponse(code = 400, message = "잘못된 펀딩 ID"),
+            @ApiResponse(code = 404, message = "펀딩 또는 매물을 찾을 수 없거나 좌표 변환 실패"),
             @ApiResponse(code = 500, message = "서버 내부 오류")
     })
     public ResponseEntity<CoordinateDTO> getPropertyCoordinate(
-            @ApiParam(value = "매물 ID", required = true, example = "1")
-            @PathVariable("propertyId") Long propertyId) {
+            @ApiParam(value = "펀딩 ID", required = true, example = "1")
+            @PathVariable("fundingId") Long fundingId) {
 
         try {
-            log.info("매물 ID 기반 좌표 조회 요청 - 매물ID: {}", propertyId);
+            log.info("펀딩 ID 기반 좌표 조회 요청 - 펀딩ID: {}", fundingId);
 
             // 입력값 검증
-            if (propertyId == null || propertyId <= 0) {
-                log.warn("잘못된 매물 ID: {}", propertyId);
+            if (fundingId == null || fundingId <= 0) {
+                log.warn("잘못된 펀딩 ID: {}", fundingId);
                 return ResponseEntity.badRequest().build();
             }
 
-            // 매물 정보 조회
-            org.bobj.property.dto.PropertyDetailDTO property = propertyService.getPropertyById(propertyId);
-            if (property == null) {
-                log.warn("매물 ID: {}에 해당하는 매물을 찾을 수 없습니다", propertyId);
-                return ResponseEntity.notFound().build();
-            }
-
-            // 매물 주소 추출
-            String address = property.getAddress();
+            // 펀딩 ID로 매물 주소 조회 (S3 의존성 없음)
+            String address = propertyService.getPropertyAddressByFundingId(fundingId);
             if (address == null || address.trim().isEmpty()) {
-                log.warn("매물 ID: {}의 주소 정보가 없습니다", propertyId);
+                log.warn("펀딩 ID: {}에 해당하는 주소를 찾을 수 없습니다", fundingId);
                 return ResponseEntity.notFound().build();
             }
 
-            log.info("매물 주소 추출 완료 - 매물ID: {}, 주소: {}", propertyId, address);
+            log.info("펀딩 ID로 매물 주소 조회 완료 - 펀딩ID: {}, 주소: {}", fundingId, address);
 
             // 좌표 조회
             CoordinateDTO coordinate = propertyMapService.getCoordinateFromAddress(address);
 
             if (coordinate != null) {
-                log.info("매물 좌표 조회 성공 - 매물ID: {}, 위도: {}, 경도: {}", 
-                        propertyId, coordinate.getLatitude(), coordinate.getLongitude());
+                log.info("펀딩 ID로 매물 좌표 조회 성공 - 펀딩ID: {}, 위도: {}, 경도: {}",
+                        fundingId, coordinate.getLatitude(), coordinate.getLongitude());
                 return ResponseEntity.ok(coordinate);
             } else {
-                log.warn("매물 주소의 좌표를 찾을 수 없음 - 매물ID: {}, 주소: {}", propertyId, address);
+                log.warn("펀딩 ID로 매물 주소의 좌표를 찾을 수 없음 - 펀딩ID: {}, 주소: {}", fundingId, address);
                 return ResponseEntity.notFound().build();
             }
 
         } catch (Exception e) {
-            log.error("매물 좌표 조회 중 오류 발생 - 매물ID: {}, 오류: {}", propertyId, e.getMessage(), e);
+            log.error("펀딩 ID로 매물 좌표 조회 중 오류 발생 - 펀딩ID: {}, 오류: {}", fundingId, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
