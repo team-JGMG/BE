@@ -11,6 +11,7 @@ import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,7 +30,7 @@ public class UserDeviceTokenController {
             @ApiResponse(code = 404, message = "사용자를 찾을 수 없음", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<String>> registerDeviceToken(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody @ApiParam(value = "디바이스 토큰 DTO", required = true) UserDeviceTokenRequestDTO requestDTO
     ) {
         Long userId = principal.getUserId();
