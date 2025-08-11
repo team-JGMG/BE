@@ -297,11 +297,18 @@
       WHERE f.funding_id = #{fundingId}
   </select>
 
-  <select id="getUserIdbyFundingId" resultType="java.lang.Long">
-    SELECT p.user_id
-    FROM fundings f
-           JOIN properties p ON f.property_id = p.property_id
-    WHERE f.funding_id = #{fundingId};
-  </select>
+    <select id="getUserIdbyFundingId" resultType="java.lang.Long">
+        SELECT p.user_id
+        FROM fundings f
+                 JOIN properties p ON f.property_id = p.property_id
+        WHERE f.funding_id = #{fundingId};
+    </select>
+
+    <!-- 펀딩 ID로 매물 ID 조회 -->
+    <select id="findPropertyIdByFundingId" resultType="java.lang.Long">
+        SELECT property_id
+        FROM fundings
+        WHERE funding_id = #{fundingId}
+    </select>
 
 </mapper>
