@@ -72,4 +72,7 @@ public interface FundingMapper {
 
     // 펀딩 현재 금액을 0로 변경
     void updateCurrentAmountToZero(Long fundingId);
+
+    //펀딩 ID로 매물 ID 조회
+    Long findPropertyIdByFundingId(@Param("fundingId") Long fundingId);
 }
