@@ -3,6 +3,7 @@ package org.bobj.config;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,10 +24,20 @@ public class S3Config {
 
     @Bean
     public AmazonS3 amazonS3() {
-        AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-        return AmazonS3ClientBuilder.standard()
-                .withRegion(region)
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .build();
+        if (accessKey != null && !accessKey.isEmpty() &&
+                secretKey != null && !secretKey.isEmpty()) {
+            // 로컬: application.yml 에서 키를 읽어 사용
+            AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+            return AmazonS3ClientBuilder.standard()
+                    .withRegion(region)
+                    .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                    .build();
+        } else {
+            // EC2: IAM Role을 사용 (키 필요 없음)
+            return AmazonS3ClientBuilder.standard()
+                    .withRegion(region)
+                    .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
+                    .build();
+        }
     }
 }
