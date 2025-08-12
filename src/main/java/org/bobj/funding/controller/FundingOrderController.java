@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/funding-order")
+@RequestMapping("/api/auth/funding-order")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags="펀딩 주문 API")
