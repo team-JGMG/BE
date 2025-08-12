@@ -81,7 +81,7 @@ public class PropertyController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(list));
     }
 
-    @GetMapping("/auth/property/user/{userId}")
+    @GetMapping("/auth/property/user")
     @ApiOperation(value = "사용자 매물 목록 조회", notes = "[매도자] 특정 사용자가 등록한 매물 목록을 조회합니다.")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
