@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,7 +52,7 @@ public class NotificationServiceImpl implements NotificationService{
     //특정 알림 읽음 처리
     @Override
     public void markNotificationAsRead(Long userId, Long notificationId) {
-        NotificationVO notification = notificationMapper.findById(notificationId)
+        NotificationVO notification = Optional.ofNullable(notificationMapper.findById(notificationId))
                 .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getUserId().equals(userId)) {
