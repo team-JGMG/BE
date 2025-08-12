@@ -9,8 +9,11 @@ import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.funding.dto.FundingOrderLimitDTO;
 import org.bobj.funding.dto.FundingOrderUserResponseDTO;
 import org.bobj.funding.service.FundingOrderService;
+import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.math.BigDecimal;
 
@@ -25,7 +28,7 @@ public class FundingOrderController {
     @PostMapping
     @ApiOperation(value = "펀딩 주문 생성", notes = "펀딩 ID, 회원 ID, 구매 주식 수 정보를 통해 펀딩 주문을 생성합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "query"),
+            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "fundingId", value = "펀딩 ID", required = true, dataType = "long", paramType = "query"),
             @ApiImplicitParam(name = "shareCount", value = "구매 주식 수", required = true, dataType = "int", paramType = "query")
     })
@@ -35,9 +38,10 @@ public class FundingOrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<Void>> createFundingOrder(
-            @RequestParam Long userId,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam Long fundingId,
             @RequestParam int shareCount) {
+        Long userId = principal.getUserId();
         fundingOrderService.createFundingOrder(userId, fundingId, shareCount);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(null));
     }
@@ -62,10 +66,10 @@ public class FundingOrderController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(null));
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping
     @ApiOperation(value = "사용자의 투자 주문 목록 조회", notes = "주문 ID, Status에 따른 투자 주문 목록을 조회합니다. (무한스크롤 구현)")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "path"),
+            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
     })
@@ -75,10 +79,11 @@ public class FundingOrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<CustomSlice<FundingOrderUserResponseDTO>>> getFundingOrderUsers(
-            @PathVariable @ApiParam(value = "사용자 ID", required = true) Long userId,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ){
+        Long userId = principal.getUserId();
         CustomSlice<FundingOrderUserResponseDTO> response = fundingOrderService.getFundingOrderUsers(userId, page, size);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }
@@ -86,7 +91,7 @@ public class FundingOrderController {
     @GetMapping("/limit")
     @ApiOperation(value = "사용자의 펀딩 주문 가능 정보 조회", notes = "주문 ID, 펀딩 ID에 따른 가능한 펀딩 주문 정보를 조회합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "userId", value = "사용자 ID",required = true, dataType = "long", paramType = "query"),
+            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "fundingId", value = "펀딩 ID",required = true, dataType = "long", paramType = "query")
     })
     @ApiResponses(value = {
@@ -95,9 +100,10 @@ public class FundingOrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<FundingOrderLimitDTO>> getFundingOrderLimit(
-            @RequestParam(defaultValue = "1") Long userId,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "1") Long fundingId
     ){
+        Long userId = principal.getUserId();
         FundingOrderLimitDTO response = fundingOrderService.getFundingOrderLimit(userId, fundingId);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }

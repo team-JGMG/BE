@@ -80,11 +80,12 @@ public class PropertyService {
 
     // 매물 등록
     @Transactional
-    public void registerProperty(PropertyCreateDTO dto,
+    public void registerProperty(Long userId,
+                                 PropertyCreateDTO dto,
                                  List<MultipartFile> photoFiles,
                                  List<PropertyDocumentRequestDTO> documentRequests) {
         PropertyVO vo = dto.toVO();
-
+        vo.setUserId(userId);
         // 매물 등록 (DB 트랜잭션 내에서 처리)
         propertyMapper.insert(vo);
         Long propertyId = vo.getPropertyId();
