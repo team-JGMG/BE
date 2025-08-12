@@ -3,6 +3,7 @@ package org.bobj.property.controller;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.common.crypto.DecryptionResponseAdvice;
 import org.bobj.common.dto.CustomSlice;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
@@ -27,6 +28,7 @@ import java.util.List;
 @Api(tags="매물 API")
 public class PropertyController {
     private final PropertyService propertyService;
+    private final DecryptionResponseAdvice decryptionResponseAdvice;
 
     @PostMapping(
             value = "/auth/property",
@@ -117,7 +119,9 @@ public class PropertyController {
     public ResponseEntity<ApiCommonResponse<PropertyDetailDTO>> getPropertyById(
             @PathVariable @ApiParam(value = "매물 ID", required = true) Long propertyId) {
         PropertyDetailDTO result = propertyService.getPropertyById(propertyId);
-        return ResponseEntity.ok(ApiCommonResponse.createSuccess(result));
+        
+        PropertyDetailDTO decryptedResult = decryptionResponseAdvice.decryptPropertyDetailDTO(result);
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(decryptedResult));
     }
 
     @PatchMapping("/auth/property/{propertyId}/status")
