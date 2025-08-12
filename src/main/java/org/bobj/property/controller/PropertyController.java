@@ -9,10 +9,13 @@ import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.property.domain.PropertyDocumentType;
 import org.bobj.property.dto.*;
 import org.bobj.property.service.PropertyService;
+import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,7 @@ public class PropertyController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<Void>> createProperty(
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestPart("request") PropertyCreateDTO requestDTO,
             @RequestPart(value = "photoFiles", required = false) List<MultipartFile> photoFiles,
             @RequestPart(value = "documentFiles", required = false) List<MultipartFile> documentFiles,
@@ -49,8 +53,8 @@ public class PropertyController {
                 ));
             }
         }
-
-        propertyService.registerProperty(requestDTO, photoFiles, documentRequests);
+        Long userId = principal.getUserId();
+        propertyService.registerProperty(userId,requestDTO, photoFiles, documentRequests);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(null));
     }
 
@@ -78,7 +82,7 @@ public class PropertyController {
     @GetMapping("/auth/property/user/{userId}")
     @ApiOperation(value = "사용자 매물 목록 조회", notes = "[매도자] 특정 사용자가 등록한 매물 목록을 조회합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "userId", value = "사용자 ID", required = true, dataType = "long", paramType = "path"),
+            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "status", value = "매물 상태(pending -> 대기중, approved -> 승인, rejected -> 거절됨, sold -> 매각", defaultValue = "pending" ,dataType = "String", paramType = "query"),
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
@@ -89,11 +93,12 @@ public class PropertyController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<CustomSlice<PropertyUserResponseDTO>>> getUserPropertiesByStatus(
-            @PathVariable @ApiParam(value = "사용자 ID", required = true) Long userId,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
+        Long userId = principal.getUserId();
         CustomSlice<PropertyUserResponseDTO> response =
                 propertyService.getUserPropertiesByStatus(userId, status, page, size);
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
