@@ -11,6 +11,7 @@ import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class NotificationController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<List<NotificationResponseDTO>>> getNotifications(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "all") String readStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -56,7 +57,7 @@ public class NotificationController {
             @ApiResponse(code = 404, message = "해당 알림을 찾을 수 없음", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<String>> markNotificationAsRead(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable @ApiParam(value = "알림 ID", required = true) Long notificationId) {
         Long userId = principal.getUserId();
 
@@ -72,7 +73,7 @@ public class NotificationController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<String>> markAllNotificationsAsRead(
-            @AuthenticationPrincipal UserPrincipal principal
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal
     ) {
         Long userId = principal.getUserId();
         notificationService.markAllNotificationsAsRead(userId);

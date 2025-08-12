@@ -6,16 +6,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.user.domain.UserVO;
+import org.bobj.user.dto.request.LogoutRequestDTO;
 import org.bobj.user.dto.request.UserRegistrationRequestDTO;
 import org.bobj.user.dto.response.AuthResponseDTO;
 import org.bobj.user.dto.response.SimpleResponseDTO;
 import org.bobj.user.security.JwtTokenProvider;
+import org.bobj.user.security.UserPrincipal;
+import org.bobj.user.service.LogoutService;
 import org.bobj.user.service.UserService;
 import org.bobj.user.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +34,8 @@ import java.util.Map;
 @Api(tags = "인증 및 회원가입 API")
 public class AuthController {
     private final UserService userService;
+    private final LogoutService logoutService;
+
     private final JwtTokenProvider jwtTokenProvider;
     private final CookieUtil cookieUtil;
 
@@ -215,13 +222,18 @@ public class AuthController {
                     "```", response = SimpleResponseDTO.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public ResponseEntity<SimpleResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<SimpleResponseDTO> logout(HttpServletRequest request, HttpServletResponse response,
+                                                    @RequestBody LogoutRequestDTO logoutRequestDTO,
+                                                    @ApiIgnore @AuthenticationPrincipal UserPrincipal principal) {
         String token = jwtTokenProvider.resolveToken(request);
+
+        Long userId = principal.getUserId();
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String email = jwtTokenProvider.getUserPk(token);
             // Refresh Token DB에서 제거
-            userService.removeRefreshToken(email);
+//            userService.removeRefreshToken(email);
+            logoutService.processLogout(userId, email, logoutRequestDTO.getDeviceToken());
             log.info("로그아웃 처리 완료: {}", email);
         }
 
