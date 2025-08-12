@@ -163,7 +163,7 @@
           f.status = 'FUNDING'
         </when>
         <when test="category == 'ended'">
-          f.status = 'ENDED'
+          f.status = 'ENDED' AND p.status = 'APPROVED'
         </when>
         <when test="category == 'sold'">
           p.status = 'SOLD'
