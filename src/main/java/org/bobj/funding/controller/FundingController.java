@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @Api(tags="펀딩 API")
 public class FundingController {
     private final FundingService fundingService;
+    private final org.bobj.common.crypto.DecryptionResponseAdvice decryptionResponseAdvice;
 
     @GetMapping("/{fundingId}")
     @ApiOperation(value = "펀딩 상세 조회", notes = "특정 펀딩에 관련된 매물 정보를 조회합니다.")
@@ -35,7 +36,9 @@ public class FundingController {
     public ResponseEntity<ApiCommonResponse<FundingDetailResponseDTO>> getFundingDetail(
             @PathVariable @ApiParam(value = "펀딩 ID", required = true) Long fundingId) {
         FundingDetailResponseDTO detail = fundingService.getFundingDetail(fundingId);
-        return ResponseEntity.ok(ApiCommonResponse.createSuccess(detail));
+        FundingDetailResponseDTO decryptedDetail = decryptionResponseAdvice.decryptFundingDetailResponseDTO(detail);
+
+        return ResponseEntity.ok(ApiCommonResponse.createSuccess(decryptedDetail));
     }
 
     @GetMapping
