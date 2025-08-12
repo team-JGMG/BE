@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -246,7 +247,7 @@ public class AllocationService {
 
 
             // 3. 배당금 알림 전송
-            sendAllocationNotifications(allocation.getFundingId(), userIdsForNotification);
+            sendAllocationNotifications(allocation.getFundingId(), allocation.getDividendPerShare(), userIdsForNotification);
 
             // 4. 실제 지급액과 예상 지급액 비교 검증
             if (totalPaidAmount.compareTo(allocation.getTotalDividendAmount()) != 0) {
@@ -261,17 +262,19 @@ public class AllocationService {
     }
 
    // 배당금 지급 완료 알림
-    private void sendAllocationNotifications(Long fundingId, List<Long> userIdsForNotification) {
+    private void sendAllocationNotifications(Long fundingId, BigDecimal dividendPerShare, List<Long> userIdsForNotification) {
         if (userIdsForNotification.isEmpty()) {
             return;
         }
 
+        String propertyTitle = fundingMapper.getPropertyTitleByFundingId(fundingId);
+
+        String title = "배당금 지급 안내!";
+        String body = "'" + propertyTitle + "'배당금이 지급이 처리되었습니다. 주당 배당금은 "
+                + dividendPerShare.setScale(0, RoundingMode.HALF_UP)
+                + "원입니다. 포인트 입금까지 약간의 시간이 소요될 수 있습니다. 포인트 내역을 확인해 주세요.";
+
         try {
-            String propertyTitle = fundingMapper.getPropertyTitleByFundingId(fundingId);
-
-            String title = "배당금 지급 완료!";
-            String body = "'" + propertyTitle + "' 배당금이 지급되었습니다. 포인트 내역을 확인해 주세요.";
-
             // 배치 전송 + 일괄 DB 저장
             notificationService.sendBatchNotificationsAndSave(userIdsForNotification, title, body);
 
