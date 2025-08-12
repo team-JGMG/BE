@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -91,7 +92,7 @@ public class OrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<OrderResponseDTO>> placeOrder(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody @ApiParam(value = "거래 주문 DTO", required = true) OrderRequestDTO dto) {
 
         Long userId = principal.getUserId();
@@ -126,7 +127,7 @@ public class OrderController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<ApiCommonResponse<List<OrderResponseDTO>>> getOrderHistory(
-            @AuthenticationPrincipal UserPrincipal principal,
+            @ApiIgnore @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(value = "orderType", required = false) String orderType
     ) {
         Long userId = principal.getUserId();

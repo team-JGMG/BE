@@ -6,16 +6,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.user.domain.UserVO;
+import org.bobj.user.dto.request.LogoutRequestDTO;
 import org.bobj.user.dto.request.UserRegistrationRequestDTO;
 import org.bobj.user.dto.response.AuthResponseDTO;
 import org.bobj.user.dto.response.SimpleResponseDTO;
 import org.bobj.user.security.JwtTokenProvider;
+import org.bobj.user.security.UserPrincipal;
+import org.bobj.user.service.LogoutService;
 import org.bobj.user.service.UserService;
 import org.bobj.user.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,11 +29,13 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Api(tags = "인증 및 회원가입 API")
 public class AuthController {
     private final UserService userService;
+    private final LogoutService logoutService;
+
     private final JwtTokenProvider jwtTokenProvider;
     private final CookieUtil cookieUtil;
 
@@ -201,7 +208,7 @@ public class AuthController {
     /**
      * 로그아웃 - 쿠키 삭제 및 Refresh Token DB에서 제거
      */
-    @PostMapping("/oauth/logout")
+    @PostMapping("/auth/logout")
     @ApiOperation(value = "로그아웃", notes = "액세스 토큰 쿠키 삭제 및 리프레시 토큰을 DB에서 제거합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "로그아웃 성공\n\n" +
@@ -215,13 +222,18 @@ public class AuthController {
                     "```", response = SimpleResponseDTO.class),
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
-    public ResponseEntity<SimpleResponseDTO> logout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<SimpleResponseDTO> logout(HttpServletRequest request, HttpServletResponse response,
+                                                    @RequestBody LogoutRequestDTO logoutRequestDTO,
+                                                    @ApiIgnore @AuthenticationPrincipal UserPrincipal principal) {
         String token = jwtTokenProvider.resolveToken(request);
+
+        Long userId = principal.getUserId();
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String email = jwtTokenProvider.getUserPk(token);
             // Refresh Token DB에서 제거
-            userService.removeRefreshToken(email);
+//            userService.removeRefreshToken(email);
+            logoutService.processLogout(userId, email, logoutRequestDTO.getDeviceToken());
             log.info("로그아웃 처리 완료: {}", email);
         }
 
@@ -235,7 +247,7 @@ public class AuthController {
      * Access Token 재발급
      * 클라이언트는 만료된 Access Token만 보내고, 서버에서 DB의 Refresh Token으로 갱신
      */
-    @PostMapping("/oauth/token-refresh")
+    @PostMapping("/auth/token-refresh")
     @ApiOperation(value = "액세스 토큰 갱신", notes = "만료된 액세스 토큰을 새로운 토큰으로 갱신합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "토큰 갱신 성공\n\n" +

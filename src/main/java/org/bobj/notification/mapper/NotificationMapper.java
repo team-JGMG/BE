@@ -12,7 +12,7 @@ public interface NotificationMapper {
     void registerNotification(NotificationVO notification);
 
     //ID로 특정 알림을 조회
-    Optional<NotificationVO> findById(@Param("notificationId") Long notificationId);
+    NotificationVO findById(@Param("notificationId") Long notificationId);
 
     // 사용자의 알림 목록을 페이징하여 조회
     List<NotificationVO> findNotificationsByUserId(

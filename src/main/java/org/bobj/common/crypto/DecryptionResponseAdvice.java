@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
@@ -20,8 +21,7 @@ import java.util.stream.Collectors;
 /**
  * 🔓 API 응답 자동 복호화 처리기
  * 
- * 모든 REST API 응답에서 암호화된 개인정보를 자동으로 복호화합니다.
- * 
+ * 모든 REST API 응답에서 암호화된 개인정보를 자동으로 복호화합니다.*
  * 지원하는 복호화 대상:
  * - UserResponseDTO: 이름, 전화번호, 계좌번호, 은행코드
  * - SellerDTO: 판매자 이름, 전화번호  
@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
  * @since 2025-01-01
  */
 @RestControllerAdvice
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class DecryptionResponseAdvice implements ResponseBodyAdvice<Object> {
@@ -126,6 +127,10 @@ public class DecryptionResponseAdvice implements ResponseBodyAdvice<Object> {
         
         if (obj instanceof PropertyDetailDTO) {
             return decryptPropertyDetailDTO((PropertyDetailDTO) obj);
+        }
+        
+        if (obj instanceof org.bobj.funding.dto.FundingDetailResponseDTO) {
+            return decryptFundingDetailResponseDTO((org.bobj.funding.dto.FundingDetailResponseDTO) obj);
         }
         
         // PropertyTotalDTO는 seller 정보가 없으므로 복호화 불필요
@@ -249,9 +254,68 @@ public class DecryptionResponseAdvice implements ResponseBodyAdvice<Object> {
     }
 
     /**
-     * 매물 상세 DTO 복호화 (포함된 판매자 정보만 복호화)
+     * 펀딩 상세 DTO 복호화 (포함된 SellerDTO만 복호화)
+     * Legacy 환경에서 Controller가 직접 호출할 수 있도록 public으로 제공
      */
-    private PropertyDetailDTO decryptPropertyDetailDTO(PropertyDetailDTO dto) {
+    public org.bobj.funding.dto.FundingDetailResponseDTO decryptFundingDetailResponseDTO(org.bobj.funding.dto.FundingDetailResponseDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        
+        try {
+            // 판매자 정보가 있으면 복호화
+            SellerDTO originalSeller = dto.getSeller();
+            SellerDTO decryptedSeller = decryptSellerDTO(originalSeller);
+            
+            // 복호화가 필요한 경우에만 새 객체 생성
+            if (decryptedSeller != originalSeller) {
+                org.bobj.funding.dto.FundingDetailResponseDTO decrypted = org.bobj.funding.dto.FundingDetailResponseDTO.builder()
+                    .fundingId(dto.getFundingId())
+                    .propertyId(dto.getPropertyId())
+                    .title(dto.getTitle())
+                    .address(dto.getAddress())
+                    .targetAmount(dto.getTargetAmount())
+                    .fundingRate(dto.getFundingRate())
+                    .currentAmount(dto.getCurrentAmount())
+                    .fundingEndDate(dto.getFundingEndDate())
+                    .daysLeft(dto.getDaysLeft())
+                    .currentShareAmount(dto.getCurrentShareAmount())
+                    .usageDistrict(dto.getUsageDistrict())
+                    .landArea(dto.getLandArea())
+                    .buildingArea(dto.getBuildingArea())
+                    .totalFloorAreaProperty(dto.getTotalFloorAreaProperty())
+                    .totalFloorAreaBuilding(dto.getTotalFloorAreaBuilding())
+                    .basementFloors(dto.getBasementFloors())
+                    .groundFloors(dto.getGroundFloors())
+                    .approvalDate(dto.getApprovalDate())
+                    .officialLandPrice(dto.getOfficialLandPrice())
+                    .unitPricePerPyeong(dto.getUnitPricePerPyeong())
+                    .description(dto.getDescription())
+                    .expectedDividendPerShare(dto.getExpectedDividendPerShare())
+                    .photos(dto.getPhotos())
+                    .seller(decryptedSeller)  // 복호화된 판매자 정보
+                    .createdAt(dto.getCreatedAt())
+                    .tags(dto.getTags())
+                    .build();
+
+                return decrypted;
+            }
+            
+            // 복호화가 필요없는 경우 원본 반환
+            return dto;
+            
+        } catch (Exception e) {
+            log.warn("⚠️ FundingDetailResponseDTO 복호화 실패 - 원본 반환: fundingId={}, error={}", 
+                dto.getFundingId(), e.getMessage());
+            return dto;
+        }
+    }
+
+    /**
+     * 매물 상세 DTO 복호화 (포함된 판매자 정보만 복호화)
+     * Legacy 환경에서 Controller가 직접 호출할 수 있도록 public으로 제공
+     */
+    public PropertyDetailDTO decryptPropertyDetailDTO(PropertyDetailDTO dto) {
         if (dto == null) {
             return null;
         }
@@ -296,7 +360,6 @@ public class DecryptionResponseAdvice implements ResponseBodyAdvice<Object> {
                     .tags(dto.getTags())
                     .build();
 
-                log.info("🔓 PropertyDetailDTO 복호화 완료 - propertyId: {}", dto.getPropertyId());
                 return decrypted;
             }
             
@@ -308,6 +371,15 @@ public class DecryptionResponseAdvice implements ResponseBodyAdvice<Object> {
                 dto.getPropertyId(), e.getMessage());
             return dto;
         }
+    }
+
+    /**
+     * SellerDTO 수동 복호화 (Legacy 환경용 public 메서드)
+     */
+    public SellerDTO decryptSellerDTOManual(SellerDTO dto) {
+        SellerDTO result = decryptSellerDTO(dto);
+        log.debug("🔧 SellerDTO 수동 복호화 호출됨");
+        return result;
     }
 
     /**

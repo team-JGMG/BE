@@ -17,8 +17,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PropertyCreateDTO {
-    @ApiModelProperty(value = "판매자(유저) ID", example = "1")
-    private Long userId;
     @ApiModelProperty(value = "매물 제목", example = "강남 오피스텔 매물")
     private String title;
     @ApiModelProperty(value = "주소", example = "서울 강남구 테헤란로 123")
@@ -80,7 +78,6 @@ public class PropertyCreateDTO {
 
     public static PropertyCreateDTO of(PropertyVO vo){
         return PropertyCreateDTO.builder()
-                .userId(vo.getUserId())
                 .title(vo.getTitle())
                 .address(vo.getAddress())
                 .area(vo.getArea())
@@ -109,7 +106,6 @@ public class PropertyCreateDTO {
 
     public PropertyVO toVO() {
         return PropertyVO.builder()
-                .userId(userId)
                 .title(title)
                 .address(address)
                 .area(area)
