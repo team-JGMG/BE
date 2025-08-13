@@ -194,14 +194,18 @@
              FROM property_photos
              WHERE property_id = p.property_id
              ORDER BY created_at ASC
-             LIMIT 1) AS thumbnail_url
+             LIMIT 1) AS thumbnail_url,
+            f.funding_id
         FROM properties p
+        LEFT JOIN fundings f
+            ON f.property_id = p.property_id
         WHERE p.status = 'SOLD'
         ORDER BY p.sold_at DESC
     </select>
 
     <resultMap id="PropertySoldMap" type="org.bobj.property.dto.PropertySoldResponseDTO">
         <id property="propertyId" column="property_id"/>
+        <id property="fundingId" column="funding_id"/>
         <result property="title" column="title"/>
         <result property="cumulativeReturn" column="cumulative_return"/>
         <association property="thumbnail" javaType="org.bobj.property.dto.PhotoDTO">

@@ -16,9 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
-/**
- * 부동산 지도 관련 API를 제공하는 컨트롤러
- */
+//부동산 지도 관련 API를 제공하는 컨트롤러
 @Slf4j
 @RestController
 @RequestMapping("/api/property/map")
@@ -35,12 +33,9 @@ public class PropertyMapController {
         this.propertyService = propertyService;
     }
 
-    /**
-     * 펀딩 ID를 이용하여 최근 3개월 실거래가와 좌표 정보를 조회
-     *
-     * @param fundingId 펀딩 ID
-     * @return 실거래가와 좌표 정보 목록
-     */
+
+     //펀딩 ID를 이용하여 최근 3개월 실거래가와 좌표 정보를 조회
+
     @GetMapping("/{fundingId}")
     @ApiOperation(value = "펀딩 ID 기반 실거래가 위치 정보 조회",
             notes = "펀딩 ID를 경로 변수로 받아서 해당 펀딩의 매물 법정동 코드를 조회한 후, 최근 3개월 실거래가와 좌표 정보를 제공합니다.")
@@ -93,12 +88,6 @@ public class PropertyMapController {
         }
     }
 
-    /**
-     * 펀딩 ID를 이용하여 해당 매물의 좌표를 반환하는 API (S3 독립적)
-     *
-     * @param fundingId 펀딩 ID
-     * @return 좌표 정보
-     */
     @GetMapping("/coordinate/{fundingId}")
     @ApiOperation(value = "펀딩 ID 기반 좌표 조회",
             notes = "펀딩 ID를 경로 변수로 받아서 해당 펀딩의 매물 주소를 조회한 후, 위도, 경도 좌표로 변환합니다.")
@@ -148,12 +137,7 @@ public class PropertyMapController {
         }
     }
 
-    /**
-     * 주소를 직접 받아서 좌표를 반환하는 API
-     *
-     * @param address 주소
-     * @return 좌표 정보
-     */
+    //주소를 직접 받아서 좌표를 반환하는 API
     @PostMapping("/coordinate")
     @ApiOperation(value = "주소 기반 좌표 변환",
             notes = "주소를 직접 받아서 위도, 경도 좌표로 변환합니다.")
@@ -202,11 +186,8 @@ public class PropertyMapController {
         }
     }
 
-    /**
-     * 헬스체크 엔드포인트
-     *
-     * @return 상태 정보
-     */
+
+     //헬스체크 엔드포인
     @GetMapping("/health")
     @ApiOperation(value = "헬스체크", notes = "API 서버 상태를 확인합니다.")
     @ApiResponses(value = {
