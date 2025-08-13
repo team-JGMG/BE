@@ -21,4 +21,6 @@ public class PropertySoldResponseDTO {
     private String title;
     @ApiModelProperty("누적 수익률")
     private BigDecimal cumulativeReturn;
+    @ApiModelProperty("펀딩 ID")
+    private Long fundingId;
 }
