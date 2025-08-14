@@ -7,9 +7,7 @@ import lombok.AllArgsConstructor;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-/**
- * 부동산 실거래가 데이터를 담는 DTO (XML 파싱용)
- */
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -31,5 +29,10 @@ public class RealEstateTransactionDTO {
     
     @JacksonXmlProperty(localName = "estateAgentSggNm")
     private String estateAgentSggNm;  // 실제 행정구역 (예: "서울 종로구")
+
+    //반경 필터링을 위한 추가 필드
+    private Double latitude;              // 위도 (PropertyMapService에서 계산)
+    private Double longitude;             // 경도 (PropertyMapService에서 계산)
+    private Double distanceFromProperty;  // 매물로부터의 거리 (km, 필터링 시 계산)
 
 }
