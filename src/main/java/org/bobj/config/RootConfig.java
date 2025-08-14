@@ -47,11 +47,12 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "org.bobj.allocation.mapper",
 })
 @ComponentScan(basePackages = "org.bobj")
-@EnableTransactionManagement
+@EnableTransactionManagement(proxyTargetClass = true)
 @Import({
         AppConfig.class,
         OAuth2ClientConfig.class,
-        S3Config.class
+        S3Config.class,
+        RedisConfig.class
 })
 @EnableScheduling
 

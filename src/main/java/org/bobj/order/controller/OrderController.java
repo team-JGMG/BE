@@ -102,15 +102,6 @@ public class OrderController {
 
         //소켓 메세지 pub
         publishOrderBookUpdate(created.getFundingId());
-//        try {
-//            OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(created.getFundingId());
-//            String destination = "/topic/order-book/" + created.getFundingId();
-//
-//            messagingTemplate.convertAndSend(destination, orderBook);
-//            log.info("Order book update published to topic {}: {}", destination, orderBook);
-//        } catch (Exception e) {
-//            log.error("Failed to publish order book update for fundingId {}: {}", created.getFundingId(), e.getMessage(), e);
-//        }
 
         return ResponseEntity.ok(response);
     }
@@ -152,15 +143,6 @@ public class OrderController {
     public ResponseEntity<ApiCommonResponse<String>> cancelOrder(@PathVariable Long orderId) {
         Long fundingId = service.cancelOrder(orderId);
 
-//        try {
-//            OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(fundingId);
-//            String destination = "/topic/order-book/" + fundingId;
-//
-//            messagingTemplate.convertAndSend(destination, orderBook);
-//            log.info("Order book update published to topic {}: {}", destination, orderBook);
-//        } catch (Exception e) {
-//            log.error("Failed to publish order book update for fundingId {}: {}", fundingId, e.getMessage(), e);
-//        }
         //소켓 메세지 pub
         publishOrderBookUpdate(fundingId);
 
