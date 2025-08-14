@@ -28,7 +28,6 @@ public class FundingOrderController {
     @PostMapping
     @ApiOperation(value = "펀딩 주문 생성", notes = "펀딩 ID, 회원 ID, 구매 주식 수 정보를 통해 펀딩 주문을 생성합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "fundingId", value = "펀딩 ID", required = true, dataType = "long", paramType = "query"),
             @ApiImplicitParam(name = "shareCount", value = "구매 주식 수", required = true, dataType = "int", paramType = "query")
     })
@@ -69,7 +68,6 @@ public class FundingOrderController {
     @GetMapping
     @ApiOperation(value = "사용자의 투자 주문 목록 조회", notes = "주문 ID, Status에 따른 투자 주문 목록을 조회합니다. (무한스크롤 구현)")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
     })
@@ -91,7 +89,6 @@ public class FundingOrderController {
     @GetMapping("/limit")
     @ApiOperation(value = "사용자의 펀딩 주문 가능 정보 조회", notes = "주문 ID, 펀딩 ID에 따른 가능한 펀딩 주문 정보를 조회합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "fundingId", value = "펀딩 ID",required = true, dataType = "long", paramType = "query")
     })
     @ApiResponses(value = {
