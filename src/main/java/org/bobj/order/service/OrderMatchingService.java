@@ -8,6 +8,7 @@ import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderType;
 import org.bobj.order.mapper.OrderMapper;
 import org.bobj.orderbook.service.OrderBookService;
+import org.bobj.point.domain.PointTransactionType;
 import org.bobj.point.domain.PointVO;
 import org.bobj.point.service.PointService;
 import org.bobj.share.domain.ShareVO;
@@ -210,6 +211,7 @@ public class OrderMatchingService {
             // SHARES 테이블 업데이트
             shareMapper.update(existingShare.getShareId(), newShareCount, newAverageAmount);
         }
+        pointService.appendTransactionByUserId(userId, PointTransactionType.INVEST, totalTradeCost);
     }
 
     // 매도자 포인트 업데이트
@@ -241,6 +243,7 @@ public class OrderMatchingService {
             // 일부 주식을 매도한 경우: 수량만 감소 (평균 단가는 매도 시 변하지 않음)
             shareMapper.update(existingShare.getShareId(), newShareCount, existingShare.getAverageAmount());
         }
+        pointService.appendTransactionByUserId(userId, PointTransactionType.TRADE_SALE, totalTradeRevenue);
     }
 
 }
