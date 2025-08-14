@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * 브이월드(VWorld) API를 호출하여 주소를 좌표로 변환하는 서비스
- */
+
 @Slf4j
 @Service
 public class VWorldLocalApiService {
@@ -31,11 +29,7 @@ public class VWorldLocalApiService {
         this.objectMapper = new ObjectMapper();
     }
     
-    /**
-     * 주소를 좌표로 변환 (여러 형태로 시도)
-     * @param address 변환할 주소
-     * @return 좌표 정보
-     */
+
     public CoordinateDTO getCoordinateFromAddress(String address) {
         try {
             // 빈 주소 검증
@@ -44,7 +38,7 @@ public class VWorldLocalApiService {
                 return null;
             }
             
-            log.info("브이월드 API 주소 검색 요청: {}", address);
+            log.debug("브이월드 API 주소 검색 요청: {}", address);
             
             // API 키 존재 여부 확인
             if (vworldApiKey == null || vworldApiKey.trim().isEmpty() || "YOUR_VWORLD_API_KEY".equals(vworldApiKey)) {
@@ -55,15 +49,15 @@ public class VWorldLocalApiService {
             // 여러 주소 형태로 시도
             CoordinateDTO result = null;
             
-            // 1. 원본 주소로 지번 검색
+            //원본 주소로 지번 검색
             result = tryGeocoding(address, "parcel");
             if (result != null) return result;
             
-            // 2. 원본 주소로 도로명 검색  
+            //원본 주소로 도로명 검색
             result = tryGeocoding(address, "road");
             if (result != null) return result;
             
-            // 3. "번지" 추가해서 지번 검색
+            //"번지" 추가해서 지번 검색
             String addressWithBeonji = address.replaceAll("(\\d+)$", "$1번지");
             if (!addressWithBeonji.equals(address)) {
                 log.debug("번지 추가 시도: {}", addressWithBeonji);
@@ -71,7 +65,7 @@ public class VWorldLocalApiService {
                 if (result != null) return result;
             }
             
-            // 4. 동명만으로 검색 (예: "창신동")
+            //동명만으로 검색 (예: "창신동")
             String dongOnly = extractDong(address);
             if (dongOnly != null) {
                 log.debug("동명만으로 시도: {}", dongOnly);
@@ -88,9 +82,40 @@ public class VWorldLocalApiService {
         }
     }
     
-    /**
-     * 실제 지오코딩 API 호출
-     */
+    //주소를 좌표로 변환
+    public CoordinateDTO getCoordinateFromAddressWithType(String address, String type) {
+        try {
+            // 빈 주소 검증
+            if (address == null || address.trim().isEmpty()) {
+                log.warn("빈 주소로 인해 브이월드 API 호출 생략");
+                return null;
+            }
+            
+            log.debug("브이월드 API 주소 검색 요청 ({}): {}", type, address);
+            
+            // API 키 존재 여부 확인
+            if (vworldApiKey == null || vworldApiKey.trim().isEmpty() || "YOUR_VWORLD_API_KEY".equals(vworldApiKey)) {
+                log.error("브이월드 API 키가 설정되지 않았습니다!");
+                return null;
+            }
+
+            // 지정된 타입으로만 시도
+            CoordinateDTO result = tryGeocoding(address, type);
+            if (result != null) {
+                return result;
+            }
+            
+            log.debug("브이월드 API에서 주소를 찾을 수 없음 ({}): {}", type, address);
+            return null;
+            
+        } catch (Exception e) {
+            log.error("브이월드 API 호출 중 오류 발생 ({}): {}", type, e.getMessage(), e);
+            return null;
+        }
+    }
+    
+
+    //실제 지오코딩 API 호출
     private CoordinateDTO tryGeocoding(String address, String type) {
         try {
             // URL 생성
@@ -157,9 +182,8 @@ public class VWorldLocalApiService {
         }
     }
     
-    /**
-     * 주소에서 동명 추출
-     */
+
+    //주소에서 동명 추출
     private String extractDong(String address) {
         try {
             // "서울특별시 중구 창신동 703" -> "서울특별시 중구 창신동"
@@ -172,11 +196,7 @@ public class VWorldLocalApiService {
         }
     }
     
-    /**
-     * 여러 주소를 한번에 좌표로 변환
-     * @param addresses 변환할 주소 목록
-     * @return 좌표 정보 목록
-     */
+
     public java.util.List<CoordinateDTO> getCoordinatesFromAddresses(java.util.List<String> addresses) {
         return addresses.stream()
                 .map(this::getCoordinateFromAddress)
