@@ -84,7 +84,6 @@ public class PropertyController {
     @GetMapping("/auth/property/user")
     @ApiOperation(value = "사용자 매물 목록 조회", notes = "[매도자] 특정 사용자가 등록한 매물 목록을 조회합니다.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "Authorization", value = "Bearer 토큰", required = true, dataTypeClass = String.class, paramType = "header"),
             @ApiImplicitParam(name = "status", value = "매물 상태(pending -> 대기중, approved -> 승인, rejected -> 거절됨, sold -> 매각", defaultValue = "pending" ,dataType = "String", paramType = "query"),
             @ApiImplicitParam(name = "page", value = "페이지 번호 (0부터 시작)", defaultValue = "0" ,dataType = "int", paramType = "query"),
             @ApiImplicitParam(name = "size", value = "한 페이지당 항목 수", defaultValue = "10", dataType = "int", paramType = "query")
