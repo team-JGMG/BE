@@ -2,8 +2,10 @@ package org.bobj.fcm.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.Lists;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,6 +20,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -66,22 +69,46 @@ public class FcmServiceImpl implements FcmService{
     }
 
     // Firebase Admin SDK의 비공개 키를 참조하여 Bearer 토큰을 발급 받는다.
+//    private String getAccessToken() throws IOException {
+//        final String firebaseConfigPath = "firebase/serviceAccountKey.json";
+//
+//        try {
+//            final GoogleCredentials googleCredentials = GoogleCredentials
+//                    .fromStream(new ClassPathResource(firebaseConfigPath).getInputStream())
+//                    .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+//
+//            googleCredentials.refreshIfExpired();
+//            log.info("access token: {}",googleCredentials.getAccessToken());
+//            return googleCredentials.getAccessToken().getTokenValue();
+//
+//        } catch (IOException e) {
+//            throw new IOException("Failed to get Google Access Token", e);
+//        }
+//    }
+
     private String getAccessToken() throws IOException {
-        final String firebaseConfigPath = "firebase/serviceAccountKey.json";
+        String path = System.getenv("FIREBASE_CONFIG_PATH");
+        if (path == null || path.isBlank()) {
+            throw new IllegalStateException("FIREBASE_CONFIG_PATH is not set or empty");
+        }
 
-        try {
-            final GoogleCredentials googleCredentials = GoogleCredentials
-                    .fromStream(new ClassPathResource(firebaseConfigPath).getInputStream())
-                    .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+        try (FileInputStream serviceAccountStream = new FileInputStream(path)) {
+            GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccountStream)
+                    .createScoped(List.of("https://www.googleapis.com/auth/firebase.messaging"));
 
-            googleCredentials.refreshIfExpired();
-            log.info("access token: {}",googleCredentials.getAccessToken());
-            return googleCredentials.getAccessToken().getTokenValue();
+            credentials.refreshIfExpired();
+            AccessToken token = credentials.getAccessToken();
+            if (token == null) {
+                credentials.refresh();
+                token = credentials.getAccessToken();
+            }
 
-        } catch (IOException e) {
-            throw new IOException("Failed to get Google Access Token", e);
+            log.info("[FCM] Access token issued via ENV path: {}", path);
+            return token.getTokenValue();
         }
     }
+
+
 
     @Override
     public void sendMulticast(List<String> tokens, String title, String body) {
@@ -125,3 +152,4 @@ public class FcmServiceImpl implements FcmService{
 
 
 }
+
