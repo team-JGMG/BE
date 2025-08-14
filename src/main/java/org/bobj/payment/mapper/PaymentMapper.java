@@ -14,4 +14,6 @@ public interface PaymentMapper {
 
     PaymentVO findByImpUid(@Param("impUid") String impUid);
 
+    void update(PaymentVO vo);
+
 }

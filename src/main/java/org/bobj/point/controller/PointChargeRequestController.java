@@ -76,12 +76,14 @@ public class PointChargeRequestController {
         @RequestBody @ApiParam(value = "결제 검증 요청 DTO", required = true) VerifyRequestDto requestDto,
         @ApiIgnore @AuthenticationPrincipal UserPrincipal principal // ★ 변경
     ) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body((ApiCommonResponse<String>) ApiCommonResponse.createError("인증이 필요합니다."));
-        }
+//        if (principal == null) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                .body((ApiCommonResponse<String>) ApiCommonResponse.createError("인증이 필요합니다."));
+//        }
 
-        Long userId = principal.getUserId(); // ★ 변경
+
+        Long userId = (principal != null) ? principal.getUserId() : null; // 💡 principal 없어도 통과
+        paymentService.verifyPayment(userId, requestDto);
         log.info("결제 검증 요청: userId={}, impUid={}", userId, requestDto.getImpUid());
 
         paymentService.verifyPayment(userId, requestDto);

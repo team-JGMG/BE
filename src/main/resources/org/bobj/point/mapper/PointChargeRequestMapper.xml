@@ -22,17 +22,38 @@
   </insert>
 
 
-  <select id="findByMerchantUid" parameterType="String" resultType="PointChargeRequestVO">
-    SELECT *
+  <select id="findByMerchantUid" parameterType="string"
+    resultType="org.bobj.point.domain.PointChargeRequestVO">
+    SELECT
+      id,
+      user_id     AS userId,
+      amount,
+      merchant_uid AS merchantUid,
+      imp_uid     AS impUid,
+      status,
+      created_at  AS createdAt,
+      paid_at     AS paidAt
     FROM point_charge_request
-    where merchant_uid = #{merchantUid}
+    WHERE merchant_uid = #{merchantUid}
+      LIMIT 1
   </select>
 
-  <update id="updateStatusAndImpUid" parameterType="PointChargeRequestVO">
+
+  <update id="updateStatusAndImpUid"
+    parameterType="org.bobj.point.domain.PointChargeRequestVO">
     UPDATE point_charge_request
-    SET status = #{status},
-      imp_uid = #{impUid},
-      paid_at = NOW()
+    SET status  = 'PAID',
+        imp_uid = #{impUid},
+        paid_at = #{paidAt, jdbcType=TIMESTAMP}
+    WHERE merchant_uid = #{merchantUid}
+  </update>
+
+
+
+  <!--  취소 상태로 변경 -->
+  <update id="updateStatusToCancelled" parameterType="string">
+    UPDATE point_charge_request
+    SET status = 'CANCELLED'
     WHERE merchant_uid = #{merchantUid}
   </update>
 
