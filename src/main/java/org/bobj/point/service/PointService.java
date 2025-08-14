@@ -269,4 +269,27 @@ public class PointService {
 
         pointTransactionRepository.insert(tx);
     }
+
+
+    @Transactional
+    public void appendTransactionByUserId(Long userId, PointTransactionType type, BigDecimal amount) {
+        // point_id 확보를 위해 for update로 조회 (없으면 0원 생성)
+        PointVO point = pointRepository.findByUserIdForUpdate(userId);
+        if (point == null) {
+            point = PointVO.builder().userId(userId).amount(BigDecimal.ZERO).build();
+            pointRepository.insert(point);
+            point = pointRepository.findByUserIdForUpdate(userId); // point_id 확보용 재조회
+        }
+
+        PointTransactionVO tx = PointTransactionVO.builder()
+            .pointId(point.getPointId())
+            .type(type)            // ENUM 그대로 저장
+            .amount(amount)        // 금액은 '양수'로, 방향은 type으로 해석
+            .createdAt(LocalDateTime.now())
+            .build();
+
+        pointTransactionRepository.insert(tx);
+    }
+
+
 }
