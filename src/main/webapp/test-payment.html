@@ -16,7 +16,7 @@
 
   function requestPay() {
 
-    const merchant_uid = "point_20250804001510_1_fba1d505"; // DB와 일치
+    const merchant_uid = "point_20258775646754_1_6d34043f"; // DB와 일치
 
     IMP.request_pay({
       pg: "kakaopay.TC0ONETIME",
@@ -32,7 +32,7 @@
     }, function (rsp) {
       if (rsp.success) {
         alert("결제 성공! 서버에 결제 정보 전송 중...");
-        axios.post("http://localhost:8080/api/point/verify", {
+        axios.post("http://localhost:8080/api/auth/point/verify", {
           impUid: rsp.imp_uid,
           amount: 5000
         }, {

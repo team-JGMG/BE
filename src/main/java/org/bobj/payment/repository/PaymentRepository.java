@@ -20,5 +20,7 @@ public class PaymentRepository {
     public PaymentVO findByImpUid(String impUid){
         return paymentMapper.findByImpUid(impUid);
     }
-
+    public void update(PaymentVO paymentVO){
+        paymentMapper.update(paymentVO);
+    }
 }

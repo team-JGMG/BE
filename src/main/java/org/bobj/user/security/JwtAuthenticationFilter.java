@@ -93,6 +93,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
+        if (path.startsWith("/api/point/webhook")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String method = request.getMethod();
         log.debug("JWT Filter 처리: {} {}", method, path);
 
@@ -103,7 +108,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/webjars/") ||
                 path.contains("swagger") ||
-                path.endsWith("favicon.ico")) {
+                path.endsWith("favicon.ico") ||
+                path.startsWith("/api/point/webhook") )   // ✅ PortOne 웹훅)
+         {
             filterChain.doFilter(request, response);
             return;
         }

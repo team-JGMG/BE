@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.bobj.payment.mapper.PaymentEventMapper">
+
+  <resultMap id="PaymentEventResultMap" type="org.bobj.payment.domain.PaymentEventVO">
+    <id     property="id"           column="id"/>
+    <result property="merchantUid"  column="merchant_uid"/>
+    <result property="impUid"       column="imp_uid"/>
+    <result property="eventType"    column="event_type"/>
+    <result property="pgEventAt"    column="pg_event_at"/>
+    <result property="source"       column="source"/>
+    <result property="payloadJson"  column="payload_json"/>
+    <result property="createdAt"    column="created_at"/>
+  </resultMap>
+
+  <select id="existsByMerchantUidAndEventTypeAndPgEventAt" resultType="boolean">
+    SELECT EXISTS(
+      SELECT 1
+      FROM payment_event
+      WHERE merchant_uid = #{merchantUid}
+        AND event_type   = #{eventType}
+        AND pg_event_at  = #{pgEventAt}
+    )
+  </select>
+
+  <insert id="save" parameterType="org.bobj.payment.domain.PaymentEventVO"
+    useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO payment_event
+    (merchant_uid, imp_uid, event_type, pg_event_at, source, payload_json)
+    VALUES
+      (#{merchantUid}, #{impUid}, #{eventType},
+       #{pgEventAt, jdbcType=TIMESTAMP}, #{source}, #{payloadJson})
+  </insert>
+
+
+</mapper>

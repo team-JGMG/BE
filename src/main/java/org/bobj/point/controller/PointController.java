@@ -5,8 +5,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
+import org.bobj.payment.dto.WebhookDto;
+import org.bobj.payment.service.PaymentService;
+import org.bobj.payment.service.PaymentService.EventSource;
 import org.bobj.point.RefundRequestDto;
 import org.bobj.point.domain.PointTransactionVO;
 import org.bobj.point.service.PointService;
@@ -16,19 +20,21 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/auth/point")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Api(tags = "포인트 API ")
 public class PointController {
 
     private final PointService pointService;
+    private final PaymentService paymentService;
 
     /**
      * 포인트 입출금 내역 조회
      * GET /api/auth/point/transactions?userId=1
      */
-    @GetMapping("/transactions")
+    @GetMapping("/auth/point/transactions")
     @ApiOperation(
         value = "포인트 입출금 내역 조회",
         notes = "인증된 사용자의 포인트 입출금 내역을 반환합니다."
@@ -50,7 +56,7 @@ public class PointController {
      * 현재 포인트 보유량 조회
      * GET /api/point/balance?userId=1
      */
-    @GetMapping("/balance")
+    @GetMapping("/auth/point/balance")
     @ApiOperation(
         value = "현재 포인트 보유량 조회",
         notes = "인증된 사용자의 현재 포인트 보유량을 반환합니다."
@@ -73,7 +79,7 @@ public class PointController {
      * POST /api/point/refund?userId=1
      * Body: { "amount": 5000 }
      */
-    @PostMapping("/refund")
+    @PostMapping("/auth/point/refund")
     @ApiOperation(
         value = "포인트 환급 요청",
         notes = "인증된 사용자의 포인트 환급을 요청합니다."
@@ -92,4 +98,27 @@ public class PointController {
         pointService.requestRefund(userId, refundRequestDto.getAmount());
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("환급 요청이 완료되었습니다."));
     }
+
+    // org.bobj.point.controller.PointController (웹훅 부분만)
+    @PostMapping("/point/webhook")
+    public ResponseEntity<String> webhook(@RequestBody WebhookDto dto) {
+        log.info("Webhook received: {}", dto);
+
+        // 1) 필수 필드 가드(imp_uid 없으면 포트원 재시도만 늘림)
+        if (dto == null || dto.getImpUid() == null || dto.getImpUid().isBlank()) {
+            log.warn("Webhook ignored: imp_uid is missing. payload={}", dto);
+            return ResponseEntity.ok("ignored"); // 2xx로 마무리(재시도 방지)
+        }
+
+        try {
+            // 2) 포트원 단건 조회 + 적용
+            paymentService.verifyWithPortOneAndApply(dto, EventSource.WEBHOOK);
+            return ResponseEntity.ok("success");
+        } catch (Exception e) {
+            // 3) 비즈니스 오류라도 2xx로 흡수(포트원은 2xx면 성공으로 간주함)
+            log.error("Webhook handle error: {}", e.getMessage(), e);
+            return ResponseEntity.ok("received");
+        }
+    }
+
 }
