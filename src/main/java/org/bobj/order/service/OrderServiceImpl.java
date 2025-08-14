@@ -7,13 +7,11 @@ import org.bobj.order.domain.OrderStatus;
 import org.bobj.order.domain.OrderType;
 import org.bobj.order.dto.request.OrderRequestDTO;
 import org.bobj.order.dto.response.OrderResponseDTO;
+import org.bobj.order.event.OrderPlacedEvent;
 import org.bobj.order.mapper.OrderMapper;
 import org.bobj.order.producer.OrderQueueProducer;
-import org.bobj.orderbook.service.OrderBookService;
-import org.bobj.orderbook.service.OrderBookWebSocketService;
 import org.bobj.share.mapper.ShareMapper;
-import org.bobj.share.service.ShareService;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,15 +27,11 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper orderMapper;
     private final ShareMapper shareMapper;
-//    final private TradeMapper tradeMapper;
-    private final ShareService shareService;
 
     //주문 체결 서비스
-    private final OrderMatchingService orderMatchingService;
-    private final OrderBookWebSocketService orderBookWebSocketService;
-
-    private final RedisTemplate<String, Object> redisTemplate;
     private final OrderQueueProducer orderQueueProducer;
+
+    private final ApplicationEventPublisher publisher;
 
     @Override
     public OrderResponseDTO getOrderById(Long orderId) {
@@ -46,7 +40,6 @@ public class OrderServiceImpl implements OrderService {
         return Optional.ofNullable(board).orElseThrow(NoSuchElementException::new);
     }
 
-
     @Transactional
     @Override
     public OrderResponseDTO placeOrder(Long userId, OrderRequestDTO orderRequestDTO) {
@@ -54,12 +47,6 @@ public class OrderServiceImpl implements OrderService {
         OrderVO orderVO = orderRequestDTO.toVo();
 
         orderVO.setUserId(userId);
-
-        // 1. 펀딩 상태 확인
-//        String fundingStatus = mapper.findFundingStatusByFundingId(orderBookVO.getFundingId());
-//        if (!"ENDED".equals(fundingStatus)) {
-//            throw new IllegalStateException("펀딩이 종료된 후에만 거래가 가능합니다.");
-//        }
 
         // 2. 매도인일 경우 주식 보유 수량 확인
         if ("SELL".equalsIgnoreCase(String.valueOf(orderVO.getOrderType()))) {
@@ -95,11 +82,10 @@ public class OrderServiceImpl implements OrderService {
         // 주문 저장
         orderMapper.create(orderVO);
 
-        // 체결 시도
-      //  orderMatchingService.processOrderMatching(orderVO);
-
         //레디스 큐를 이용하여 주문 체결 로직을 비동기적으로 처리
-        orderQueueProducer.pushOrder(orderVO.getFundingId(), orderVO.getOrderId());
+//        orderQueueProducer.pushOrder(orderVO.getFundingId(), orderVO.getOrderId());
+
+        publisher.publishEvent(new OrderPlacedEvent(orderVO.getFundingId(), orderVO.getOrderId()));
 
         return getOrderById(orderVO.getOrderId());
     }
@@ -135,8 +121,6 @@ public class OrderServiceImpl implements OrderService {
 
         orderMapper.cancelOrder(orderId);
 
-        // 주문 취소 후 호가창 업데이트를 웹소켓으로 푸시
-//        orderBookWebSocketService.publishOrderBookUpdate(orderBook.getFundingId());
         return orderBook.getFundingId();
     }
 }
