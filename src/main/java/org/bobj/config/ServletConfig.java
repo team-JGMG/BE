@@ -28,7 +28,8 @@ import org.springframework.web.servlet.view.JstlView;
         "org.bobj.device.controller",
         "org.bobj.fcm.controller",
         "org.bobj.device.controller",
-        "org.bobj.allocation.controller"
+        "org.bobj.allocation.controller",
+        "org.bobj.order.consumer"
         })
 
 public class ServletConfig implements WebMvcConfigurer {

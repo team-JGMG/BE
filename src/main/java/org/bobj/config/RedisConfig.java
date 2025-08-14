@@ -1,5 +1,6 @@
 package org.bobj.config;
 
+import org.bobj.order.consumer.OrderQueueConsumer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,9 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -29,13 +33,16 @@ public class RedisConfig {
     @Value("${spring.redis.port}")
     private int port;
 
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer pspc() {
-        PropertySourcesPlaceholderConfigurer p = new PropertySourcesPlaceholderConfigurer();
-        p.setIgnoreResourceNotFound(true);
-        p.setIgnoreUnresolvablePlaceholders(true);
-        return p;
-    }
+    // Pub/Sub 채널 이름
+    private static final String ORDER_EVENT_CHANNEL = "order:events";
+
+//    @Bean
+//    public static PropertySourcesPlaceholderConfigurer pspc() {
+//        PropertySourcesPlaceholderConfigurer p = new PropertySourcesPlaceholderConfigurer();
+//        p.setIgnoreResourceNotFound(true);
+//        p.setIgnoreUnresolvablePlaceholders(true);
+//        return p;
+//    }
 
 
     @Bean
@@ -64,6 +71,22 @@ public class RedisConfig {
     @Bean
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         return new StringRedisTemplate(redisConnectionFactory);
+    }
+
+
+    @Bean
+    public MessageListenerAdapter listenerAdapter(OrderQueueConsumer consumer) {
+        return new MessageListenerAdapter(consumer, "onMessage");
+    }
+
+    @Bean
+    public RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory,
+                                                   MessageListenerAdapter listenerAdapter) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        // "order:events" 채널을 구독하도록 설정
+        container.addMessageListener(listenerAdapter, new ChannelTopic(ORDER_EVENT_CHANNEL));
+        return container;
     }
 
 }
