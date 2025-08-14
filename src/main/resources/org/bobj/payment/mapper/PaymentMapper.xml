@@ -1,38 +1,59 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.bobj.payment.mapper.PaymentMapper">
 
-
   <resultMap id="PaymentResultMap" type="org.bobj.payment.domain.PaymentVO">
-    <result property="impUid" column="imp_uid"/>
-    <result property="merchantUid" column="merchant_uid"/>
-    <result property="userId" column="user_id"/>
-    <result property="amount" column="amount"/>
-    <result property="status" column="status" javaType="org.bobj.payment.domain.PaymentStatus"/>
-    <result property="paidAt" column="paid_at"/>
+    <id     column="payment_id"       property="paymentId"/>
+    <result column="imp_uid"          property="impUid"/>
+    <result column="merchant_uid"     property="merchantUid"/>
+    <result column="user_id"          property="userId"/>
+    <result column="amount"           property="amount"/>
+    <result column="status"           property="status"/> <!-- enum 문자열 매핑 -->
+    <result column="paid_at"          property="paidAt"/>
+    <result column="canceled_at"      property="canceledAt"/>
+    <result column="pg_provider"      property="pgProvider"/>
+    <result column="last_event_at"    property="lastEventAt"/>
+    <result column="last_event_source" property="lastEventSource"/>
+    <result column="version"          property="version"/>
+    <result column="created_at"       property="createdAt"/>
+    <result column="end_at"           property="endAt"/>
   </resultMap>
 
-  <!-- imp_uid 존재 여부 확인 -->
-  <select id="existsByImpUid" resultType="boolean">
-    SELECT EXISTS(
-    SELECT 1
-    FROM payment
-    WHERE imp_uid = #{impUid}
-    )
+  <select id="existsByImpUid" parameterType="string" resultType="boolean">
+    SELECT EXISTS(SELECT 1 FROM payment WHERE imp_uid = #{impUid})
   </select>
 
-  <insert id="save">
-    INSERT INTO payment (imp_uid, merchant_uid, user_id, amount, status, paid_at)
-    VALUES (#{impUid}, #{merchantUid}, #{userId}, #{amount}, #{status}, #{paidAt})
-  </insert>
-
-  <!-- ✅ resultMap 적용 -->
-  <select id="findByImpUid" resultMap="PaymentResultMap">
+  <select id="findByImpUid" parameterType="string" resultMap="PaymentResultMap">
     SELECT *
     FROM payment
     WHERE imp_uid = #{impUid}
+      LIMIT 1
   </select>
+
+  <insert id="save" parameterType="org.bobj.payment.domain.PaymentVO"
+    useGeneratedKeys="true" keyProperty="paymentId">
+    INSERT INTO payment
+    (imp_uid, merchant_uid, user_id, amount, status, paid_at, canceled_at,
+     pg_provider, last_event_at, last_event_source, version)
+    VALUES
+      (#{impUid}, #{merchantUid}, #{userId}, #{amount}, #{status}, #{paidAt}, #{canceledAt},
+       #{pgProvider}, #{lastEventAt}, #{lastEventSource}, #{version})
+  </insert>
+
+  <update id="update" parameterType="org.bobj.payment.domain.PaymentVO">
+    UPDATE payment
+    SET merchant_uid      = #{merchantUid},
+        user_id           = #{userId},
+        amount            = #{amount},
+        status            = #{status},
+        paid_at           = #{paidAt},
+        canceled_at       = #{canceledAt},
+        pg_provider       = #{pgProvider},
+        last_event_at     = #{lastEventAt},
+        last_event_source = #{lastEventSource},
+        version           = #{version}
+    WHERE imp_uid = #{impUid}
+  </update>
 
 </mapper>

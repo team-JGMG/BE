@@ -22,4 +22,9 @@ public class PointChargeRequestRepository {
         mapper.updateStatusAndImpUid(request);
     }
 
+    //취소 전이
+    public void updateStatusToCancelled(String merchantUid) {
+        mapper.updateStatusToCancelled(merchantUid);
+    }
+
 }

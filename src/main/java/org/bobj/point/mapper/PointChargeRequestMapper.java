@@ -9,5 +9,12 @@ public interface PointChargeRequestMapper {
 
     PointChargeRequestVO findByMerchantUid(@Param("merchantUid") String merchantUid);
 
+    //성공 전이(고정): PAID + imp_uid + paid_at
     void updateStatusAndImpUid(PointChargeRequestVO request);
+
+    //취소 전이(고정): CANCELLED
+    void updateStatusToCancelled(@Param("merchantUid") String merchantUid);
+
+
+
 }

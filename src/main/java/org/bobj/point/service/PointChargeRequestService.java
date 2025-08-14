@@ -38,6 +38,12 @@ public class PointChargeRequestService {
 
     // 필요 시 FAILED 상태 처리도 추가 가능
 
+    @Transactional
+    public void updateStatusToCancelled(PointChargeRequestVO req) {
+        // 필요하면 req.setStatus("CANCELLED"); req.setImpUid(null); 등 사전 세팅
+        pointChargeRequestRepository.updateStatusToCancelled(req.getMerchantUid());
+    }
+
 
 
 
