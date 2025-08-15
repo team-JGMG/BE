@@ -47,7 +47,7 @@ public class NotificationController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(notifications));
     }
 
-    @PutMapping("/{notificationId}/read")
+    @PatchMapping("/{notificationId}")
     @ApiOperation(value = "특정 알림 읽음 처리", notes = "특정 알림을 '읽음' 상태로 변경합니다.")
     @ApiImplicitParam(name = "notificationId", value = "읽음 처리할 알림 ID", required = true, dataType = "long", paramType = "path")
     @ApiResponses(value = {
@@ -65,7 +65,7 @@ public class NotificationController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("알림이 읽음 처리되었습니다."));
     }
 
-    @PutMapping("/read-all")
+    @PatchMapping("/read-all")
     @ApiOperation(value = "모든 알림 읽음 처리", notes = "현재 로그인된 사용자의 모든 읽지 않은 알림을 '읽음' 상태로 변경합니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "모든 알림 읽음 처리 성공", response = ApiCommonResponse.class),
