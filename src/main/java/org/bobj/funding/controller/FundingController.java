@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/funding")
+@RequestMapping("/api/fundings")
 @RequiredArgsConstructor
 @Slf4j
 @Api(tags="펀딩 API")
