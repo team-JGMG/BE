@@ -31,7 +31,7 @@ public class PropertyController {
     private final DecryptionResponseAdvice decryptionResponseAdvice;
 
     @PostMapping(
-            value = "/auth/property",
+            value = "/auth/properties",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiOperation(value = "매물 등록", notes = "새로운 매물을 등록합니다. 법정동코드가 있으면 자동으로 전월세 데이터를 조회하여 월세 정보를 설정합니다.")
     @ApiResponses(value = {
@@ -61,7 +61,7 @@ public class PropertyController {
     }
 
 
-    @GetMapping("/auth/property")
+    @GetMapping("/auth/properties")
     @ApiOperation(value = "매물 목록 조회", notes = "[관리자] 요약 정보가 담긴 매물 목록을 반환합니다.")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "category", value = "카테고리 필터명(pending -> 대기중 ,approved -> 승인 ,failed -> 펀딩 실패)", defaultValue = "pending", dataType = "string", paramType = "query"),
@@ -81,7 +81,7 @@ public class PropertyController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(list));
     }
 
-    @GetMapping("/auth/property/user")
+    @GetMapping("/auth/users/me/properties")
     @ApiOperation(value = "사용자 매물 목록 조회", notes = "[매도자] 특정 사용자가 등록한 매물 목록을 조회합니다.")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "status", value = "매물 상태(pending -> 대기중, approved -> 승인, rejected -> 거절됨, sold -> 매각", defaultValue = "pending" ,dataType = "String", paramType = "query"),
@@ -105,7 +105,7 @@ public class PropertyController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(response));
     }
 
-    @GetMapping("/auth/property/{propertyId}")
+    @GetMapping("/auth/properties/{propertyId}")
     @ApiOperation(value = "매물 상세 조회", notes = "[관리자, 매도자]특정 매물의 상세 정보를 반환합니다.")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "propertyId", value = "매물 ID", required = true, dataType = "long", paramType = "path")
@@ -123,7 +123,7 @@ public class PropertyController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess(decryptedResult));
     }
 
-    @PatchMapping("/auth/property/{propertyId}/status")
+    @PatchMapping("/auth/properties/{propertyId}/status")
     @ApiOperation(value = "매물 상태 변경", notes = "매물을 승인 또는 거절합니다.")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "propertyId", value = "매물 ID", required = true, dataType = "long", paramType = "path"),
@@ -142,7 +142,7 @@ public class PropertyController {
         return ResponseEntity.ok(ApiCommonResponse.createSuccess("매물 상태 변경 완료"));
     }
 
-    @GetMapping("/property/sold")
+    @GetMapping("/properties/sold")
     @ApiOperation(value = "매각 완료 매물 목록 조회", notes = "[메인] 매각 완료 매물들을 불러옵니다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "매각 완료 매물 목록 조회 성공", response = PropertySoldResponseDTO.class, responseContainer = "List"),

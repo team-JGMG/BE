@@ -34,7 +34,7 @@ public class PointController {
      * 포인트 입출금 내역 조회
      * GET /api/auth/point/transactions?userId=1
      */
-    @GetMapping("/auth/point/transactions")
+    @GetMapping("/auth/points/transactions")
     @ApiOperation(
         value = "포인트 입출금 내역 조회",
         notes = "인증된 사용자의 포인트 입출금 내역을 반환합니다."
@@ -56,7 +56,7 @@ public class PointController {
      * 현재 포인트 보유량 조회
      * GET /api/point/balance?userId=1
      */
-    @GetMapping("/auth/point/balance")
+    @GetMapping("/auth/points/balance")
     @ApiOperation(
         value = "현재 포인트 보유량 조회",
         notes = "인증된 사용자의 현재 포인트 보유량을 반환합니다."
@@ -79,7 +79,7 @@ public class PointController {
      * POST /api/point/refund?userId=1
      * Body: { "amount": 5000 }
      */
-    @PostMapping("/auth/point/refund")
+    @PostMapping("/auth/points/refund")
     @ApiOperation(
         value = "포인트 환급 요청",
         notes = "인증된 사용자의 포인트 환급을 요청합니다."
@@ -100,7 +100,7 @@ public class PointController {
     }
 
     // org.bobj.point.controller.PointController (웹훅 부분만)
-    @PostMapping("/point/webhook")
+    @PostMapping("/points/webhook")
     public ResponseEntity<String> webhook(@RequestBody WebhookDto dto) {
         log.info("Webhook received: {}", dto);
 

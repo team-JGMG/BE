@@ -18,7 +18,7 @@ import springfox.documentation.annotations.ApiIgnore;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/auth/funding-order")
+@RequestMapping("/api/auth/funding-orders")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags="펀딩 주문 API")
