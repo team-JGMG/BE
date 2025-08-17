@@ -197,7 +197,7 @@
     SELECT f.funding_id, p.title
     FROM fundings f
            JOIN properties p ON f.property_id = p.property_id
-    WHERE f.status = 'ENDED'
+    WHERE f.status = 'ENDED' AND p.status = 'APPROVED'
     ORDER BY f.funding_end_date DESC
     LIMIT #{limit} OFFSET #{offset}
   </select>
