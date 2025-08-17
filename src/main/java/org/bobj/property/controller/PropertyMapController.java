@@ -19,7 +19,7 @@ import java.util.List;
 //부동산 지도 관련 API를 제공하는 컨트롤러
 @Slf4j
 @RestController
-@RequestMapping("/api/property/map")
+@RequestMapping("/api/properties/map")
 @CrossOrigin(origins = "*")
 @Api(tags = "부동산 지도 API")
 public class PropertyMapController {
