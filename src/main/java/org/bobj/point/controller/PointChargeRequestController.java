@@ -22,7 +22,7 @@ import springfox.documentation.annotations.ApiIgnore;
 // (프로젝트 내) 인증 사용자 객체
 
 @RestController
-@RequestMapping("/api/auth/point")
+@RequestMapping("/api/auth/points")
 @RequiredArgsConstructor
 @Log4j2
 @Api(tags = "포인트 충전 및 검증 API")
