@@ -49,11 +49,11 @@ public class OrderServiceImpl implements OrderService {
 
         // 1. 거래 가능 시간 확인 (서비스 계층으로 이동)
         LocalTime now = LocalTime.now();
-        LocalTime start = LocalTime.of(11, 0);
+        LocalTime start = LocalTime.of(9, 0);
         LocalTime end = LocalTime.of(15, 0);
 
         if (now.isBefore(start) || now.isAfter(end)) {
-            throw new CustomException(ErrorCode.ORDER_OUT_OF_TRADING_HOURS);
+            throw new IllegalStateException("거래 가능 시간(09:00~15:00)이 아닙니다.");
         }
 
         OrderVO orderVO = orderRequestDTO.toVo();
