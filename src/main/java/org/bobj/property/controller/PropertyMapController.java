@@ -135,53 +135,53 @@ public class PropertyMapController {
     }
 
     //주소를 직접 받아서 좌표를 반환하는 API
-//    @PostMapping("/coordinate")
-//    @ApiOperation(value = "주소 기반 좌표 변환",
-//            notes = "주소를 직접 받아서 위도, 경도 좌표로 변환합니다.")
-//    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "변환 성공", response = CoordinateDTO.class),
-//            @ApiResponse(code = 400, message = "잘못된 주소 형식"),
-//            @ApiResponse(code = 404, message = "주소에 해당하는 좌표를 찾을 수 없음"),
-//            @ApiResponse(code = 500, message = "서버 내부 오류")
-//    })
-//    public ResponseEntity<CoordinateDTO> getCoordinateFromAddress(
-//            @ApiParam(value = "변환할 주소", required = true, example = "서울특별시 강남구 테헤란로 427")
-//            @RequestBody String address) {
-//
-//        try {
-//            log.info("주소 기반 좌표 변환 요청: {}", address);
-//
-//            // 입력값 검증 및 전처리
-//            if (address == null || address.trim().isEmpty()) {
-//                log.warn("잘못된 주소: {}", address);
-//                return ResponseEntity.badRequest().build();
-//            }
-//
-//            // 주소 문자열 정리 (앞뒤 따옴표 제거, 공백 정리)
-//            String cleanAddress = address.trim();
-//            if (cleanAddress.startsWith("\"") && cleanAddress.endsWith("\"")) {
-//                cleanAddress = cleanAddress.substring(1, cleanAddress.length() - 1);
-//            }
-//            cleanAddress = cleanAddress.trim();
-//
-//            log.info("정리된 주소: {}", cleanAddress);
-//
-//            // 좌표 조회
-//            CoordinateDTO coordinate = propertyMapService.getCoordinateFromAddress(cleanAddress);
-//
-//            if (coordinate != null) {
-//                log.info("주소 기반 좌표 변환 성공: {}", cleanAddress);
-//                return ResponseEntity.ok(coordinate);
-//            } else {
-//                log.warn("좌표를 찾을 수 없음: {}", cleanAddress);
-//                return ResponseEntity.notFound().build();
-//            }
-//
-//        } catch (Exception e) {
-//            log.error("주소 기반 좌표 변환 중 오류 발생: {}", e.getMessage(), e);
-//            return ResponseEntity.internalServerError().build();
-//        }
-//    }
+    @PostMapping("/coordinate")
+    @ApiOperation(value = "주소 기반 좌표 변환",
+            notes = "주소를 직접 받아서 위도, 경도 좌표로 변환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "변환 성공", response = CoordinateDTO.class),
+            @ApiResponse(code = 400, message = "잘못된 주소 형식"),
+            @ApiResponse(code = 404, message = "주소에 해당하는 좌표를 찾을 수 없음"),
+            @ApiResponse(code = 500, message = "서버 내부 오류")
+    })
+    public ResponseEntity<CoordinateDTO> getCoordinateFromAddress(
+            @ApiParam(value = "변환할 주소", required = true, example = "서울특별시 강남구 테헤란로 427")
+            @RequestBody String address) {
+
+        try {
+            log.info("주소 기반 좌표 변환 요청: {}", address);
+
+            // 입력값 검증 및 전처리
+            if (address == null || address.trim().isEmpty()) {
+                log.warn("잘못된 주소: {}", address);
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 주소 문자열 정리 (앞뒤 따옴표 제거, 공백 정리)
+            String cleanAddress = address.trim();
+            if (cleanAddress.startsWith("\"") && cleanAddress.endsWith("\"")) {
+                cleanAddress = cleanAddress.substring(1, cleanAddress.length() - 1);
+            }
+            cleanAddress = cleanAddress.trim();
+
+            log.info("정리된 주소: {}", cleanAddress);
+
+            // 좌표 조회
+            CoordinateDTO coordinate = propertyMapService.getCoordinateFromAddress(cleanAddress);
+
+            if (coordinate != null) {
+                log.info("주소 기반 좌표 변환 성공: {}", cleanAddress);
+                return ResponseEntity.ok(coordinate);
+            } else {
+                log.warn("좌표를 찾을 수 없음: {}", cleanAddress);
+                return ResponseEntity.notFound().build();
+            }
+
+        } catch (Exception e) {
+            log.error("주소 기반 좌표 변환 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
 
      //헬스체크 엔드포인트
