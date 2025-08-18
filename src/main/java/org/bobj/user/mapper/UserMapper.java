@@ -19,19 +19,13 @@ public interface UserMapper {
     void saveSocialLogin(SocialLoginsVO socialLogin);
     void updateRefreshToken(SocialLoginsVO socialLogin);
 
-    /**
-     * Refresh Token으로 소셜 로그인 정보 조회
-     */
+    //Refresh Token으로 소셜 로그인 정보 조회
     SocialLoginsVO findSocialLoginByRefreshToken(String refreshToken);
 
-    /**
-     * 특정 사용자의 Refresh Token 삭제 (로그아웃)
-     */
+    //특정 사용자의 Refresh Token 삭제 (로그아웃)
     void clearRefreshTokenByUserId(Long userId);
 
-    /**
-     * 사용자 ID로 소셜 로그인 정보 조회 (토큰 갱신용)
-     */
+    //사용자 ID로 소셜 로그인 정보 조회 (토큰 갱신용)
     SocialLoginsVO findSocialLoginByUserId(Long userId);
 
 }
