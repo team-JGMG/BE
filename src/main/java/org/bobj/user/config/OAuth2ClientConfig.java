@@ -42,16 +42,16 @@ public class OAuth2ClientConfig {
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         
-        log.info("🔧 순수 수동 OAuth2 클라이언트 설정 초기화 시작");
-        log.info("🔑 카카오 클라이언트 ID: {}...",
+        log.info("순수 수동 OAuth2 클라이언트 설정 초기화 시작");
+        log.info("카카오 클라이언트 ID: {}...",
                 clientId != null && clientId.length() > 8 ? 
                 clientId.substring(0, 8) + "****" : "설정되지 않음");
-        log.info("🔄 카카오 리다이렉트 URI: {}", redirectUri);
-        log.info("📋 요청 스코프: {}", scopeString);
+        log.info("카카오 리다이렉트 URI: {}", redirectUri);
+        log.info("요청 스코프: {}", scopeString);
 
         // 스코프 파싱
         Set<String> scopes = parseScopes(scopeString);
-        log.info("✅ 파싱된 스코프: {}", scopes);
+        log.info("파싱된 스코프: {}", scopes);
 
         // 카카오 클라이언트 등록 정보 생성 (순수 수동 설정)
         ClientRegistration kakaoClientRegistration = ClientRegistration.withRegistrationId("kakao")
@@ -89,7 +89,7 @@ public class OAuth2ClientConfig {
         if (scopes.isEmpty()) {
             scopes.add("profile_nickname");
             scopes.add("account_email");
-            log.warn("⚠️ 스코프가 비어있어 기본 스코프를 사용합니다: {}", scopes);
+            log.warn("스코프가 비어있어 기본 스코프를 사용합니다: {}", scopes);
         }
         
         return scopes;
