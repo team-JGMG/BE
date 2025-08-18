@@ -126,18 +126,18 @@ public class AuthController {
                                                   HttpServletRequest request,
                                                   HttpServletResponse response) {
         
-        log.info("🚀 [회원가입 시작] 요청 데이터: {}", registrationRequest.toMaskedString());
+        log.info("[회원가입 시작] 요청 데이터: {}", registrationRequest.toMaskedString());
         
-        // 🔍 모든 쿠키 로그 출력 (디버깅용)
+        //모든 쿠키 로그 출력 (디버깅용)
         cookieUtil.logAllCookies(request);
         
         // 1. 사전 인증 토큰 검증
         String preAuthToken = jwtTokenProvider.resolveToken(request);
-        log.info("🔍 [토큰 추출] preAuthToken 존재 여부: {}", preAuthToken != null);
+        log.info("[토큰 추출] preAuthToken 존재 여부: {}", preAuthToken != null);
         
         if (preAuthToken == null) {
-            log.error("❌ [토큰 오류] preAuthToken이 null입니다.");
-            log.error("🔍 [상세 확인] 요청 헤더 Authorization: {}", request.getHeader("Authorization"));
+            log.error("[토큰 오류] preAuthToken이 null입니다.");
+            log.error("[상세 확인] 요청 헤더 Authorization: {}", request.getHeader("Authorization"));
             
             // 유효하지 않은 토큰시 pre-auth 토큰 쿠키 삭제
             cookieUtil.deletePreAuthTokenCookie(response, request);
@@ -147,32 +147,32 @@ public class AuthController {
         // 토큰 일부만 로그 출력 (보안)
         String tokenPreview = preAuthToken.length() > 20 ? 
             preAuthToken.substring(0, 20) + "..." : preAuthToken;
-        log.info("🔍 [토큰 내용] preAuthToken 미리보기: {}", tokenPreview);
+        log.info("[토큰 내용] preAuthToken 미리보기: {}", tokenPreview);
         
         if (!jwtTokenProvider.validateToken(preAuthToken)) {
-            log.error("❌ [토큰 검증] preAuthToken이 유효하지 않습니다: {}", tokenPreview);
+            log.error("[토큰 검증] preAuthToken이 유효하지 않습니다: {}", tokenPreview);
             cookieUtil.deletePreAuthTokenCookie(response, request);
             return ResponseEntity.status(401).body(SimpleResponseDTO.error("유효하지 않은 사전 인증 토큰입니다."));
         }
         
-        log.info("✅ [토큰 검증] preAuthToken 유효성 검증 통과");
+        log.info("[토큰 검증] preAuthToken 유효성 검증 통과");
 
         Claims claims = jwtTokenProvider.getClaims(preAuthToken);
         String tokenType = claims.get("type", String.class);
-        log.info("🔍 [토큰 타입] {}", tokenType);
+        log.info("[토큰 타입] {}", tokenType);
         
         if (!"pre-auth".equals(tokenType)) {
-            log.error("❌ [토큰 타입 오류] 예상: pre-auth, 실제: {}", tokenType);
+            log.error("[토큰 타입 오류] 예상: pre-auth, 실제: {}", tokenType);
             cookieUtil.deletePreAuthTokenCookie(response, request);
             return ResponseEntity.status(403).body(SimpleResponseDTO.error("올바르지 않은 토큰 타입입니다."));
         }
         
-        log.info("✅ [토큰 타입] pre-auth 타입 확인 완료");
+        log.info("[토큰 타입] pre-auth 타입 확인 완료");
 
         // 2. 서버 사이드 검증 (클라이언트 검증 우회 방지)
         UserRegistrationRequestDTO.ValidationResult validationResult = registrationRequest.validate();
         if (!validationResult.isValid()) {
-            log.warn("❌ [검증 실패] 회원가입 요청 검증 실패: {}", validationResult.getErrors());
+            log.warn("[검증 실패] 회원가입 요청 검증 실패: {}", validationResult.getErrors());
             cookieUtil.deletePreAuthTokenCookie(response, request);
             return ResponseEntity.badRequest().body(
                 SimpleResponseDTO.error("입력값이 올바르지 않습니다.", 
@@ -180,10 +180,10 @@ public class AuthController {
             );
         }
         
-        log.info("✅ [입력값 검증] 회원가입 데이터 검증 통과");
+        log.info("[입력값 검증] 회원가입 데이터 검증 통과");
 
         try {
-            log.info("🔄 [회원가입 처리] 최종 회원가입 시작 - 사용자: {}", claims.getSubject());
+            log.info("[회원가입 처리] 최종 회원가입 시작 - 사용자: {}", claims.getSubject());
             AuthResponseDTO finalAuthResponse = userService.registerUserAndCreateFinalToken(registrationRequest, claims);
             
             // Access Token을 쿠키로 설정
@@ -191,7 +191,7 @@ public class AuthController {
             // Pre-Auth Token 쿠키 삭제 (회원가입 완료)
             cookieUtil.deletePreAuthTokenCookie(response, request);
             
-            log.info("✅ [회원가입 성공] 사용자: {}", claims.getSubject());
+            log.info("[회원가입 성공] 사용자: {}", claims.getSubject());
             return ResponseEntity.ok(finalAuthResponse);
             
         } catch (Exception e) {

@@ -45,33 +45,6 @@ public class SecurityConfig {
         // ================================
         // 🚀 개발용 설정 (API 테스트 편의성)
         // ================================
-        http
-                .cors().configurationSource(corsConfigurationSource())
-                .and()
-                .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests(authorize -> authorize
-                        // 🔓 개발 중 - 모든 API 접근 허용 (JWT 토큰 없어도 OK)
-                        .anyRequest().permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .successHandler(oAuth2LoginSuccessHandler())
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService())
-                        )
-                );
-
-        // JWT 필터는 유지 (토큰이 있으면 인증 처리, 없어도 통과)
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-
-        /* ================================
-         * 🔒 운영용 보안 설정 (주석 처리)
-         * 배포 시 위의 개발용 설정을 주석처리하고 아래 설정을 활성화하세요
-         * ================================
-         */
 //        http
 //                .cors().configurationSource(corsConfigurationSource())
 //                .and()
@@ -79,34 +52,8 @@ public class SecurityConfig {
 //                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 //                .and()
 //                .authorizeRequests(authorize -> authorize
-//                        // 인증 필요한 API (정규 토큰만 접근 가능)
-//                        .antMatchers("/api/auth/**").authenticated()
-//
-//                        // 인증 불필요한 API (토큰 없어도 접근 가능)
-//                        .antMatchers(
-//                                "/api/**",                           // 일반 API
-//                                "/", "/error",                       // 기본 경로
-//                                "/test",                             // 테스트 경로
-//                                "/swagger-ui.html", "/swagger-resources/**",
-//                                "/v2/api-docs", "/v3/api-docs/**", "/webjars/**",
-//                                "/swagger-ui/**"                     // Swagger 문서
-//                        ).permitAll()
-//
-//                        // 기타 모든 요청은 인증 필요 (차단하지 않음)
-//                        .anyRequest().authenticated()
-//                )
-//                // 인증 실패 시 JSON 응답 반환하도록 설정
-//                .exceptionHandling(exceptions -> exceptions
-//                        .authenticationEntryPoint((request, response, authException) -> {
-//                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//                            response.setContentType("application/json;charset=UTF-8");
-//                            response.getWriter().write("{\"error\":\"Authentication required\",\"message\":\"Access token required for this endpoint\"}");
-//                        })
-//                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-//                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-//                            response.setContentType("application/json;charset=UTF-8");
-//                            response.getWriter().write("{\"error\":\"Access denied\",\"message\":\"Insufficient permissions\"}");
-//                        })
+//                        //개발 중 - 모든 API 접근 허용 (JWT 토큰 없어도 OK)
+//                        .anyRequest().permitAll()
 //                )
 //                .oauth2Login(oauth2 -> oauth2
 //                        .successHandler(oAuth2LoginSuccessHandler())
@@ -115,11 +62,68 @@ public class SecurityConfig {
 //                        )
 //                );
 //
-//        // JWT 인증 필터 추가
+//        // JWT 필터는 유지 (토큰이 있으면 인증 처리, 없어도 통과)
 //        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 //
 //        return http.build();
+//    }
 
+        /* ================================
+         * 운영용 보안 설정 (주석 처리)
+         * 배포 시 위의 개발용 설정을 주석처리하고 아래 설정을 활성화하세요
+         * ================================*/
+
+        http
+                .cors().configurationSource(corsConfigurationSource())
+                .and()
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests(authorize -> authorize
+                        .antMatchers("/api/signup").hasAuthority("PRE_AUTH")
+
+                        // 인증 필요한 API (정규 토큰만 접근 가능)
+                        .antMatchers("/api/auth/**").authenticated()
+
+                        // 인증 불필요한 API (토큰 없어도 접근 가능)
+                        .antMatchers(
+                                "/api/**",                           // 일반 API
+                                "/", "/error",                       // 기본 경로
+                                "/test",                             // 테스트 경로
+                                "/login/oauth2/code/**",             // OAuth2 리다이렉트
+                                "/swagger-ui.html", "/swagger-resources/**",
+                                "/v2/api-docs", "/v3/api-docs/**", "/webjars/**",
+                                "/swagger-ui/**"                     // Swagger 문서
+                        ).permitAll()
+
+                        // 기타 모든 요청은 거부
+                        .anyRequest().authenticated()
+
+                )
+                // 인증 실패 시 JSON 응답 반환하도록 설정
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Authentication required\",\"message\":\"Access token required for this endpoint\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"Access denied\",\"message\":\"Insufficient permissions\"}");
+                        })
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler())
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService())
+                        )
+                );
+
+        // JWT 인증 필터 추가
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -128,6 +132,7 @@ public class SecurityConfig {
 
     @Bean
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler() {
+        // Spring Non-Boot 환경에서 값 직접 주입
         return new OAuth2LoginSuccessHandler(jwtTokenProvider, userService, cookieUtil, frontendRedirectUri);
     }
 
@@ -142,7 +147,6 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 개발 환경 도메인
-        configuration.addAllowedOrigin("http://localhost:3000");    // Vue3 + Vite 대안 포트
         configuration.addAllowedOrigin("http://localhost:5173");    // Vue3 + Vite 기본 포트
         configuration.addAllowedOrigin("http://localhost:8080");    // Vue3 + Vue CLI 기본 포트
         configuration.addAllowedOrigin("http://localhost:8081");    // 기존 프론트엔드 포트
