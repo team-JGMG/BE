@@ -53,18 +53,18 @@ public class CookieUtil {
         
         // 로컬 환경 확인
         if (host != null && (host.contains("localhost") || host.contains("127.0.0.1"))) {
-            log.debug("🔍 Localhost 환경 감지 - 쿠키 도메인 설정 생략: {}", host);
+            log.debug("Localhost 환경 감지 - 쿠키 도메인 설정 생략: {}", host);
             return null;
         }
         
         if (requestURL != null && requestURL.contains("localhost")) {
-            log.debug("🔍 Localhost URL 감지 - 쿠키 도메인 설정 생략: {}", requestURL);
+            log.debug("Localhost URL 감지 - 쿠키 도메인 설정 생략: {}", requestURL);
             return null;
         }
         
         // 배포 환경에서는 항상 백엔드 도메인 사용
         String backendDomain = getBackendDomain();
-        log.debug("🔍 배포 환경 감지 - 백엔드 도메인으로 쿠키 설정: {}", backendDomain);
+        log.debug("배포 환경 감지 - 백엔드 도메인으로 쿠키 설정: {}", backendDomain);
         return backendDomain;
     }
 
@@ -104,7 +104,7 @@ public class CookieUtil {
         // 3. 프록시 헤더 확인 (Vercel, CloudFlare 등)
         String xForwardedProto = request.getHeader("X-Forwarded-Proto");
         if ("https".equalsIgnoreCase(xForwardedProto)) {
-            log.debug("🔒 프록시를 통한 HTTPS 감지: X-Forwarded-Proto=https");
+            log.debug("프록시를 통한 HTTPS 감지: X-Forwarded-Proto=https");
             return true;
         }
         
@@ -112,7 +112,7 @@ public class CookieUtil {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         String origin = request.getHeader("Origin");
         if (origin != null && origin.startsWith("https://")) {
-            log.debug("🔒 Origin 헤더를 통한 HTTPS 감지: {}", origin);
+            log.debug("Origin 헤더를 통한 HTTPS 감지: {}", origin);
             return true;
         }
         
@@ -169,7 +169,7 @@ public class CookieUtil {
         );
 
         response.addHeader("Set-Cookie", cookieHeader);
-        log.info("🍪 쿠키 설정: {}, 도메인: {}, HTTPS: {}, Cross-Origin: {}, Secure: {}, {}, 만료: {}초",
+        log.info("쿠키 설정: {}, 도메인: {}, HTTPS: {}, Cross-Origin: {}, Secure: {}, {}, 만료: {}초",
                 name, cookieDomain != null ? cookieDomain : "자동(localhost)", isHttps, isCrossOrigin, useSecure, sameSite, maxAge);
     }
 
@@ -189,12 +189,12 @@ public class CookieUtil {
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if (cookieName.equals(cookie.getName())) {
-                    log.debug("🔍 쿠키 발견: {} = {}", cookieName, cookie.getValue());
+                    log.debug("쿠키 발견: {} = {}", cookieName, cookie.getValue());
                     return cookie.getValue();
                 }
             }
         }
-        log.debug("❌ 쿠키 없음: {}", cookieName);
+        log.debug("쿠키 없음: {}", cookieName);
         return null;
     }
 
@@ -253,7 +253,7 @@ public class CookieUtil {
         String host = request.getHeader("Host");
         String xForwardedProto = request.getHeader("X-Forwarded-Proto");
         
-        log.info("🔍 요청 헤더 정보:");
+        log.info("요청 헤더 정보:");
         log.info("  - Origin: {}", origin);
         log.info("  - Host: {}", host);
         log.info("  - Referer: {}", referer);
@@ -266,12 +266,12 @@ public class CookieUtil {
         
         Cookie[] cookies = request.getCookies();
         if (cookies != null && cookies.length > 0) {
-            log.info("🍪 요청에 포함된 쿠키들:");
+            log.info("요청에 포함된 쿠키들:");
             for (Cookie cookie : cookies) {
                 log.info("  - {} = {}", cookie.getName(), cookie.getValue());
             }
         } else {
-            log.warn("❌ 요청에 쿠키가 없습니다!");
+            log.warn("요청에 쿠키가 없습니다!");
         }
     }
 }
