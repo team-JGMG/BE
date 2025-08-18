@@ -25,8 +25,10 @@ public enum ErrorCode {
     PAYMENT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "P005", "결제 요청 내역이 존재하지 않습니다."),
 
     // 🔔 알림 오류 (Notification)
-    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다.");
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
 
+    // 주문 오류
+    ORDER_OUT_OF_TRADING_HOURS(HttpStatus.BAD_REQUEST, "OB006", "거래 가능 시간(09:00~15:00)이 아닙니다.");
 
     private final HttpStatus status;
     private final String code;

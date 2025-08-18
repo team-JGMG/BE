@@ -3,6 +3,7 @@ package org.bobj.order.controller;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.common.constants.ErrorCode;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.order.dto.request.OrderRequestDTO;
@@ -17,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -74,6 +76,14 @@ public class OrderController {
                     "  \"status\": 400,\n" +
                     "  \"code\": \"C001\",\n" +
                     "  \"message\": \"잘못된 입력 값입니다.\",\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
+                    "}\n" +
+                    "```\n\n" +
+                    "```json\n" +
+                    "{\n" +
+                    "  \"status\": 400,\n" +
+                    "  \"code\": \"OB006\",\n" +
+                    "  \"message\": \"거래 가능 시간(09:00~15:00)이 아닙니다.\",\n" +
                     "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
                     "```",
