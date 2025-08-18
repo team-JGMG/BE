@@ -26,7 +26,6 @@ public class OrderBookWebSocketController {
     @ApiOperation(value = "호가창 실시간 구독", notes = "STOMP 메시지를 통해 해당 펀딩의 호가창을 실시간으로 받아옵니다.")
     public OrderBookResponseDTO sendMessage(@DestinationVariable Long fundingId){
 
-
         OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(fundingId);
         log.info("OrderBookWebSocketController - sendMessage 호출됨!");
         log.info("수신된 fundingId: {}", fundingId);

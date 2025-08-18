@@ -2,6 +2,8 @@ package org.bobj.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.common.constants.ErrorCode;
+import org.bobj.common.exception.CustomException;
 import org.bobj.order.domain.OrderVO;
 import org.bobj.order.domain.OrderStatus;
 import org.bobj.order.domain.OrderType;
@@ -15,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -43,6 +46,15 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public OrderResponseDTO placeOrder(Long userId, OrderRequestDTO orderRequestDTO) {
+
+        // 1. 거래 가능 시간 확인 (서비스 계층으로 이동)
+        LocalTime now = LocalTime.now();
+        LocalTime start = LocalTime.of(11, 0);
+        LocalTime end = LocalTime.of(15, 0);
+
+        if (now.isBefore(start) || now.isAfter(end)) {
+            throw new CustomException(ErrorCode.ORDER_OUT_OF_TRADING_HOURS);
+        }
 
         OrderVO orderVO = orderRequestDTO.toVo();
 
