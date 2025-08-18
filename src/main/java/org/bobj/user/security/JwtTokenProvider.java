@@ -167,51 +167,51 @@ public class JwtTokenProvider {
      */
     public String resolveToken(HttpServletRequest request) {
         String path = request.getRequestURI();
-        log.debug("🔍 [토큰 추출 시작] 요청 URI: {}", path);
+        log.debug("[토큰 추출 시작] 요청 URI: {}", path);
 
         // 1. Authorization Header에서 토큰 추출
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            log.debug("✅ [토큰 발견] Authorization Header에서 토큰 추출");
+            log.debug("[토큰 발견] Authorization Header에서 토큰 추출");
             return bearerToken.substring(7);
         }
-        log.debug("❌ [토큰 없음] Authorization Header에 토큰 없음");
+        log.debug("[토큰 없음] Authorization Header에 토큰 없음");
 
         // 2. 쿠키에서 토큰 추출
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
-            log.debug("🍪 [쿠키 확인] 총 {}개 쿠키 발견", cookies.length);
+            log.debug("[쿠키 확인] 총 {}개 쿠키 발견", cookies.length);
 
             if ("/api/auth/signup".equals(path)) {
                 // 회원가입 시에는 preAuthToken 우선 사용
                 for (Cookie cookie : cookies) {
                     if ("preAuthToken".equals(cookie.getName())) {
-                        log.debug("✅ [토큰 발견] preAuthToken 쿠키에서 토큰 추출 (회원가입용)");
+                        log.debug("[토큰 발견] preAuthToken 쿠키에서 토큰 추출 (회원가입용)");
                         return cookie.getValue();
                     }
                 }
-                log.debug("❌ [preAuthToken 없음] 회원가입 요청에 preAuthToken 쿠키 없음");
+                log.debug("[preAuthToken 없음] 회원가입 요청에 preAuthToken 쿠키 없음");
                 return null; // 회원가입 시 preAuthToken 없으면 인증 실패 처리 가능
             } else {
                 // 회원가입 외 경로는 기존 순서 유지 (accessToken 우선)
                 for (Cookie cookie : cookies) {
                     if ("accessToken".equals(cookie.getName())) {
-                        log.debug("✅ [토큰 발견] accessToken 쿠키에서 토큰 추출");
+                        log.debug("[토큰 발견] accessToken 쿠키에서 토큰 추출");
                         return cookie.getValue();
                     }
                 }
                 for (Cookie cookie : cookies) {
                     if ("preAuthToken".equals(cookie.getName())) {
-                        log.debug("✅ [토큰 발견] preAuthToken 쿠키에서 토큰 추출");
+                        log.debug("[토큰 발견] preAuthToken 쿠키에서 토큰 추출");
                         return cookie.getValue();
                     }
                 }
             }
         } else {
-            log.debug("❌ [쿠키 없음] 요청에 쿠키가 전혀 없음");
+            log.debug("[쿠키 없음] 요청에 쿠키가 전혀 없음");
         }
 
-        log.debug("❌ [토큰 추출 실패] Authorization Header와 쿠키 모두에서 토큰을 찾을 수 없음");
+        log.debug("[토큰 추출 실패] Authorization Header와 쿠키 모두에서 토큰을 찾을 수 없음");
         return null;
     }
 
