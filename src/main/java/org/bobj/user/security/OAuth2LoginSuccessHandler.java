@@ -119,11 +119,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 
                 // pre-auth 토큰 생성
                 String preAuthToken = jwtTokenProvider.createPreAuthToken(email, nickname, provider, providerId);
-                log.info("🔑 Pre-Auth Token 생성 완료: {}...", preAuthToken.substring(0, Math.min(20, preAuthToken.length())));
+                log.info("Pre-Auth Token 생성 완료: {}...", preAuthToken.substring(0, Math.min(20, preAuthToken.length())));
                 
                 // 쿠키로 pre-auth 토큰 설정
                 cookieUtil.setPreAuthTokenCookie(response, request, preAuthToken);
-                log.info("🍪 Pre-Auth Token 쿠키 설정 완료 (도메인은 CookieUtil에서 자동 설정)");
+                log.info("Pre-Auth Token 쿠키 설정 완료 (도메인은 CookieUtil에서 자동 설정)");
                 
                 // 회원가입 페이지로 리다이렉트 (회원가입 필요 상태)
                 String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
