@@ -33,8 +33,10 @@ public class PropertyMapService {
     // Redis 캐시 키 설정
     private static final String COORDINATE_CACHE_PREFIX = "coordinate:";
     private static final String NEGATIVE_CACHE_PREFIX = "coordinate:failed:"; // 실패 캐시
+    private static final String REALESTATE_CACHE_PREFIX = "realestate:"; // 실거래가 데이터 캐시
     private static final long CACHE_EXPIRATION_HOURS = 24; // 24시간 캐시
     private static final long NEGATIVE_CACHE_EXPIRATION_HOURS = 1; // 실패 캐시 1시간
+    private static final long REALESTATE_CACHE_EXPIRATION_DAYS = 7; // 실거래가 캐시 7일
     
     // 반경 기반 필터링 설정
     private static final double RADIUS_KM = 1.0;           // 고정 1km 반경
@@ -44,18 +46,28 @@ public class PropertyMapService {
     @Autowired
     public PropertyMapService(RealEstateApiService realEstateApiService,
                               VWorldLocalApiService vworldLocalApiService,
-                              @Autowired(required = false) RedisTemplate<String, Object> redisTemplate,
+                              RedisTemplate<String, Object> redisTemplate,
                               PropertyService propertyService) {
         this.realEstateApiService = realEstateApiService;
         this.vworldLocalApiService = vworldLocalApiService;
         this.redisTemplate = redisTemplate;
         this.propertyService = propertyService;
         
-        // Redis 사용 가능 여부 로그
-        if (redisTemplate != null) {
-            log.info("Redis 캐시 사용 가능 - 성능 최적화 모드");
-        } else {
-            log.warn("Redis 캐시 사용 불가 - 메모리 캐시만 사용");
+        // Redis 연결 테스트 (Order 패턴과 동일하게)
+        try {
+            // Redis 쓰기/읽기 테스트로 실제 연결 확인
+            redisTemplate.opsForValue().set("test:propertymap:init", "connected", 10, java.util.concurrent.TimeUnit.SECONDS);
+            String testResult = (String) redisTemplate.opsForValue().get("test:propertymap:init");
+            if ("connected".equals(testResult)) {
+                log.info("순수 수동 Redis 캐시 설정 초기화 시작");
+                log.info("Redis 캐시 연결 성공 - 성능 최적화 모드 활성화");
+                redisTemplate.delete("test:propertymap:init"); // 테스트 키 정리
+            } else {
+                log.warn("Redis 읽기 실패 - 메모리 캐시만 사용");
+            }
+        } catch (Exception e) {
+            log.error("Redis 캐시 연결 실패 - 메모리 캐시만 사용: {}", e.getMessage());
+            // Redis 실패해도 애플리케이션은 계속 동작 (메모리 캐시 사용)
         }
     }
 
@@ -198,7 +210,65 @@ public class PropertyMapService {
         }
     }
 
-    //최근 6개월 년월 목록 생성 (YYYYMM 형식)
+    /**
+     * 캐시된 실거래가 데이터 조회 (Redis 우선)
+     */
+    private List<RealEstateTransactionDTO> getCachedRealEstateTransactions(String rawdCd, String yearMonth) {
+        if (redisTemplate == null) {
+            return null; // Redis 없으면 직접 API 호출
+        }
+        
+        try {
+            String key = REALESTATE_CACHE_PREFIX + rawdCd + ":" + yearMonth;
+            Object cached = redisTemplate.opsForValue().get(key);
+            if (cached != null) {
+                log.debug("실거래가 Redis 캐시 히트 - {}:{}", rawdCd, yearMonth);
+                return (List<RealEstateTransactionDTO>) cached;
+            }
+            return null;
+        } catch (Exception e) {
+            log.warn("실거래가 캐시 조회 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 실거래가 데이터 캐시 저장 (Redis)
+     */
+    private void setCachedRealEstateTransactions(String rawdCd, String yearMonth, List<RealEstateTransactionDTO> transactions) {
+        if (redisTemplate == null || transactions == null) {
+            return;
+        }
+        
+        try {
+            String key = REALESTATE_CACHE_PREFIX + rawdCd + ":" + yearMonth;
+            redisTemplate.opsForValue().set(key, transactions, REALESTATE_CACHE_EXPIRATION_DAYS, java.util.concurrent.TimeUnit.DAYS);
+            log.debug("실거래가 데이터 캐시 저장 - {}:{}, {}건", rawdCd, yearMonth, transactions.size());
+        } catch (Exception e) {
+            log.warn("실거래가 캐시 저장 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 캐시 우선 실거래가 데이터 조회
+     */
+    private List<RealEstateTransactionDTO> getRealEstateTransactionsWithCache(String rawdCd, String yearMonth) {
+        // 1차: Redis 캐시 확인
+        List<RealEstateTransactionDTO> cached = getCachedRealEstateTransactions(rawdCd, yearMonth);
+        if (cached != null) {
+            return cached;
+        }
+        
+        // 2차: API 호출 및 캐시 저장
+        List<RealEstateTransactionDTO> transactions = realEstateApiService.getRealEstateTransactions(rawdCd, yearMonth);
+        
+        // 성공적으로 데이터를 받았으면 캐시에 저장
+        if (transactions != null && !transactions.isEmpty()) {
+            setCachedRealEstateTransactions(rawdCd, yearMonth, transactions);
+        }
+        
+        return transactions != null ? transactions : Collections.emptyList();
+    }
     private List<String> getRecentMonths() {
         List<String> months = new ArrayList<>();
         LocalDate now = LocalDate.now();
@@ -333,9 +403,9 @@ public class PropertyMapService {
                 log.info("{}개월차 데이터 수집 중 - {}, 현재 수집: {}개",
                         monthIndex + 1, yearMonth, locations.size());
 
-                // 2단계: 해당 월 실거래가 데이터 수집
+                // 2단계: 해당 월 실거래가 데이터 수집 (캐시 우선)
                 List<RealEstateTransactionDTO> monthlyTransactions =
-                    realEstateApiService.getRealEstateTransactions(rawdCd, yearMonth);
+                    getRealEstateTransactionsWithCache(rawdCd, yearMonth);
 
                 if (monthlyTransactions.isEmpty()) {
                     log.info("{}월 데이터 없음 - 다음 월로 진행", yearMonth);
