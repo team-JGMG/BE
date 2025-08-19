@@ -48,6 +48,11 @@ public class UserController {
             @ApiResponse(code = 500, message = "서버 내부 오류", response = ErrorResponse.class)
     })
     public ResponseEntity<UserResponseDTO> getMyInfo(@ApiIgnore @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        // UserPrincipal null 체크 추가
+        if (userPrincipal == null) {
+            throw new RuntimeException("인증이 필요합니다. 로그인 후 다시 시도해주세요.");
+        }
+        
         // UserPrincipal에서 userId를 가져와 DB에서 전체 사용자 정보 조회
         UserResponseDTO myInfo = userService.findUserInfoById(userPrincipal.getUserId());
         return ResponseEntity.ok(myInfo);
