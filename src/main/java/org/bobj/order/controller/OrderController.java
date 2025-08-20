@@ -110,7 +110,10 @@ public class OrderController {
 
         ApiCommonResponse<OrderResponseDTO> response = ApiCommonResponse.createSuccess(created);
 
-        //소켓 메세지 pub
+        // 1. 주문 완료 후, 해당 펀딩 ID의 캐시 삭제
+        orderBookService.evictOrderBookCache(created.getFundingId());
+
+        // 2. 소켓 메세지 pub
         publishOrderBookUpdate(created.getFundingId());
 
         return ResponseEntity.ok(response);
@@ -152,6 +155,9 @@ public class OrderController {
     })
     public ResponseEntity<ApiCommonResponse<String>> cancelOrder(@PathVariable Long orderId) {
         Long fundingId = service.cancelOrder(orderId);
+
+        // 1. 주문 취소 후, 해당 펀딩 ID의 캐시를 먼저 삭제
+        orderBookService.evictOrderBookCache(fundingId);
 
         //소켓 메세지 pub
         publishOrderBookUpdate(fundingId);
