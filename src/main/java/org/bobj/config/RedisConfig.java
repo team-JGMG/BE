@@ -1,5 +1,8 @@
 package org.bobj.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.bobj.order.consumer.OrderQueueConsumer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -50,8 +53,6 @@ public class RedisConfig {
         // redis 연결 정보(host, port, password)
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(
                 host, port);
-//        redisStandaloneConfiguration.setPassword(password);
-
         return new LettuceConnectionFactory(redisStandaloneConfiguration);
     }
 
@@ -65,7 +66,21 @@ public class RedisConfig {
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
+        GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
+        template.setValueSerializer(jsonRedisSerializer);
+        template.setHashValueSerializer(jsonRedisSerializer);
+
+        template.afterPropertiesSet();
+
         return template;
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        return objectMapper;
     }
 
     @Bean

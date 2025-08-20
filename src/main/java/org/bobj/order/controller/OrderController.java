@@ -3,6 +3,7 @@ package org.bobj.order.controller;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.bobj.common.constants.ErrorCode;
 import org.bobj.common.exception.ErrorResponse;
 import org.bobj.common.response.ApiCommonResponse;
 import org.bobj.order.dto.request.OrderRequestDTO;
@@ -17,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -76,6 +78,14 @@ public class OrderController {
                     "  \"message\": \"잘못된 입력 값입니다.\",\n" +
                     "  \"path\": \"/api/auth/orders\"\n" +
                     "}\n" +
+                    "```\n\n" +
+                    "```json\n" +
+                    "{\n" +
+                    "  \"status\": 400,\n" +
+                    "  \"code\": \"OB006\",\n" +
+                    "  \"message\": \"거래 가능 시간(09:00~15:00)이 아닙니다.\",\n" +
+                    "  \"path\": \"/api/auth/orders\"\n" +
+                    "}\n" +
                     "```",
                     response = ErrorResponse.class),
             @ApiResponse(code = 409, message = "충돌 (예: 이미 체결된 주문)\n\n" +
@@ -100,7 +110,10 @@ public class OrderController {
 
         ApiCommonResponse<OrderResponseDTO> response = ApiCommonResponse.createSuccess(created);
 
-        //소켓 메세지 pub
+        // 1. 주문 완료 후, 해당 펀딩 ID의 캐시 삭제
+        orderBookService.evictOrderBookCache(created.getFundingId());
+
+        // 2. 소켓 메세지 pub
         publishOrderBookUpdate(created.getFundingId());
 
         return ResponseEntity.ok(response);
@@ -142,6 +155,9 @@ public class OrderController {
     })
     public ResponseEntity<ApiCommonResponse<String>> cancelOrder(@PathVariable Long orderId) {
         Long fundingId = service.cancelOrder(orderId);
+
+        // 1. 주문 취소 후, 해당 펀딩 ID의 캐시를 먼저 삭제
+        orderBookService.evictOrderBookCache(fundingId);
 
         //소켓 메세지 pub
         publishOrderBookUpdate(fundingId);

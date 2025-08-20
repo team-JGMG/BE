@@ -29,7 +29,7 @@ public class UserVO {
     private String bankCode;      // bank_code VARCHAR(50)
     private String accountNumber; // account_number VARCHAR(50)
 
-    // ✅ 기존 코드 호환성을 위한 메서드 (deprecated)
+    //기존 코드 호환성을 위한 메서드 (deprecated)
     @Deprecated
     public boolean getIsAdmin() {
         return admin;

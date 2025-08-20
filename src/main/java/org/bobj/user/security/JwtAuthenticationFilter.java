@@ -8,6 +8,7 @@ import org.bobj.user.service.UserService;
 import org.bobj.user.util.CookieUtil;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,6 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 
 @RequiredArgsConstructor
@@ -40,8 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // JWT 정보로 UserPrincipal 생성
                 UserPrincipal userPrincipal = UserPrincipal.fromJwtClaims(userId, email, role);
 
+                // ACCESS 권한 부여 (SecurityConfig hasAuthority("ACCESS") 체크용)
+                Collection<SimpleGrantedAuthority> authorities =
+                    Collections.singletonList(new SimpleGrantedAuthority("ACCESS"));
+
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        userPrincipal, null, userPrincipal.getAuthorities());
+                        userPrincipal, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 return true;  //성공 시 true
@@ -54,9 +60,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Pre-auth는 임시 인증이므로 최소 정보만
                     UserPrincipal tempPrincipal = UserPrincipal.fromJwtClaims(null, email, "USER");
 
-                    // 권한 없는 임시 인증
+                    //PRE_AUTH 권한 부여 (SecurityConfig hasAuthority("PRE_AUTH") 체크용)
+                    Collection<SimpleGrantedAuthority> authorities =
+                        Collections.singletonList(new SimpleGrantedAuthority("PRE_AUTH"));
+
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            tempPrincipal, null, Collections.emptyList());
+                            tempPrincipal, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
                     return true;  // 성공 시 true
@@ -109,8 +118,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/webjars/") ||
                 path.contains("swagger") ||
                 path.endsWith("favicon.ico") ||
-                path.startsWith("/api/point/webhook") )   // ✅ PortOne 웹훅)
-         {
+                path.startsWith("/api/point/webhook"))   // PortOne 웹훅)
+        {
             filterChain.doFilter(request, response);
             return;
         }
@@ -118,15 +127,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // ================================
         // 🚀 개발용 설정: 토큰이 없으면 그냥 통과
         // ================================
-//        if (token == null) {
-//            log.debug("개발 모드: 토큰 없음 - 인증 없이 통과: {}", path);
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
+        if (token == null) {
+            log.debug("개발 모드: 토큰 없음 - 인증 없이 통과: {}", path);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        // ================================
-        // 🚀 개발용 설정: 토큰이 있으면 처리 시도, 실패해도 통과
-        // ================================
         if (jwtTokenProvider.validateToken(token)) {
             // 1. 토큰이 유효한 경우
 
@@ -181,12 +187,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);  // 🚀 개발용: 무효한 토큰이어도 통과
             return;
         }
+    }
 
-        /* ================================
+
+        /*================================
          * 🔒 운영용 JWT 필터 로직 (주석 처리)
          * 배포 시 위의 개발용 로직을 주석처리하고 아래 로직을 활성화하세요
-         * ===============================
-         */
+         * ================================*/
 
 //        if (token == null) {
 //            // 토큰이 없는 경우
@@ -231,7 +238,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //            // 1-1. 사전 갱신 체크 (Access Token만 대상)
 //            if ("access".equals(tokenType) && jwtTokenProvider.shouldPreemptivelyRefresh(token)) {
 //                log.info("토큰 만료 임박 - 사전 갱신 시도: {} ({}분 후 만료)",
-//                    path, jwtTokenProvider.getTokenRemainingMinutes(token));
+//                        path, jwtTokenProvider.getTokenRemainingMinutes(token));
 //
 //                String preRefreshedToken = attemptPreemptiveTokenRefresh(token, request, response);
 //                if (preRefreshedToken != null) {
@@ -318,8 +325,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //                return;
 //            }
 //        }
-     }
-
+//    }
 
     /**
      * 자동 토큰 갱신 시도 (만료 후 강제 갱신)
