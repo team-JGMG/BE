@@ -66,8 +66,15 @@ public class RedisConfig {
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
+        // JSON 직렬화를 위한 Serializer (ObjectMapper 사용)
         GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
+
+        // Key는 String, Value는 JSON으로 직렬화/역직렬화 설정
+        template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(jsonRedisSerializer);
+
+        // Hash Key도 String, Hash Value도 JSON으로 직렬화/역직렬화 설정
+        template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(jsonRedisSerializer);
 
         template.afterPropertiesSet();
