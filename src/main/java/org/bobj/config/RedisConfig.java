@@ -19,6 +19,7 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -86,8 +87,16 @@ public class RedisConfig {
                                                                               ObjectMapper objectMapper) {
         RedisTemplate<String, OrderBookResponseDTO> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+
+        // Key serializer
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+
+        // Value serializer
+        Jackson2JsonRedisSerializer<OrderBookResponseDTO> serializer =
+                new Jackson2JsonRedisSerializer<>(OrderBookResponseDTO.class);
+        template.setValueSerializer(serializer);
+
+        template.afterPropertiesSet();
         return template;
     }
 
