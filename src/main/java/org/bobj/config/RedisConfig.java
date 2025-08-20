@@ -63,9 +63,6 @@ public class RedisConfig {
         // 데이터를 받아 올 RedisConnection 설정
         template.setConnectionFactory(redisConnectionFactory());
 
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
         // JSON 직렬화를 위한 Serializer (ObjectMapper 사용)
         GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
 
