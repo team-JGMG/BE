@@ -10,6 +10,7 @@ import org.bobj.order.dto.request.OrderRequestDTO;
 import org.bobj.order.dto.response.OrderResponseDTO;
 import org.bobj.order.service.OrderService;
 import org.bobj.orderbook.dto.response.OrderBookResponseDTO;
+import org.bobj.orderbook.dto.response.OrderBookUpdateDTO;
 import org.bobj.orderbook.service.OrderBookService;
 import org.bobj.user.security.UserPrincipal;
 import org.springframework.http.ResponseEntity;
@@ -110,10 +111,7 @@ public class OrderController {
 
         ApiCommonResponse<OrderResponseDTO> response = ApiCommonResponse.createSuccess(created);
 
-        // 1. 주문 완료 후, 해당 펀딩 ID의 캐시 삭제
-        orderBookService.evictOrderBookCache(created.getFundingId());
-
-        // 2. 소켓 메세지 pub
+        // 소켓 메세지 pub
         publishOrderBookUpdate(created.getFundingId());
 
         return ResponseEntity.ok(response);
@@ -156,9 +154,6 @@ public class OrderController {
     public ResponseEntity<ApiCommonResponse<String>> cancelOrder(@PathVariable Long orderId) {
         Long fundingId = service.cancelOrder(orderId);
 
-        // 1. 주문 취소 후, 해당 펀딩 ID의 캐시를 먼저 삭제
-        orderBookService.evictOrderBookCache(fundingId);
-
         //소켓 메세지 pub
         publishOrderBookUpdate(fundingId);
 
@@ -167,11 +162,12 @@ public class OrderController {
 
     private void publishOrderBookUpdate(Long fundingId) {
         try {
-            OrderBookResponseDTO orderBook = orderBookService.getOrderBookByFundingId(fundingId);
+            List<OrderBookUpdateDTO> updates = orderBookService.updateOrderBookAndSendUpdates(fundingId);
             String destination = "/topic/order-book/" + fundingId;
 
-            messagingTemplate.convertAndSend(destination, orderBook);
-            log.info("Order book update published to topic {}: {}", destination, orderBook);
+            // 전체 호가창이 아닌 변경분만 전송
+            messagingTemplate.convertAndSend(destination, updates);
+            log.info("Order book update published to topic {}: {}", destination, updates);
         } catch (Exception e) {
             log.error("Failed to publish order book update for fundingId {}: {}", fundingId, e.getMessage(), e);
         }

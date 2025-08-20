@@ -93,8 +93,8 @@ public class OrderQueueConsumer  implements MessageListener {
                 break;
             }
         }
-        // 큐 처리가 모두 끝난 후, 캐시를 무효화합니다.
-        orderBookService.evictOrderBookCache(fundingId);
+
+        orderBookService.updateOrderBookAndSendUpdates(fundingId);
     }
 
  //매 10초마다 Redis 큐에서 주문 ID 꺼내서 처리
