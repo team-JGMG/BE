@@ -91,11 +91,12 @@ public class RedisConfig {
         // Key serializer
         template.setKeySerializer(new StringRedisSerializer());
 
-        // Value serializer
+        // Value serializer에 objectMapper 적용
         Jackson2JsonRedisSerializer<OrderBookResponseDTO> serializer =
                 new Jackson2JsonRedisSerializer<>(OrderBookResponseDTO.class);
-        template.setValueSerializer(serializer);
+        serializer.setObjectMapper(objectMapper);  // <-- JavaTimeModule 적용된 ObjectMapper
 
+        template.setValueSerializer(serializer);
         template.afterPropertiesSet();
         return template;
     }
