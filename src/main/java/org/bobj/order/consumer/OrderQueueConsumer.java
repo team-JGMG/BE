@@ -2,10 +2,10 @@ package org.bobj.order.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.bobj.funding.mapper.FundingMapper;
 import org.bobj.order.domain.OrderVO;
 import org.bobj.order.mapper.OrderMapper;
 import org.bobj.order.service.OrderMatchingService;
+import org.bobj.orderbook.service.OrderBookService;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,6 +19,7 @@ public class OrderQueueConsumer  implements MessageListener {
     private final RedisTemplate<String, Object> redisTemplate;
     private final OrderMapper orderMapper;
     private final OrderMatchingService orderMatchingService;
+    private final OrderBookService orderBookService;
 
     // Pub/Sub 메시지를 처리하는 메서드
     @Override
@@ -92,6 +93,8 @@ public class OrderQueueConsumer  implements MessageListener {
                 break;
             }
         }
+        // 큐 처리가 모두 끝난 후, 캐시를 무효화합니다.
+        orderBookService.evictOrderBookCache(fundingId);
     }
 
  //매 10초마다 Redis 큐에서 주문 ID 꺼내서 처리

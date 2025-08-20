@@ -31,12 +31,10 @@ public class OrderMatchingService {
     private final OrderMapper orderMapper;
     private final TradeMapper tradeMapper;
     private final ShareMapper shareMapper;
-    private final PointService pointService;
 
-    private final OrderBookService orderBookService;
+    private final PointService pointService;
     private final FundingService fundingService;
     private final NotificationService notificationService;
-
 
     @Transactional
     public int processOrderMatching(OrderVO newOrder) {
