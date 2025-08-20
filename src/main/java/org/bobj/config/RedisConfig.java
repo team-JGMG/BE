@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.bobj.order.consumer.OrderQueueConsumer;
+import org.bobj.orderbook.dto.response.OrderBookResponseDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,14 +58,15 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate() {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory,
+                                                       ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
 
         // 데이터를 받아 올 RedisConnection 설정
-        template.setConnectionFactory(redisConnectionFactory());
+        template.setConnectionFactory(connectionFactory);
 
         // JSON 직렬화를 위한 Serializer (ObjectMapper 사용)
-        GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
+        GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
         // Key는 String, Value는 JSON으로 직렬화/역직렬화 설정
         template.setKeySerializer(new StringRedisSerializer());
@@ -76,6 +78,16 @@ public class RedisConfig {
 
         template.afterPropertiesSet();
 
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, OrderBookResponseDTO> orderBookRedisTemplate(RedisConnectionFactory connectionFactory,
+                                                                              ObjectMapper objectMapper) {
+        RedisTemplate<String, OrderBookResponseDTO> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
         return template;
     }
 
