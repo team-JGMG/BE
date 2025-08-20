@@ -38,7 +38,7 @@ public class OrderBookServiceImpl implements OrderBookService{
     private final TradeMapper tradeMapper;
     private final OrderMapper orderMapper;
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, OrderBookResponseDTO> orderBookRedisTemplate;
 
     // 상한가/하한가 계산을 위한 비율
     private static final BigDecimal LIMIT_PERCENTAGE = new BigDecimal("0.30"); // 30%
@@ -50,7 +50,7 @@ public class OrderBookServiceImpl implements OrderBookService{
         String cacheKey = "orderBook:" + fundingId;
 
         // 1.Redis 캐시에서 데이터 조회
-        OrderBookResponseDTO cachedOrderBook = (OrderBookResponseDTO) redisTemplate.opsForValue().get(cacheKey);
+        OrderBookResponseDTO cachedOrderBook = orderBookRedisTemplate.opsForValue().get(cacheKey);
         if (cachedOrderBook != null) {
             return cachedOrderBook;
         }
@@ -93,7 +93,7 @@ public class OrderBookServiceImpl implements OrderBookService{
                 .build();
 
         // 4. 계산된 데이터를 캐시에 저장 (예: 30초 TTL 설정)
-        redisTemplate.opsForValue().set(cacheKey, orderBook, 30, TimeUnit.SECONDS);
+        orderBookRedisTemplate.opsForValue().set(cacheKey, orderBook, 30, TimeUnit.SECONDS);
 
         return orderBook;
     }
@@ -101,7 +101,7 @@ public class OrderBookServiceImpl implements OrderBookService{
     @Override
     public void evictOrderBookCache(Long fundingId) {
         String cacheKey = "orderBook:" + fundingId;
-        redisTemplate.delete(cacheKey);
+        orderBookRedisTemplate.delete(cacheKey);
     }
 
     private List<OrderBookEntryDTO> buildOrderBook(List<OrderVO> orders, OrderType type, Comparator<BigDecimal> sortOrder) {
